@@ -17,17 +17,19 @@ export async function POST(req: Request) {
   const company = safe(form.get("company"), 180);
   const phone = safe(form.get("phone"), 60);
   const message = safe(form.get("message"), 2000);
+  const segment = safe(form.get("segment"), 40) || "geral";
 
-  if (!name || !email) return NextResponse.redirect(new URL("/lp/?lead=required", req.url));
+  if (!name || !email) return NextResponse.redirect(new URL(`/lp/${segment}/?lead=required`, req.url));
 
   try {
     await dbQuery(
-      "insert into lp_leads(name,email,company,phone,message) values($1,$2,$3,$4,$5)",
-      [name, email, company || null, phone || null, message || null]
+      "insert into lp_leads(name,email,company,phone,message,segment) values($1,$2,$3,$4,$5,$6)",
+      [name, email, company || null, phone || null, message || null, segment]
     );
 
     const text = [
       "🚀 Novo lead no Ironcore LP",
+      `Segmento: ${segment}`,
       `Nome: ${name}`,
       `Email: ${email}`,
       `Empresa: ${company || "-"}`,
@@ -37,8 +39,8 @@ export async function POST(req: Request) {
 
     await dispatchLeadTelegram(text);
 
-    return NextResponse.redirect(new URL("/lp/?lead=ok", req.url));
+    return NextResponse.redirect(new URL(`/lp/${segment}/?lead=ok`, req.url));
   } catch {
-    return NextResponse.redirect(new URL("/lp/?lead=error", req.url));
+    return NextResponse.redirect(new URL(`/lp/${segment}/?lead=error`, req.url));
   }
 }
