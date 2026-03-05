@@ -19,6 +19,7 @@ export default async function LpConsultoriaPage({ searchParams }: { searchParams
         <p className="mt-5 max-w-3xl text-slate-300 text-base md:text-lg">Padronize entrega, acelere análise e transforme operações financeiras em produto recorrente. Com IA no fluxo, você ganha produtividade sem perder governança.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a href="#lead" className="badge !text-sm !px-5 !py-2.5">Quero levar para minha consultoria</a>
+          <Link href="/login" className="pill !text-sm !px-5 !py-2.5">Acessar app</Link>
           <Link href="/lp" className="pill !text-sm !px-5 !py-2.5">Trocar perfil</Link>
         </div>
       </section>

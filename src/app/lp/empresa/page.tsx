@@ -19,6 +19,7 @@ export default async function LpEmpresaPage({ searchParams }: { searchParams: Pr
         <p className="mt-5 max-w-3xl text-slate-300 text-base md:text-lg">Transforme dados dispersos em ação diária. O Ironcore usa IA para detectar risco, acelerar conciliação, orientar caixa e apoiar fechamento com confiança.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a href="#lead" className="badge !text-sm !px-5 !py-2.5">Quero usar na minha empresa</a>
+          <Link href="/login" className="pill !text-sm !px-5 !py-2.5">Acessar app</Link>
           <Link href="/lp" className="pill !text-sm !px-5 !py-2.5">Trocar perfil</Link>
         </div>
       </section>

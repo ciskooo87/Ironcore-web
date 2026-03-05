@@ -13,6 +13,9 @@ export default function LpChooserPage() {
         <p className="mt-4 text-slate-300 max-w-3xl">
           Selecione a jornada ideal para ver proposta comercial, benefícios e plano recomendado com IA.
         </p>
+        <div className="mt-5">
+          <Link href="/login" className="pill !text-sm !px-5 !py-2.5">Acessar app</Link>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-4 mt-8">
           <article className="card">
