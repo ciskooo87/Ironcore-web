@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { validateCsrf } from "@/lib/csrf";
+import { dispatchLeadTelegram } from "@/lib/notify";
 
 function safe(v: FormDataEntryValue | null, max = 255) {
   return String(v || "").trim().slice(0, max);
@@ -24,6 +25,18 @@ export async function POST(req: Request) {
       "insert into lp_leads(name,email,company,phone,message) values($1,$2,$3,$4,$5)",
       [name, email, company || null, phone || null, message || null]
     );
+
+    const text = [
+      "🚀 Novo lead no Ironcore LP",
+      `Nome: ${name}`,
+      `Email: ${email}`,
+      `Empresa: ${company || "-"}`,
+      `Telefone: ${phone || "-"}`,
+      `Mensagem: ${message || "-"}`,
+    ].join("\n");
+
+    await dispatchLeadTelegram(text);
+
     return NextResponse.redirect(new URL("/lp/?lead=ok", req.url));
   } catch {
     return NextResponse.redirect(new URL("/lp/?lead=error", req.url));

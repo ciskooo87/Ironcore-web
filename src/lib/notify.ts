@@ -54,3 +54,7 @@ export async function dispatchRoutineSummary(text: string) {
   const [t, w, e] = await Promise.all([sendTelegram(text), sendWebhook("whatsapp", text), sendEmail(text)]);
   return [t, w, e];
 }
+
+export async function dispatchLeadTelegram(text: string) {
+  return sendTelegram(text);
+}
