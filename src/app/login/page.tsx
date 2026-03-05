@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </form>
 
         {params.error ? <div className="alert bad-bg mt-3">Credenciais inválidas.</div> : null}
-        <p className="text-xs text-slate-500 mt-3">Usuários demo: admin/head/diretoria/consultor @ironcore.lat · senha: ironcore123</p>
+        <p className="text-xs text-slate-500 mt-3">Use credenciais provisionadas no banco de usuários.</p>
       </section>
     </main>
   );

@@ -12,13 +12,6 @@ export type SessionUser = {
   name: string;
 };
 
-const FALLBACK_USERS: Array<SessionUser & { password: string }> = [
-  { email: "admin@ironcore.lat", password: "ironcore123", role: "admin_master", name: "Admin Master" },
-  { email: "head@ironcore.lat", password: "ironcore123", role: "head", name: "Head" },
-  { email: "diretoria@ironcore.lat", password: "ironcore123", role: "diretoria", name: "Diretoria" },
-  { email: "consultor@ironcore.lat", password: "ironcore123", role: "consultor", name: "Consultor" },
-];
-
 export async function authenticate(email: string, password: string): Promise<SessionUser | null> {
   try {
     const q = await dbQuery<{ email: string; role: UserRole; name: string; password_hash: string }>(
@@ -30,12 +23,10 @@ export async function authenticate(email: string, password: string): Promise<Ses
       return { email: row.email, role: row.role, name: row.name };
     }
   } catch {
-    // fallback below
+    return null;
   }
 
-  const user = FALLBACK_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-  if (!user) return null;
-  return { email: user.email, role: user.role, name: user.name };
+  return null;
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
