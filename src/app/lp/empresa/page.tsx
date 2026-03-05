@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ensureCsrfCookie } from "@/lib/csrf";
 
 const PRICING = [
-  { name: "Essencial", setup: "R$ 2.500/projeto", monthly: "R$ 1.200/mês", add: "R$ 1.500 novo projeto", items: ["Operação básica com IA", "Conciliação e caixa", "Relatório executivo"] },
-  { name: "Profissional", setup: "R$ 4.500/projeto", monthly: "R$ 2.400/mês", add: "R$ 2.000 novo projeto", items: ["IA com priorização de risco", "Fechamento mensal assistido", "Painel operacional completo"] },
-  { name: "Premium", setup: "R$ 7.500/projeto", monthly: "R$ 4.000/mês", add: "R$ 3.000 novo projeto", items: ["IA intensiva para decisão", "Auditoria + governança avançada", "Acompanhamento dedicado"] },
+  { name: "Essencial", setup: "R$ 10.000", monthly: "R$ 4.800/mês", items: ["1 projeto", "Operação básica com IA", "Conciliação e caixa", "Relatório executivo"] },
+  { name: "Profissional", setup: "R$ 18.000", monthly: "R$ 9.600/mês", items: ["1 projeto", "IA com priorização de risco", "Fechamento mensal assistido", "Painel operacional completo"] },
+  { name: "Premium", setup: "R$ 30.000", monthly: "R$ 16.000/mês", items: ["1 projeto", "IA intensiva para decisão", "Auditoria + governança avançada", "Acompanhamento dedicado"] },
 ];
 
 const GAINS = [
@@ -57,7 +57,6 @@ export default async function LpEmpresaPage({ searchParams }: { searchParams: Pr
               <h3 className="font-semibold text-lg">{p.name}</h3>
               <div className="mt-2 text-sm text-slate-300">Implementação: <b>{p.setup}</b></div>
               <div className="text-sm text-slate-300">Mensal: <b>{p.monthly}</b></div>
-              <div className="text-sm text-slate-300">Novo projeto: <b>{p.add}</b></div>
               <ul className="mt-3 text-sm text-slate-300 space-y-1">{p.items.map((i) => <li key={i}>• {i}</li>)}</ul>
             </article>
           ))}

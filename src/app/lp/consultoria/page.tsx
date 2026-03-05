@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ensureCsrfCookie } from "@/lib/csrf";
 
 const PRICING = [
-  { name: "Starter", setup: "R$ 6.000", monthly: "R$ 1.490/mês", add: "R$ 250/projeto", items: ["Até 3 projetos", "IA para triagem e risco", "Conciliação + caixa"] },
-  { name: "Growth", setup: "R$ 10.000", monthly: "R$ 2.990/mês", add: "R$ 220/projeto", items: ["Até 10 projetos", "IA para insights operacionais", "Fechamento + auditoria"] },
-  { name: "Scale", setup: "R$ 15.000", monthly: "R$ 4.990/mês", add: "Blocos customizados", items: ["Até 25 projetos", "IA avançada + automações", "SLA prioritário"] },
+  { name: "Starter", setup: "R$ 24.000", monthly: "R$ 5.960/mês", add: "R$ 1.000/projeto", items: ["Até 3 projetos", "IA para triagem e risco", "Conciliação + caixa"] },
+  { name: "Growth", setup: "R$ 40.000", monthly: "R$ 11.960/mês", add: "R$ 880/projeto", items: ["Até 10 projetos", "IA para insights operacionais", "Fechamento + auditoria"] },
+  { name: "Scale", setup: "R$ 60.000", monthly: "R$ 19.960/mês", add: "Blocos customizados", items: ["Até 25 projetos", "IA avançada + automações", "SLA prioritário"] },
 ];
 
 const GAINS = [
