@@ -7,15 +7,16 @@ import { getUserByEmail } from "@/lib/users";
 import { canAccessProject } from "@/lib/permissions";
 import { diffDaysFromSaoPaulo } from "@/lib/time";
 import { parseUploadedFile } from "@/lib/upload";
+import { publicUrl } from "@/lib/request-url";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
   const project = await getProjectByCode(code);
   const user = await getSessionUser();
-  if (!project || !user) return NextResponse.redirect(new URL("/login/", req.url));
+  if (!project || !user) return NextResponse.redirect(publicUrl(req, "/login/"));
 
   const allowed = await canAccessProject(user, project.id);
-  if (!allowed) return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=forbidden`, req.url));
+  if (!allowed) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=forbidden`));
 
   const form = await req.formData();
   const businessDate = String(form.get("business_date") || "");
@@ -23,7 +24,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
 
   const daysAgo = diffDaysFromSaoPaulo(businessDate);
   if (Number.isNaN(daysAgo) || daysAgo < 0 || daysAgo > 5) {
-    return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=date_limit`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=date_limit`));
   }
 
   const file = form.get("file");
@@ -50,7 +51,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
         notes: `${payload.notes} | upload:${file.name} linhas:${parsed.lines}`.trim(),
       };
     } catch {
-      return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=upload_parse`, req.url));
+      return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=upload_parse`));
     }
   }
 
@@ -68,5 +69,5 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     [project.id, dbUser?.id || null, "daily.create", "daily_entries", id || null, JSON.stringify({ businessDate, sourceType, payload })]
   );
 
-  return NextResponse.redirect(new URL(`/projetos/${code}/diario/?saved=1`, req.url));
+  return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?saved=1`));
 }

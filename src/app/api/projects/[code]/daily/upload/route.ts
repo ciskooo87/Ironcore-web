@@ -7,15 +7,16 @@ import { insertDailyEntry } from "@/lib/daily";
 import { dbQuery } from "@/lib/db";
 import { parseUploadedFile } from "@/lib/upload";
 import { diffDaysFromSaoPaulo } from "@/lib/time";
+import { publicUrl } from "@/lib/request-url";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
   const user = await getSessionUser();
   const project = await getProjectByCode(code);
-  if (!user || !project) return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=forbidden`, req.url));
+  if (!user || !project) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=forbidden`));
 
   const allowed = await canAccessProject(user, project.id);
-  if (!allowed) return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=forbidden`, req.url));
+  if (!allowed) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=forbidden`));
 
   const form = await req.formData();
   const businessDate = String(form.get("business_date") || "");
@@ -25,11 +26,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
 
   const daysAgo = diffDaysFromSaoPaulo(businessDate);
   if (Number.isNaN(daysAgo) || daysAgo < 0 || daysAgo > 5) {
-    return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=date_limit`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=date_limit`));
   }
 
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=file_required`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=file_required`));
   }
 
   try {
@@ -57,8 +58,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       [project.id, dbUser?.id || null, "daily.upload", "daily_entries", id || null, JSON.stringify({ uploadKind, file: file.name, payload })]
     );
 
-    return NextResponse.redirect(new URL(`/projetos/${code}/diario/?saved=1`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?saved=1`));
   } catch {
-    return NextResponse.redirect(new URL(`/projetos/${code}/diario/?error=upload_parse`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?error=upload_parse`));
   }
 }
