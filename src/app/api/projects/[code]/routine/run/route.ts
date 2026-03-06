@@ -10,6 +10,7 @@ import { withRetry } from "@/lib/retry-policy";
 import { validateCsrf } from "@/lib/csrf";
 import { can } from "@/lib/rbac";
 import { publicUrl } from "@/lib/request-url";
+import { getSopStepStatus, updateSopStep } from "@/lib/sop";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
@@ -27,6 +28,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   const businessDate = String(form.get("business_date") || "");
   if (!businessDate) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=date`));
   const autoDelivery = String(form.get("auto_delivery") || "1") === "1";
+
+  const [cadastroStep, uploadStep] = await Promise.all([
+    getSopStepStatus(project.id, "cadastro"),
+    getSopStepStatus(project.id, "upload_base_diaria"),
+  ]);
+
+  if (!cadastroStep || cadastroStep.status === "nao_iniciado") {
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=sop_prereq_cadastro`));
+  }
+  if (!uploadStep || uploadStep.status === "nao_iniciado") {
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=sop_prereq_upload_base_diaria`));
+  }
 
   const out = await runDailyRoutine(project.id, businessDate, project.code);
   const dbUser = await getUserByEmail(user.email);
@@ -46,6 +59,25 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     "insert into audit_log(project_id, actor_user_id, action, entity, entity_id, after_data) values($1,$2,$3,$4,$5,$6::jsonb)",
     [project.id, dbUser?.id || null, "routine.run", "routine_runs", out.id || null, JSON.stringify({ ...out, deliveries })]
   );
+
+  const routineEvidence = `rotina diária ${businessDate} run:${out.id || "-"} status:${out.status}`;
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "painel_risco",
+    status: out.status === "blocked" ? "bloqueado" : "concluido",
+    evidence: routineEvidence,
+    note: "Atualizado automaticamente pela rotina diária",
+    updatedBy: dbUser?.id || null,
+  });
+
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "movimento_diario",
+    status: out.status === "blocked" ? "bloqueado" : "aguardando_validacao",
+    evidence: routineEvidence,
+    note: out.status === "blocked" ? "Bloqueio por alerta/pendência" : "Aguardando validação humana da decisão diária",
+    updatedBy: dbUser?.id || null,
+  });
 
   return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?saved=1`));
 }

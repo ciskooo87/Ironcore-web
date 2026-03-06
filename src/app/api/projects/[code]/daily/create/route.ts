@@ -8,6 +8,7 @@ import { canAccessProject } from "@/lib/permissions";
 import { diffDaysFromSaoPaulo } from "@/lib/time";
 import { parseUploadedFile } from "@/lib/upload";
 import { publicUrl } from "@/lib/request-url";
+import { updateSopStep } from "@/lib/sop";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
@@ -68,6 +69,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     "insert into audit_log(project_id, actor_user_id, action, entity, entity_id, after_data) values($1,$2,$3,$4,$5,$6::jsonb)",
     [project.id, dbUser?.id || null, "daily.create", "daily_entries", id || null, JSON.stringify({ businessDate, sourceType, payload })]
   );
+
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "upload_base_diaria",
+    status: "concluido",
+    evidence: `entrada diária ${businessDate} (${sourceType})`,
+    note: sourceType === "upload" ? "via daily.create com arquivo" : "via lançamento manual",
+    updatedBy: dbUser?.id || null,
+  });
 
   return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?saved=1`));
 }

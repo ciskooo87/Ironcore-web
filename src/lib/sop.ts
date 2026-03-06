@@ -68,6 +68,34 @@ export async function listSopSteps(projectId: string): Promise<SopStepView[]> {
   });
 }
 
+export async function getSopStepStatus(projectId: string, stepKey: string): Promise<SopStepView | null> {
+  const def = STEP_MAP.get(stepKey);
+  if (!def) return null;
+
+  try {
+    const q = await dbQuery<SopStepRow>(
+      "select step_key, status, evidence, note, updated_at::text from sop_step_status where project_id=$1 and step_key=$2 limit 1",
+      [projectId, stepKey]
+    );
+    const found = q.rows[0];
+    return {
+      ...def,
+      status: found?.status || "nao_iniciado",
+      evidence: found?.evidence || "",
+      note: found?.note || "",
+      updated_at: found?.updated_at || null,
+    };
+  } catch {
+    return {
+      ...def,
+      status: "nao_iniciado",
+      evidence: "",
+      note: "",
+      updated_at: null,
+    };
+  }
+}
+
 export async function updateSopStep(input: {
   projectId: string;
   stepKey: string;

@@ -8,6 +8,7 @@ import { dbQuery } from "@/lib/db";
 import { parseUploadedFile } from "@/lib/upload";
 import { diffDaysFromSaoPaulo } from "@/lib/time";
 import { publicUrl } from "@/lib/request-url";
+import { updateSopStep } from "@/lib/sop";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
@@ -57,6 +58,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       "insert into audit_log(project_id, actor_user_id, action, entity, entity_id, after_data) values($1,$2,$3,$4,$5,$6::jsonb)",
       [project.id, dbUser?.id || null, "daily.upload", "daily_entries", id || null, JSON.stringify({ uploadKind, file: file.name, payload })]
     );
+
+    await updateSopStep({
+      projectId: project.id,
+      stepKey: "upload_base_diaria",
+      status: "concluido",
+      evidence: `upload diário ${businessDate} arquivo:${file.name}`,
+      note: `upload_kind=${uploadKind}`,
+      updatedBy: dbUser?.id || null,
+    });
 
     return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?saved=1`));
   } catch {

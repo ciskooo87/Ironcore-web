@@ -57,7 +57,13 @@ export default async function Page({
         </form>
         {query.saved ? <div className="alert ok-bg mt-3">Rotina executada.</div> : null}
         {query.sop_saved ? <div className="alert ok-bg mt-3">Workflow SOP atualizado.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error === "evidence_required" ? "evidência obrigatória para concluir etapa" : query.error}</div> : null}
+        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error === "evidence_required"
+          ? "evidência obrigatória para concluir etapa"
+          : query.error === "sop_prereq_cadastro"
+            ? "pré-requisito SOP: concluir Cadastro antes da rotina"
+            : query.error === "sop_prereq_upload_base_diaria"
+              ? "pré-requisito SOP: concluir Upload Base Diária antes da rotina"
+              : query.error}</div> : null}
       </section>
 
       <section className="card mb-4">

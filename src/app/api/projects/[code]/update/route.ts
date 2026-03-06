@@ -4,14 +4,17 @@ import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { canAccessProject } from "@/lib/permissions";
 import { can } from "@/lib/rbac";
+import { publicUrl } from "@/lib/request-url";
+import { getUserByEmail } from "@/lib/users";
+import { updateSopStep } from "@/lib/sop";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
   const user = await getSessionUser();
   const project = await getProjectByCode(code);
-  if (!user || !project) return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?error=forbidden`, req.url));
+  if (!user || !project) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=forbidden`));
   const allowed = await canAccessProject(user, project.id);
-  if (!allowed || !can(user.role, "project.edit")) return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?error=forbidden`, req.url));
+  if (!allowed || !can(user.role, "project.edit")) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=forbidden`));
 
   const form = await req.formData();
 
@@ -40,11 +43,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     .filter((row) => row.supplier && row.account);
 
   if (!name || !cnpj || !legalName || !segment || accountPlan.length === 0) {
-    return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?error=required`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=required`));
   }
 
   if (txPercent < 0 || floatDays < 0 || tac < 0 || costPerBoleto < 0) {
-    return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?error=finance`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=finance`));
   }
 
   try {
@@ -63,13 +66,23 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     });
     const after = await getProjectByCode(code);
     if (after) {
+      const dbUser = await getUserByEmail(user.email);
       await dbQuery(
-        "insert into audit_log(project_id, action, entity, entity_id, before_data, after_data) values($1,$2,$3,$4,$5::jsonb,$6::jsonb)",
-        [after.id, "project.update", "projects", after.id, JSON.stringify(before), JSON.stringify(after)]
+        "insert into audit_log(project_id, action, entity, entity_id, before_data, after_data, actor_user_id) values($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)",
+        [after.id, "project.update", "projects", after.id, JSON.stringify(before), JSON.stringify(after), dbUser?.id || null]
       );
+
+      await updateSopStep({
+        projectId: after.id,
+        stepKey: "cadastro",
+        status: "concluido",
+        evidence: `cadastro atualizado via /api/projects/${code}/update`,
+        note: "Cadastro e parâmetros financeiros salvos",
+        updatedBy: dbUser?.id || null,
+      });
     }
-    return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?saved=1`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?saved=1`));
   } catch {
-    return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?error=db`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=db`));
   }
 }
