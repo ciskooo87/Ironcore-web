@@ -5,8 +5,29 @@ import { canAccessProject } from "@/lib/permissions";
 import { listRoutineRuns } from "@/lib/routine";
 import { todayInSaoPauloISO } from "@/lib/time";
 import { ensureCsrfCookie } from "@/lib/csrf";
+import { listSopSteps, type SopStatus } from "@/lib/sop";
 
-export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
+const STATUS_OPTIONS: { value: SopStatus; label: string }[] = [
+  { value: "nao_iniciado", label: "Não iniciado" },
+  { value: "em_execucao", label: "Em execução" },
+  { value: "aguardando_validacao", label: "Aguardando validação" },
+  { value: "concluido", label: "Concluído" },
+  { value: "bloqueado", label: "Bloqueado" },
+];
+
+const PHASE_LABEL: Record<string, string> = {
+  IMPLEMENTACAO: "Implementação",
+  OPERACAO_DIARIA: "Operação diária",
+  FECHAMENTO: "Fechamento",
+};
+
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string; sop_saved?: string; error?: string }>;
+}) {
   const user = await requireUser();
   const { id } = await params;
   const project = await getProjectByCode(id);
@@ -16,7 +37,10 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Rotina Diária"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
 
-  const runs = await listRoutineRuns(project.id, 25);
+  const [runs, sopSteps] = await Promise.all([
+    listRoutineRuns(project.id, 25),
+    listSopSteps(project.id),
+  ]);
   const csrf = await ensureCsrfCookie();
 
   return (
@@ -32,7 +56,48 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <button className="badge py-2 px-3 cursor-pointer" type="submit">Rodar rotina diária</button>
         </form>
         {query.saved ? <div className="alert ok-bg mt-3">Rotina executada.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
+        {query.sop_saved ? <div className="alert ok-bg mt-3">Workflow SOP atualizado.</div> : null}
+        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error === "evidence_required" ? "evidência obrigatória para concluir etapa" : query.error}</div> : null}
+      </section>
+
+      <section className="card mb-4">
+        <h2 className="title">Workflow SOP (status único + evidência)</h2>
+        <div className="mt-3 space-y-2 text-sm">
+          {sopSteps.map((step) => (
+            <form key={step.key} action={`/api/projects/${id}/sop/update`} method="post" className="card !p-3">
+              <input type="hidden" name="csrf_token" value={csrf} />
+              <input type="hidden" name="step_key" value={step.key} />
+              <div className="row flex-wrap gap-2">
+                <div>
+                  <div className="font-medium">{PHASE_LABEL[step.phase]} · {step.order}. {step.title}</div>
+                  <div className="text-xs text-slate-400">Última atualização: {step.updated_at || "-"}</div>
+                </div>
+                <select name="status" defaultValue={step.status} className="bg-slate-950/40 border border-slate-700 rounded px-2 py-1 text-xs">
+                  {STATUS_OPTIONS.map((op) => (
+                    <option key={op.value} value={op.value}>{op.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid md:grid-cols-2 gap-2 mt-2">
+                <input
+                  name="evidence"
+                  defaultValue={step.evidence}
+                  placeholder="Evidência (obrigatória para Concluído): link, ID, log, arquivo"
+                  className="bg-slate-950/40 border border-slate-700 rounded px-2 py-1.5 text-xs"
+                />
+                <input
+                  name="note"
+                  defaultValue={step.note}
+                  placeholder="Observação (opcional)"
+                  className="bg-slate-950/40 border border-slate-700 rounded px-2 py-1.5 text-xs"
+                />
+              </div>
+              <div className="mt-2">
+                <button type="submit" className="pill">Salvar etapa</button>
+              </div>
+            </form>
+          ))}
+        </div>
       </section>
 
       <section className="card">
