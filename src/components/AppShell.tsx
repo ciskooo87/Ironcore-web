@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { APP_ROUTES } from "@/lib/navigation";
 import type { SessionUser } from "@/lib/auth";
+import { SidebarNav } from "@/components/SidebarNav";
 
 export function AppShell({ title, subtitle, user, children }: { title: string; subtitle?: string; user: SessionUser; children: React.ReactNode }) {
   return (
@@ -21,17 +20,10 @@ export function AppShell({ title, subtitle, user, children }: { title: string; s
         </div>
       </header>
 
-      <nav className="card mb-4 overflow-auto">
-        <div className="flex gap-2 min-w-max">
-          {APP_ROUTES.map((r) => (
-            <Link key={r.href} href={r.href} className="pill whitespace-nowrap">
-              {r.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
-
-      {children}
+      <div className="grid md:grid-cols-[260px_minmax(0,1fr)] gap-4 items-start">
+        <SidebarNav user={user} />
+        <section>{children}</section>
+      </div>
     </main>
   );
 }
