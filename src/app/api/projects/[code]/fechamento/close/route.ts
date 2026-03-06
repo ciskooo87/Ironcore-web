@@ -7,18 +7,20 @@ import { closeMonth } from "@/lib/closure";
 import { sumNetOperations } from "@/lib/operations";
 import { dbQuery } from "@/lib/db";
 import { can } from "@/lib/rbac";
+import { publicUrl } from "@/lib/request-url";
+import { updateSopStep } from "@/lib/sop";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
   const user = await getSessionUser();
   const project = await getProjectByCode(code);
-  if (!user || !project) return NextResponse.redirect(new URL(`/projetos/${code}/fechamento-mensal/?error=forbidden`, req.url));
+  if (!user || !project) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/fechamento-mensal/?error=forbidden`));
   const allowed = await canAccessProject(user, project.id);
-  if (!allowed || !can(user.role, "closure.create")) return NextResponse.redirect(new URL(`/projetos/${code}/fechamento-mensal/?error=forbidden`, req.url));
+  if (!allowed || !can(user.role, "closure.create")) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/fechamento-mensal/?error=forbidden`));
 
   const form = await req.formData();
   const periodYm = String(form.get("period_ym") || "");
-  if (!/^\d{4}-\d{2}$/.test(periodYm)) return NextResponse.redirect(new URL(`/projetos/${code}/fechamento-mensal/?error=period`, req.url));
+  if (!/^\d{4}-\d{2}$/.test(periodYm)) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/fechamento-mensal/?error=period`));
 
   const netOps = await sumNetOperations(project.id);
 
@@ -79,5 +81,24 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     [project.id, dbUser?.id || null, "monthly.close", "monthly_closures", out.id || null, JSON.stringify({ periodYm, version: out.version, snapshot })]
   );
 
-  return NextResponse.redirect(new URL(`/projetos/${code}/fechamento-mensal/?saved=1`, req.url));
+  const evidence = `fechamento mensal ${periodYm} v${out.version} closure:${out.id || "-"}`;
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "fechamento_mensal",
+    status: "concluido",
+    evidence,
+    note: "Fechamento mensal gerado via API",
+    updatedBy: dbUser?.id || null,
+  });
+
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "validacao_fechamento",
+    status: "aguardando_validacao",
+    evidence,
+    note: "Aguardando validação da diretoria",
+    updatedBy: dbUser?.id || null,
+  });
+
+  return NextResponse.redirect(publicUrl(req, `/projetos/${code}/fechamento-mensal/?saved=1`));
 }
