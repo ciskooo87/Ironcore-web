@@ -63,7 +63,9 @@ export default async function Page({
             ? "pré-requisito SOP: concluir Cadastro antes da rotina"
             : query.error === "sop_prereq_upload_base_diaria"
               ? "pré-requisito SOP: concluir Upload Base Diária antes da rotina"
-              : query.error}</div> : null}
+              : query.error === "approval_role_required"
+                ? "você não tem perfil para concluir esta etapa (exige aprovação superior)"
+                : query.error}</div> : null}
       </section>
 
       <section className="card mb-4">
@@ -77,6 +79,9 @@ export default async function Page({
                 <div>
                   <div className="font-medium">{PHASE_LABEL[step.phase]} · {step.order}. {step.title}</div>
                   <div className="text-xs text-slate-400">Última atualização: {step.updated_at || "-"}</div>
+                  <div className={`text-xs ${step.slaState === "atrasado" ? "text-rose-400" : "text-emerald-300"}`}>
+                    SLA: {step.slaState === "n/a" ? "n/a" : step.slaState === "atrasado" ? "atrasado" : "ok"}
+                  </div>
                 </div>
                 <select name="status" defaultValue={step.status} className="bg-slate-950/40 border border-slate-700 rounded px-2 py-1 text-xs">
                   {STATUS_OPTIONS.map((op) => (

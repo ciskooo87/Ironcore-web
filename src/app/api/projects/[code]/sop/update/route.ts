@@ -7,7 +7,7 @@ import { validateCsrf } from "@/lib/csrf";
 import { publicUrl } from "@/lib/request-url";
 import { getUserByEmail } from "@/lib/users";
 import { dbQuery } from "@/lib/db";
-import { updateSopStep, type SopStatus } from "@/lib/sop";
+import { assertSopPermission, updateSopStep, type SopStatus } from "@/lib/sop";
 
 const ALLOWED_STATUS: SopStatus[] = ["nao_iniciado", "em_execucao", "aguardando_validacao", "concluido", "bloqueado"];
 
@@ -37,6 +37,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   }
 
   try {
+    assertSopPermission({ role: user.role, stepKey, status });
+
     const dbUser = await getUserByEmail(user.email);
     const out = await updateSopStep({
       projectId: project.id,
@@ -60,6 +62,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     }
     if (msg === "step_not_found") {
       return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=step_not_found`));
+    }
+    if (msg === "approval_role_required") {
+      return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=approval_role_required`));
     }
     return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=sop_error`));
   }
