@@ -1,0 +1,7 @@
+export default function TreinoPage() {
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-semibold">Oi Léo</h1>
+    </main>
+  );
+}
