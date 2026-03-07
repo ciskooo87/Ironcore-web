@@ -31,6 +31,7 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/lp") ||
     pathname.startsWith("/dre") ||
+    pathname.startsWith("/treino") ||
     pathname === "/favicon.ico"
   ) {
     return withCsrf(NextResponse.next());
