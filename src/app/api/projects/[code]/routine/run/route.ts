@@ -11,6 +11,7 @@ import { validateCsrf } from "@/lib/csrf";
 import { can } from "@/lib/rbac";
 import { publicUrl } from "@/lib/request-url";
 import { getSopStepStatus, updateSopStep } from "@/lib/sop";
+import { deepseekChat } from "@/lib/deepseek";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
@@ -78,6 +79,47 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     note: out.status === "blocked" ? "Bloqueio por alerta/pendência" : "Aguardando validação humana da decisão diária",
     updatedBy: dbUser?.id || null,
   });
+
+  // Diagnóstico IA (DeepSeek) acoplado ao fluxo de risco/SOP — best effort
+  try {
+    const context = {
+      projectCode: project.code,
+      projectName: project.name,
+      businessDate,
+      routineStatus: out.status,
+      summary: out.summary,
+      alertLevel: out.alertLevel,
+      riskPanelStatus: out.summary?.riskPanel?.status,
+      todayDecision: out.summary?.dailyDecision,
+    };
+
+    const ai = await deepseekChat([
+      {
+        role: "system",
+        content:
+          "Você é o motor de diagnóstico operacional do IronCore. Responda apenas JSON com diagnosis, risks, recommendations e decision_confidence (0-1).",
+      },
+      {
+        role: "user",
+        content: `Faça o diagnóstico operacional para o fechamento diário com base no contexto:\n${JSON.stringify(context)}`,
+      },
+    ]);
+
+    await dbQuery(
+      "insert into ai_inference_runs(project_id, routine_run_id, provider, model, latency_ms, status, prompt, response) values($1,$2,$3,$4,$5,$6,$7,$8)",
+      [project.id, out.id || null, "deepseek", ai.model, ai.latencyMs, "ok", JSON.stringify(context), ai.content]
+    );
+
+    await dbQuery(
+      "insert into audit_log(project_id, actor_user_id, action, entity, entity_id, after_data) values($1,$2,$3,$4,$5,$6::jsonb)",
+      [project.id, dbUser?.id || null, "ai.diagnose", "ai_inference_runs", out.id || null, JSON.stringify({ provider: "deepseek", model: ai.model, latencyMs: ai.latencyMs })]
+    );
+  } catch (e) {
+    await dbQuery(
+      "insert into ai_inference_runs(project_id, routine_run_id, provider, model, latency_ms, status, prompt, response, error) values($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+      [project.id, out.id || null, "deepseek", process.env.DEEPSEEK_MODEL || "deepseek-chat", 0, "error", JSON.stringify({ businessDate, projectCode: project.code }), "", String(e)]
+    );
+  }
 
   return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?saved=1`));
 }
