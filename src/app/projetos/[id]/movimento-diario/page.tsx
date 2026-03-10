@@ -5,6 +5,7 @@ import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listRoutineRuns } from "@/lib/routine";
 import { ensureCsrfCookie } from "@/lib/csrf";
+import { dbQuery } from "@/lib/db";
 
 function br(v: unknown) {
   const n = Number(v || 0);
@@ -30,6 +31,10 @@ export default async function MovimentoDiarioPage({
 
   const runs = await listRoutineRuns(project.id, 20);
   const latest = runs[0];
+  const movementActions = (await dbQuery<{ id: string; action_label: string; status: string; linked_entity: string | null; created_at: string }>(
+    "select id, action_label, status, linked_entity, created_at::text from movement_actions where project_id=$1 order by created_at desc limit 20",
+    [project.id]
+  ).catch(() => ({ rows: [] as any[] }))).rows;
   const s = (latest?.summary || {}) as Record<string, any>;
   const op = (s.operationalDecision || {}) as Record<string, any>;
   const fidc = (op.fidc || {}) as Record<string, any>;
@@ -110,6 +115,18 @@ export default async function MovimentoDiarioPage({
             )) : <div className="text-sm text-slate-300">• nenhuma ação sugerida ainda</div>}
           </div>
         </section>
+      </section>
+
+      <section className="card">
+        <div className="section-head"><h2 className="title">Histórico de ações executadas</h2><span className="kpi-chip">Automação</span></div>
+        <div className="mt-3 space-y-2 text-sm">
+          {movementActions.length ? movementActions.map((item) => (
+            <div key={item.id} className="rounded-lg border border-slate-800 p-3">
+              <div className="font-medium">{item.action_label}</div>
+              <div className="text-xs text-slate-500 mt-1">status: {item.status} · vínculo: {item.linked_entity || '-'} · {item.created_at}</div>
+            </div>
+          )) : <div className="alert muted-bg">Sem ações executadas ainda.</div>}
+        </div>
       </section>
     </AppShell>
   );
