@@ -4,6 +4,8 @@ import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { createProjectAlert } from "@/lib/alerts";
 import { can } from "@/lib/rbac";
+import { getUserByEmail } from "@/lib/users";
+import { updateSopStep } from "@/lib/sop";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
@@ -39,6 +41,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       auto_checks: autoChecks,
       upload_ref: uploadRef,
     },
+  });
+
+  const dbUser = await getUserByEmail(user.email);
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "riscos",
+    status: "concluido",
+    evidence: `risco/alerta cadastrado: ${name}`,
+    note: `severity=${severity}${blockFlow ? " block_flow=true" : ""}`,
+    updatedBy: dbUser?.id || null,
   });
 
   return NextResponse.redirect(new URL(`/projetos/${code}/riscos-alertas/?saved=1`, req.url));

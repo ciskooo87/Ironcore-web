@@ -84,6 +84,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   const evidence = `fechamento mensal ${periodYm} v${out.version} closure:${out.id || "-"}`;
   await updateSopStep({
     projectId: project.id,
+    stepKey: "alimentacao_contabil",
+    status: "concluido",
+    evidence,
+    note: "Dados consolidados para DRE/DFC e material mensal",
+    updatedBy: dbUser?.id || null,
+  });
+
+  await updateSopStep({
+    projectId: project.id,
     stepKey: "fechamento_mensal",
     status: "concluido",
     evidence,
@@ -97,6 +106,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     status: "aguardando_validacao",
     evidence,
     note: "Aguardando validação da diretoria",
+    updatedBy: dbUser?.id || null,
+  });
+
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "monitoramento_diretoria",
+    status: "aguardando_validacao",
+    evidence,
+    note: "Material mensal pronto para consumo executivo/diretoria",
     updatedBy: dbUser?.id || null,
   });
 

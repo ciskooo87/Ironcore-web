@@ -22,6 +22,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   const form = await req.formData();
   const businessDate = String(form.get("business_date") || "");
   const uploadKind = String(form.get("upload_kind") || "base_diaria");
+  const historicalKinds = new Set([
+    "historico_faturamento",
+    "historico_contas_pagar",
+    "historico_contas_receber",
+    "historico_extratos",
+    "historico_estoques",
+    "historico_carteira",
+    "historico_borderos",
+    "historico_endividamento",
+  ]);
   const file = form.get("file");
   const notes = String(form.get("notes") || "");
 
@@ -59,14 +69,43 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       [project.id, dbUser?.id || null, "daily.upload", "daily_entries", id || null, JSON.stringify({ uploadKind, file: file.name, payload })]
     );
 
-    await updateSopStep({
-      projectId: project.id,
-      stepKey: "upload_base_diaria",
-      status: "concluido",
-      evidence: `upload diário ${businessDate} arquivo:${file.name}`,
-      note: `upload_kind=${uploadKind}`,
-      updatedBy: dbUser?.id || null,
-    });
+    if (historicalKinds.has(uploadKind)) {
+      await updateSopStep({
+        projectId: project.id,
+        stepKey: "upload_base_historica",
+        status: "concluido",
+        evidence: `upload histórico ${uploadKind} arquivo:${file.name}`,
+        note: `business_date=${businessDate}`,
+        updatedBy: dbUser?.id || null,
+      });
+
+      await updateSopStep({
+        projectId: project.id,
+        stepKey: "analise_base_historica",
+        status: "aguardando_validacao",
+        evidence: `base histórica carregada via ${uploadKind}`,
+        note: "Pronta para análise diagnóstica e validação",
+        updatedBy: dbUser?.id || null,
+      });
+    } else if (uploadKind === "fidc_retorno") {
+      await updateSopStep({
+        projectId: project.id,
+        stepKey: "painel_risco",
+        status: "aguardando_validacao",
+        evidence: `retorno FIDC ${businessDate} arquivo:${file.name}`,
+        note: "Retorno FIDC enviado para atualização do painel de risco",
+        updatedBy: dbUser?.id || null,
+      });
+    } else {
+      await updateSopStep({
+        projectId: project.id,
+        stepKey: "upload_base_diaria",
+        status: "concluido",
+        evidence: `upload diário ${businessDate} arquivo:${file.name}`,
+        note: `upload_kind=${uploadKind}`,
+        updatedBy: dbUser?.id || null,
+      });
+    }
 
     return NextResponse.redirect(publicUrl(req, `/projetos/${code}/diario/?saved=1`));
   } catch {

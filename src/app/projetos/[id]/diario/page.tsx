@@ -77,6 +77,33 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         </div>
       </section>
 
+      <section className="card mb-4">
+        <h2 className="title">Upload base histórica e retorno FIDC</h2>
+        <p className="text-sm text-slate-400 mt-1">Use esta área para colocar em prática as colunas da planilha ligadas à implementação e ao painel de risco.</p>
+        <div className="grid md:grid-cols-3 gap-3 mt-3 text-sm">
+          {[
+            ["historico_faturamento", "Histórico · Faturamento"],
+            ["historico_contas_pagar", "Histórico · Contas a Pagar"],
+            ["historico_contas_receber", "Histórico · Contas a Receber"],
+            ["historico_extratos", "Histórico · Extratos"],
+            ["historico_estoques", "Histórico · Estoques"],
+            ["historico_carteira", "Histórico · Carteira de Pedidos"],
+            ["historico_borderos", "Histórico · Borderôs"],
+            ["historico_endividamento", "Histórico · Endividamento"],
+            ["fidc_retorno", "Operação diária · Retorno FIDC"],
+          ].map(([kind, label]) => (
+            <form key={kind} action={`/api/projects/${id}/daily/upload`} method="post" encType="multipart/form-data" className="card !p-3">
+              <div className="font-medium mb-2">{label}</div>
+              <input type="hidden" name="upload_kind" value={kind} />
+              <input name="business_date" type="date" defaultValue={todayInSaoPauloISO()} required className="mb-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+              <input name="file" type="file" accept=".csv,.xlsx,.xls,.pdf" required className="mb-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+              <input name="notes" placeholder="observações / origem / responsável" className="mb-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+              <button type="submit" className="badge py-2 cursor-pointer">Enviar</button>
+            </form>
+          ))}
+        </div>
+      </section>
+
       <section className="card">
         <h2 className="title">Últimos lançamentos</h2>
         <div className="mt-3 space-y-2 text-sm">
