@@ -201,7 +201,7 @@ export default async function Page({
               ) : rows.map((o) => (
                 <tr key={o.id} className="odd:bg-slate-900/30 align-top">
                   <td className="px-2 py-2 border-b border-slate-900">
-                    <div className="font-medium">{o.id.slice(0, 8)}</div>
+                    <Link href={`/projetos/${id}/operacoes/${o.id}/`} className="font-medium text-cyan-300 hover:underline">{o.id.slice(0, 8)}</Link>
                     <div className="text-[11px] text-slate-500">{o.notes || "-"}</div>
                   </td>
                   <td className={`px-2 py-2 border-b border-slate-900 font-medium ${STATUS_CLASS[o.status]}`}>{OPERATION_STATUS_FLOW.find((s) => s.value === o.status)?.label || o.status}</td>

@@ -48,6 +48,21 @@ export type FinancialOperation = {
   updated_at: string | null;
 };
 
+export type OperationComment = {
+  id: string;
+  author_name: string | null;
+  body: string;
+  created_at: string;
+};
+
+export type OperationDocument = {
+  id: string;
+  document_type: string;
+  document_ref: string;
+  note: string | null;
+  created_at: string;
+};
+
 export async function listOperations(projectId: string, limit = 50) {
   try {
     const q = await dbQuery<FinancialOperation>(
@@ -66,6 +81,41 @@ export async function listOperations(projectId: string, limit = 50) {
   } catch {
     return [] as FinancialOperation[];
   }
+}
+
+export async function getOperationById(projectId: string, opId: string) {
+  const q = await dbQuery<FinancialOperation>(
+    `select id, business_date::text, due_date::text, op_type, modality, status, risk_level,
+            gross_amount::float8, principal_amount::float8, disbursed_amount::float8,
+            fee_percent::float8, company_fee::float8, net_amount::float8, fund_limit::float8,
+            receivable_available::float8, operator_name, counterparty_name, fund_name,
+            document_ref, approver_name, approval_note, notes, created_at::text, updated_at::text
+     from financial_operations where project_id=$1 and id=$2`,
+    [projectId, opId]
+  );
+  return q.rows[0] || null;
+}
+
+export async function listOperationComments(projectId: string, opId: string) {
+  const q = await dbQuery<OperationComment>(
+    `select id, author_name, body, created_at::text
+     from operation_comments
+     where project_id=$1 and operation_id=$2
+     order by created_at desc`,
+    [projectId, opId]
+  );
+  return q.rows;
+}
+
+export async function listOperationDocuments(projectId: string, opId: string) {
+  const q = await dbQuery<OperationDocument>(
+    `select id, document_type, document_ref, note, created_at::text
+     from operation_documents
+     where project_id=$1 and operation_id=$2
+     order by created_at desc`,
+    [projectId, opId]
+  );
+  return q.rows;
 }
 
 function inferRiskLevel(input: { grossAmount: number; fundLimit: number; receivableAvailable: number; feePercent: number }) {
@@ -150,6 +200,35 @@ export async function updateOperationStatus(input: {
          updated_at=now()
      where id=$1 and project_id=$2`,
     [input.opId, input.projectId, input.status, input.note || null, input.approverName || null]
+  );
+}
+
+export async function addOperationComment(input: {
+  projectId: string;
+  operationId: string;
+  body: string;
+  authorUserId: string | null;
+  authorName: string | null;
+}) {
+  await dbQuery(
+    `insert into operation_comments(operation_id, project_id, author_user_id, author_name, body)
+     values($1,$2,$3,$4,$5)`,
+    [input.operationId, input.projectId, input.authorUserId, input.authorName, input.body]
+  );
+}
+
+export async function addOperationDocument(input: {
+  projectId: string;
+  operationId: string;
+  documentType: string;
+  documentRef: string;
+  note?: string | null;
+  createdBy: string | null;
+}) {
+  await dbQuery(
+    `insert into operation_documents(operation_id, project_id, document_type, document_ref, note, created_by)
+     values($1,$2,$3,$4,$5,$6)`,
+    [input.operationId, input.projectId, input.documentType, input.documentRef, input.note || null, input.createdBy]
   );
 }
 
