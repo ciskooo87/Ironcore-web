@@ -12,27 +12,30 @@ Objetivo:
 
 ---
 
-## Resumo executivo
+## Resumo executivo atualizado
 
-O `ironcore-web` já possui uma espinha dorsal funcional com:
-- autenticação
-- RBAC / permissões
-- gestão multi-projeto
-- entradas diárias
-- upload inicial simplificado
-- conciliação simplificada
-- operações financeiras básicas
-- fechamento mensal versionado
-- dashboard e auditoria de uso
+O `ironcore-web` agora já cobre a maior parte da espinha dorsal operacional do fluxo, com implementação funcional de:
+- onboarding com checklist e travas reais
+- riscos/alertas com workflow
+- uploads históricos e diários por categorias relevantes
+- diagnóstico histórico e entregável executivo
+- painel FIDC funcional
+- operações, carteira, títulos e timeline de eventos
+- movimento diário com decisão operacional
+- validação formal do movimento diário
+- alimentação contábil DRE/DFC
+- fechamento mensal consolidado
+- validação do fechamento
+- monitoramento diretoria
 
-Porém, o fluxo operacional desenhado na planilha ainda não está implementado ponta a ponta. Hoje o produto cobre partes da operação, mas ainda não traduz integralmente a jornada de:
-- implementação/onboarding
-- risco assistido por IA
-- análise histórica completa
-- painel de risco FIDC
-- movimento diário com motor decisório
-- validação operacional formal
-- fechamento mensal completo com relatórios integrados
+Ou seja: a base do fluxo deixou de ser apenas conceito e já existe no produto.
+
+O que ainda falta agora não é “começar o fluxo”, e sim aprofundar principalmente:
+- parser/qualidade das bases por origem
+- risco/diagnóstico com IA mais forte
+- delivery formal para envolvidos
+- governança transversal por tarefas/SLA
+- acabamento executivo mais sofisticado
 
 ---
 
@@ -41,348 +44,281 @@ Porém, o fluxo operacional desenhado na planilha ainda não está implementado 
 ## 1. Implementação
 
 ### 1.1 Cadastro
-**Fluxo esperado**
-- cadastro da empresa
-- preenchimento dos dados obrigatórios
-- classificação de fornecedores no plano de contas
-- bloqueio da conclusão até cadastro completo
+**Status atual**: implementado
 
-**Cobertura atual**
-- existe criação de projeto
-- existem campos de empresa
-- existe `account_plan`
-- existe `supplier_classes`
-- existe `financial_profile`
+**Já existe no código**
+- cadastro do projeto
+- dados obrigatórios
+- classificação de fornecedores
+- perfil financeiro
+- checklist de onboarding
+- trava real de avanço para módulos dependentes
 
-**Gap**
-- não existe jornada guiada de onboarding
-- não existe checklist/status de conclusão
-- não existe trava formal impedindo avanço com cadastro incompleto
+**Gap restante**
+- pode evoluir para wizard guiado mais sofisticado
 
-**Prioridade**: alta
+**Prioridade atual**: baixa
 
 ---
 
 ### 1.2 Riscos
-**Fluxo esperado**
-- relato do projeto
-- prompt para IA
-- análise do relato
-- identificação de riscos
-- validação dos riscos no sistema
-- riscos atribuídos ao projeto
+**Status atual**: parcial forte
 
-**Cobertura atual**
-- existem estruturas de `project_risks`
-- existem estruturas de `project_alerts`
-- existe avaliação básica de alertas
-- há indício de integração IA no projeto
+**Já existe no código**
+- riscos/alertas cadastráveis
+- reflexo no workflow
+- painel de risco ligado à operação/FIDC
 
-**Gap**
-- falta tela de relato do projeto
-- falta geração de riscos por IA
-- falta revisão/aprovação dos riscos
-- falta distinção entre risco sugerido, aprovado e ativo
+**Gap restante**
+- relato estruturado do projeto em formato consultivo
+- risco sugerido por IA com workflow mais profundo
+- distinção mais forte entre risco sugerido / aprovado / ativo
 
-**Prioridade**: alta
+**Prioridade atual**: alta
 
 ---
 
 ### 1.3 Upload da base histórica
-**Fluxo esperado**
-- ingestão de faturamento
-- contas a pagar
-- contas a receber
-- extratos
-- estoques
-- carteira de pedidos
-- borderôs financeiros
-- endividamento
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- existe parser de upload para CSV/XLSX/PDF
-- há leitura simplificada de:
+**Já existe no código**
+- upload por categorias históricas relevantes
+- suporte operacional para:
   - faturamento
-  - contas a receber
   - contas a pagar
-  - extrato bancário
-  - duplicatas
+  - contas a receber
+  - extratos
+  - estoques
+  - carteira
+  - borderôs
+  - endividamento
+- reflexo no workflow
 
-**Gap**
-- não há pipeline histórico dedicado
-- não há ingestão por categoria histórica completa
-- não há mapeamento de colunas configurável
-- não há validação de template/arquivo por origem
-- não há suporte evidente para estoques, carteira, borderôs, endividamento
+**Gap restante**
+- parser por layout/origem ainda pode evoluir muito
+- validação de template/consistência ainda é simples
 
-**Prioridade**: alta
+**Prioridade atual**: média-alta
 
 ---
 
 ### 1.4 Análise da base histórica
-**Fluxo esperado**
-- normalização
-- extração dos dados
-- cruzamento com riscos
-- criação de prompt
-- análise IA
-- alertas
-- plano de ação
-- relatório executivo / diagnóstico completo
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- base parcial de alertas e estruturas financeiras
-- indício de integração IA
+**Já existe no código**
+- agregação histórica
+- diagnóstico histórico
+- uso de IA com fallback
+- relatório executivo do diagnóstico
 
-**Gap**
-- não existe pipeline de diagnóstico histórico ponta a ponta
-- não existe plano de ação derivado
-- não existe relatório executivo automatizado desta fase
-- não existe apresentação final da análise histórica
+**Gap restante**
+- análise ainda pode ficar mais profunda por origem e regra de negócio
+- plano de ação ainda pode ser mais sofisticado
 
-**Prioridade**: alta
+**Prioridade atual**: média
 
 ---
 
 ### 1.5 Validação do diagnóstico
-**Fluxo esperado**
-- apresentação em tela
-- validação por usuários responsáveis
-- criação da versão final
+**Status atual**: parcial
 
-**Cobertura atual**
-- existe no produto a ideia de versionamento em fechamento mensal
+**Já existe no código**
+- etapa no workflow
+- diagnóstico exibido e preparado para validação
 
-**Gap**
-- não existe workflow explícito para validação do diagnóstico inicial
-- não existe status formal: rascunho / validado / final
+**Gap restante**
+- falta ainda um workflow formal de validação do diagnóstico histórico equivalente ao que já fizemos para movimento e fechamento
 
-**Prioridade**: média-alta
+**Prioridade atual**: média-alta
 
 ---
 
 ## 2. Operação diária
 
 ### 2.1 Upload da base diária
-**Fluxo esperado**
-- envio diário das bases
-- normalização
-- validação
-- conciliação bancária
-- montagem do fluxo de caixa
-- validação do usuário
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- existem `daily_entries`
-- existe inserção/listagem/edição
-- existe parser de upload
+**Já existe no código**
+- upload diário
+- criação/edição de entradas
+- pipeline de upload por tipo
+- amarração com operação do projeto
 
-**Gap**
-- falta UX operacional mais robusta
-- faltam múltiplos pipelines por origem/tipo de base
-- falta workflow formal de validação
-- falta status operacional de processamento
+**Gap restante**
+- validação por layout e qualidade de processamento ainda pode melhorar
 
-**Prioridade**: alta
+**Prioridade atual**: média
 
 ---
 
 ### 2.2 Painel de risco
-**Fluxo esperado**
-- upload de retorno dos FIDCs
-- normalização
-- atualização da base
-- segregação entre vencidos, a vencer, modalidade, recompras
-- visualização consolidada em painel
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- existem alertas e alguns KPIs
+**Já existe no código**
+- painel FIDC consolidado
+- vencidos / a vencer / recompra / concentração
+- ligação com operações e carteira
 
-**Gap**
-- não existe importador dedicado de retorno FIDC
-- não existe segregação operacional dos recebíveis
-- não existe painel de risco alinhado ao fluxo descrito
+**Gap restante**
+- parser real de layout FIDC
+- indicadores mais profundos por fundo/cedente/sacado/modalidade
 
-**Prioridade**: alta
+**Prioridade atual**: média-alta
 
 ---
 
 ### 2.3 Movimento diário
-**Fluxo esperado**
-- análise do dia
-- projeção de caixa próximos 15 dias
-- sugestão operacional conforme saldo
-- análise de recebíveis disponíveis
-- cruzamento com risco e limite
-- reserva, efetivação e histórico
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- existe base para operações financeiras
-- existem tipos de operação
-- há indícios de bibliotecas para fluxo de caixa
+**Já existe no código**
+- decisão operacional diária
+- integração com operações/carteira/FIDC
+- gatilhos de bloqueio/liberação
+- ações sugeridas e executáveis
 
-**Gap**
-- não existe motor decisório completo
-- não existe simulação operacional ponta a ponta
-- não existe máquina de estados operacional completa
-- não existe integração clara entre caixa, risco e elegibilidade de recebíveis
+**Gap restante**
+- policy engine mais sofisticada por projeto
+- regras parametrizáveis de decisão
 
-**Prioridade**: muito alta
+**Prioridade atual**: média-alta
 
 ---
 
 ### 2.4 Validação do movimento diário
-**Fluxo esperado**
-- resumo do dia
-- operações realizadas
-- caixa realizado
-- envio do relatório aos envolvidos
+**Status atual**: implementado
 
-**Cobertura atual**
-- existem estruturas de auditoria, delivery e KPI
+**Já existe no código**
+- validação humana formal
+- histórico de validações
+- resumo validado
+- possibilidade de envio do resumo
+- workflow real ligado à etapa
 
-**Gap**
-- falta workflow formal de fechamento diário
-- falta geração padronizada do resumo operacional do dia
-- falta trilha clara de aprovação/envio
+**Gap restante**
+- delivery ainda pode ficar mais forte por canal/target/template
 
-**Prioridade**: média-alta
+**Prioridade atual**: média
 
 ---
 
 ## 3. Fechamento
 
 ### 3.1 Alimentar DRE, DFC e apresentação mensal
-**Fluxo esperado**
-- após validação diária, consolidar dados para materiais mensais
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- existe rota `/dre`
-- existe estrutura de workbook
-- existe `closure.ts`
+**Já existe no código**
+- alimentação contábil consolidada
+- feed DRE/DFC persistido
+- histórico de alimentações
 
-**Gap**
-- DFC ainda não está claramente integrada no fluxo
-- apresentação mensal ainda não aparece como pipeline consolidado
-- falta costura automática entre operação diária e fechamento mensal
+**Gap restante**
+- apresentação mensal ainda pode ficar mais sofisticada em formato executivo/exportável
 
-**Prioridade**: média-alta
+**Prioridade atual**: média
 
 ---
 
 ### 3.2 Fechamento mensal
-**Fluxo esperado**
-- geração dos materiais finais
-- análise IA
-- relatório consolidado mensal
+**Status atual**: implementado
 
-**Cobertura atual**
-- existe `monthly_closures`
-- existe versionamento de snapshot
+**Já existe no código**
+- snapshot versionado
+- narrativa executiva
+- uso do accounting feed dentro do fechamento
+- histórico de snapshots
 
-**Gap**
-- ainda falta materialização completa dos relatórios do fechamento
-- ainda falta costura com IA e saída final executiva
+**Gap restante**
+- acabamento executivo mais premium ainda pode evoluir
 
-**Prioridade**: média
+**Prioridade atual**: baixa-média
 
 ---
 
 ### 3.3 Validação do fechamento
-**Fluxo esperado**
-- revisão por consultor/head
-- aprovação
-- envio aos envolvidos
+**Status atual**: implementado
 
-**Cobertura atual**
-- base de governança parcial
+**Já existe no código**
+- validação formal do fechamento
+- histórico de validações
+- resumo validado
+- impacto real no workflow
 
-**Gap**
-- falta workflow completo de aprovação mensal
-- faltam estados formais do fechamento
+**Gap restante**
+- delivery final aos envolvidos pode ficar mais forte
 
-**Prioridade**: média
+**Prioridade atual**: baixa-média
 
 ---
 
 ### 3.4 Monitoramento
-**Fluxo esperado**
-- envio de dados de uso ao dashboard da diretoria
+**Status atual**: implementado em versão funcional
 
-**Cobertura atual**
-- dashboard existe
-- auditoria de uso existe
-- admin/status existe
+**Já existe no código**
+- tela de monitoramento da diretoria
+- consolidação do último fechamento e validação
+- narrativa executiva
+- histórico de fechamentos/validações
 
-**Gap**
-- observar se o monitoramento cobre os indicadores executivos desejados pela diretoria
+**Gap restante**
+- dashboards comparativos multi-período / multi-projeto podem evoluir
+- exportação board-ready pode melhorar
 
-**Prioridade**: média
-
----
-
-## Gap transversal
-
-Além dos módulos acima, existem gaps estruturais transversais:
-
-### 1. Workflows/status
-O sistema ainda precisa formalizar estados como:
-- upload: pendente, processando, inválido, processado, validado
-- risco: sugerido, revisado, aprovado, ativo, arquivado
-- movimento: sugerido, reservado, efetivado, cancelado
-- fechamento: rascunho, em validação, aprovado, enviado
-
-### 2. Onboarding completo
-A entrada do projeto ainda não está estruturada como uma jornada única.
-
-### 3. Integração IA orientada ao negócio
-Há sinais de integração, mas não há costura forte com:
-- relato do projeto
-- risco
-- diagnóstico
-- análise mensal
-
-### 4. Mapeamento de dados por origem
-A ingestão ainda precisa de um modelo mais explícito por tipo de arquivo/processo.
-
-### 5. Trilha ponta a ponta
-O produto ainda não materializa com clareza o fluxo completo:
-- implementação → operação diária → fechamento → monitoramento
+**Prioridade atual**: média
 
 ---
 
-## Ordem recomendada de implementação
+## Gap transversal atual
 
-### Fase 1 — alinhamento do onboarding
-1. wizard de cadastro do projeto
-2. classificação de fornecedores
-3. relato do projeto
-4. checklist/status de implementação
+Agora os gaps principais são menos de “ausência do fluxo” e mais de maturidade do produto:
 
-### Fase 2 — risco e diagnóstico inicial
-5. geração de riscos por IA
-6. validação de riscos
-7. upload histórico estruturado
-8. diagnóstico inicial e plano de ação
+### 1. Qualidade dos dados / parsers por origem
+- validação por layout
+- parsing mais inteligente
+- consistência cruzada entre bases
 
-### Fase 3 — operação diária real
-9. upload diário robusto
-10. conciliação operacional aprimorada
-11. importação de retorno FIDC
-12. painel de risco
-13. movimento diário com motor decisório
-14. validação diária e relatório operacional
+### 2. IA mais profunda no risco e diagnóstico
+- risco sugerido por IA com governança formal
+- recomendações mais ricas e contextualizadas
 
-### Fase 4 — fechamento executivo
-15. consolidação DRE/DFC
-16. apresentação mensal
-17. validação mensal
-18. monitoramento executivo final
+### 3. Delivery formal
+- destinatários por projeto
+- templates executivos
+- trilha de recebimento mais forte
+
+### 4. Governança transversal
+- tarefas por responsável
+- prioridade / SLA / prazo
+- fila transversal do que trava o fluxo
+
+### 5. Refinamento executivo
+- relatórios mais premium
+- exportações mais fortes
+- visão diretoria comparativa
+
+---
+
+## Ordem recomendada de implementação a partir daqui
+
+### Próxima fase recomendada
+1. **Validação formal do diagnóstico histórico**
+2. **Fortalecer risco + IA**
+3. **Melhorar parsers/base histórica/FIDC**
+4. **Delivery formal para envolvidos**
+5. **Governança transversal por tarefas/SLA**
+6. **Refino executivo dos relatórios e board**
 
 ---
 
 ## Conclusão
 
-O repositório atual já possui base útil e reaproveitável. A construção do IronCore deve seguir em cima dessa base, mas com um esforço claro de alinhamento entre fluxo de negócio e implementação real.
+A diferença entre planilha e código diminuiu muito. As etapas 1 a 8 do fluxo já têm cobertura funcional relevante dentro do Ironcore.
 
-A prioridade imediata não é reescrever tudo — é costurar o que já existe em uma jornada coerente e preencher os gaps de maior impacto operacional.
+O trabalho daqui para frente é menos “erguer a espinha dorsal” e mais:
+- aumentar profundidade analítica
+- melhorar governança
+- melhorar qualidade de dados
+- melhorar saída executiva
+
+Em resumo:
+- **fluxo principal**: já implementado em grande parte
+- **maturidade operacional/executiva**: ainda em evolução
