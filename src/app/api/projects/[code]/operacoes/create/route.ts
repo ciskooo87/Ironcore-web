@@ -38,6 +38,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   const feePercent = num(form.get("fee_percent"), 0, 100);
   const fundLimit = num(form.get("fund_limit"), 0, 1_000_000_000);
   const receivableAvailable = num(form.get("receivable_available"), 0, 1_000_000_000);
+  const dueDate = str(form.get("due_date"), 0, 10) || null;
+  const modality = str(form.get("modality"), 0, 120) || null;
+  const principalAmount = num(form.get("principal_amount"), 0, 1_000_000_000);
+  const disbursedAmount = num(form.get("disbursed_amount"), 0, 1_000_000_000);
+  const companyFee = num(form.get("company_fee"), 0, 1_000_000_000);
+  const operatorName = str(form.get("operator_name"), 0, 160);
+  const counterpartyName = str(form.get("counterparty_name"), 0, 160);
+  const fundName = str(form.get("fund_name"), 0, 160);
+  const documentRef = str(form.get("document_ref"), 0, 160);
   const notes = str(form.get("notes"), 0, 4000);
 
   if (!businessDate || grossAmount <= 0) return NextResponse.redirect(new URL(`/projetos/${code}/operacoes/?error=required`, req.url));
@@ -45,11 +54,30 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   if (receivableAvailable > 0 && grossAmount > receivableAvailable) return NextResponse.redirect(new URL(`/projetos/${code}/operacoes/?error=receivable_limit`, req.url));
 
   const dbUser = await getUserByEmail(user.email);
-  const out = await createOperation({ projectId: project.id, businessDate, opType, grossAmount, feePercent, fundLimit, receivableAvailable, notes, createdBy: dbUser?.id || null });
+  const out = await createOperation({
+    projectId: project.id,
+    businessDate,
+    dueDate,
+    opType,
+    modality,
+    grossAmount,
+    principalAmount,
+    disbursedAmount,
+    feePercent,
+    companyFee,
+    fundLimit,
+    receivableAvailable,
+    operatorName,
+    counterpartyName,
+    fundName,
+    documentRef,
+    notes,
+    createdBy: dbUser?.id || null,
+  });
 
   await dbQuery(
     "insert into audit_log(project_id, actor_user_id, action, entity, entity_id, after_data) values($1,$2,$3,$4,$5,$6::jsonb)",
-    [project.id, dbUser?.id || null, "operation.create", "financial_operations", out.id || null, JSON.stringify({ businessDate, opType, grossAmount, feePercent, net: out.netAmount })]
+    [project.id, dbUser?.id || null, "operation.create", "financial_operations", out.id || null, JSON.stringify({ businessDate, dueDate, opType, modality, grossAmount, feePercent, net: out.netAmount, riskLevel: out.riskLevel, operatorName, counterpartyName, fundName })]
   );
 
   return NextResponse.redirect(new URL(`/projetos/${code}/operacoes/?saved=1`, req.url));
