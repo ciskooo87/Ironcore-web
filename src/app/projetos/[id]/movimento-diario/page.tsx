@@ -31,8 +31,8 @@ export default async function MovimentoDiarioPage({
 
   const runs = await listRoutineRuns(project.id, 20);
   const latest = runs[0];
-  const movementActions = (await dbQuery<{ id: string; action_label: string; status: string; linked_entity: string | null; created_at: string }>(
-    "select id, action_label, status, linked_entity, created_at::text from movement_actions where project_id=$1 order by created_at desc limit 20",
+  const movementActions = (await dbQuery<{ id: string; action_label: string; status: string; linked_entity: string | null; linked_entity_id: string | null; assignee_name: string | null; closed_note: string | null; created_at: string }>(
+    "select id, action_label, status, linked_entity, linked_entity_id, assignee_name, closed_note, created_at::text from movement_actions where project_id=$1 order by created_at desc limit 20",
     [project.id]
   ).catch(() => ({ rows: [] as any[] }))).rows;
   const s = (latest?.summary || {}) as Record<string, any>;
@@ -43,7 +43,7 @@ export default async function MovimentoDiarioPage({
 
   return (
     <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Leitura executiva da decisão operacional do dia">
-      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : "Atualizado."}</div> : null}
+      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : query.saved === "action_update" ? "Ação atualizada." : "Atualizado."}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
 
       <section className="flex gap-2 flex-wrap mb-4">
@@ -119,11 +119,22 @@ export default async function MovimentoDiarioPage({
 
       <section className="card">
         <div className="section-head"><h2 className="title">Histórico de ações executadas</h2><span className="kpi-chip">Automação</span></div>
-        <div className="mt-3 space-y-2 text-sm">
+        <div className="mt-3 space-y-3 text-sm">
           {movementActions.length ? movementActions.map((item) => (
             <div key={item.id} className="rounded-lg border border-slate-800 p-3">
               <div className="font-medium">{item.action_label}</div>
-              <div className="text-xs text-slate-500 mt-1">status: {item.status} · vínculo: {item.linked_entity || '-'} · {item.created_at}</div>
+              <div className="text-xs text-slate-500 mt-1">status: {item.status} · vínculo: {item.linked_entity || '-'} {item.linked_entity_id ? `(${item.linked_entity_id.slice(0,8)})` : ''} · {item.created_at}</div>
+              <div className="text-xs text-slate-400 mt-1">responsável: {item.assignee_name || '-'} · nota: {item.closed_note || '-'}</div>
+              <form action={`/api/projects/${id}/movement/action/update`} method="post" className="grid md:grid-cols-4 gap-2 mt-3">
+                <input type="hidden" name="csrf_token" value={csrf} />
+                <input type="hidden" name="action_id" value={item.id} />
+                <input name="assignee_name" defaultValue={item.assignee_name || ''} placeholder="responsável" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+                <input name="note" placeholder="nota de fechamento/reabertura" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 md:col-span-2" />
+                <div className="flex gap-2">
+                  <button type="submit" name="mode" value="done" className="pill">Concluir</button>
+                  <button type="submit" name="mode" value="reopen" className="pill">Reabrir</button>
+                </div>
+              </form>
             </div>
           )) : <div className="alert muted-bg">Sem ações executadas ainda.</div>}
         </div>

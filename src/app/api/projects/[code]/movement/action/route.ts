@@ -8,6 +8,7 @@ import { can } from "@/lib/rbac";
 import { getUserByEmail } from "@/lib/users";
 import { dbQuery } from "@/lib/db";
 import { updateSopStep } from "@/lib/sop";
+import { addOperationEvent } from "@/lib/operations";
 
 export async function POST(req: Request, ctx: { params: Promise<{ code: string }> }) {
   const { code } = await ctx.params;
@@ -40,7 +41,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       updatedBy: dbUser?.id || null,
     });
   } else if (/aprova|formaliza/i.test(action)) {
-    linkedEntity = "sop_step_status";
+    const op = await dbQuery<{ id: string }>(
+      `select id from financial_operations
+       where project_id=$1 and status in ('pendente_aprovacao','pendente_formalizacao','em_correcao_formalizacao')
+       order by business_date desc, created_at desc limit 1`,
+      [project.id]
+    );
+    linkedEntity = op.rows[0]?.id ? 'financial_operations' : 'sop_step_status';
+    linkedEntityId = op.rows[0]?.id || linkedEntityId;
     await updateSopStep({
       projectId: project.id,
       stepKey: "validacao_movimento",
@@ -50,7 +58,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       updatedBy: dbUser?.id || null,
     });
   } else if (/cobran|vencid|renegocia/i.test(action)) {
-    linkedEntity = "sop_step_status";
+    const op = await dbQuery<{ operation_id: string }>(
+      `select operation_id from operation_titles
+       where project_id=$1 and carteira_status in ('vencido','inadimplente','recomprado')
+       order by created_at desc limit 1`,
+      [project.id]
+    );
+    linkedEntity = op.rows[0]?.operation_id ? 'financial_operations' : 'sop_step_status';
+    linkedEntityId = op.rows[0]?.operation_id || linkedEntityId;
     await updateSopStep({
       projectId: project.id,
       stepKey: "painel_risco",
@@ -66,6 +81,17 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
      values($1,$2,$3,$4,'done',$5,$6,$7,$8,now()) returning id`,
     [project.id, routineRunId || null, action, action, linkedEntity, linkedEntityId, note, dbUser?.id || null]
   );
+
+  if (linkedEntity === 'financial_operations' && linkedEntityId) {
+    await addOperationEvent({
+      projectId: project.id,
+      operationId: linkedEntityId,
+      eventType: 'movement_action_created',
+      eventLabel: 'Ação do movimento vinculada à operação',
+      payload: { actionId: actionInsert.rows[0]?.id || null, action },
+      actorName: user.email,
+    });
+  }
 
   await dbQuery(
     `insert into audit_log(project_id, actor_user_id, action, entity, entity_id, after_data)
