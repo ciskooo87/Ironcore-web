@@ -4,7 +4,14 @@ import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { ensureCsrfCookie } from "@/lib/csrf";
-import { getOperationById, listOperationComments, listOperationDocuments, OPERATION_STATUS_FLOW } from "@/lib/operations";
+import {
+  getOperationById,
+  listOperationComments,
+  listOperationDocuments,
+  listOperationTitles,
+  OPERATION_STATUS_FLOW,
+  OPERATION_TITLE_STATUS_OPTIONS,
+} from "@/lib/operations";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -28,19 +35,27 @@ export default async function OperationDetailPage({
   const onboardingComplete = isProjectOnboardingComplete(project);
   if (!onboardingComplete) return <AppShell user={user} title="Projeto · Operação"><div className="alert bad-bg">Onboarding incompleto.</div></AppShell>;
 
-  const [operation, comments, documents, csrf] = await Promise.all([
+  const [operation, comments, documents, titles, csrf] = await Promise.all([
     getOperationById(project.id, opId),
     listOperationComments(project.id, opId),
     listOperationDocuments(project.id, opId),
+    listOperationTitles(project.id, opId),
     ensureCsrfCookie(),
   ]);
 
   if (!operation) return <AppShell user={user} title="Projeto · Operação"><div className="alert bad-bg">Operação não encontrada.</div></AppShell>;
 
   const currentIdx = OPERATION_STATUS_FLOW.findIndex((s) => s.value === operation.status);
+  const carteiraResumo = {
+    total: titles.reduce((s, t) => s + Number(t.face_value || 0), 0),
+    aVencer: titles.filter((t) => t.carteira_status === "a_vencer").reduce((s, t) => s + Number(t.face_value || 0), 0),
+    vencido: titles.filter((t) => t.carteira_status === "vencido").reduce((s, t) => s + Number(t.face_value || 0), 0),
+    liquidado: titles.filter((t) => t.carteira_status === "liquidado").reduce((s, t) => s + Number(t.face_value || 0), 0),
+    recompra: titles.filter((t) => t.carteira_status === "recomprado").reduce((s, t) => s + Number(t.face_value || 0), 0),
+  };
 
   return (
-    <AppShell user={user} title="Projeto · Visualizar Operação" subtitle="Resumo, histórico, documentos e comentários da operação">
+    <AppShell user={user} title="Projeto · Visualizar Operação" subtitle="Resumo, histórico, documentos, comentários e carteira da operação">
       <section className="card mb-4">
         <div className="section-head">
           <h2 className="title">Esteira da operação</h2>
@@ -87,6 +102,87 @@ export default async function OperationDetailPage({
         </div>
       </section>
 
+      <section className="grid md:grid-cols-5 gap-3 mb-4">
+        <div className="metric"><div className="text-xs text-slate-400">Carteira total</div><div className="text-lg font-semibold mt-1">{brl(carteiraResumo.total)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">A vencer</div><div className="text-lg font-semibold mt-1 text-emerald-300">{brl(carteiraResumo.aVencer)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Vencido</div><div className="text-lg font-semibold mt-1 text-rose-300">{brl(carteiraResumo.vencido)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Liquidado</div><div className="text-lg font-semibold mt-1 text-cyan-300">{brl(carteiraResumo.liquidado)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Recomprado</div><div className="text-lg font-semibold mt-1 text-amber-300">{brl(carteiraResumo.recompra)}</div></div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Carteira / Títulos</h2><span className="kpi-chip">Fase C</span></div>
+        <form action={`/api/projects/${id}/operacoes/${opId}/title`} method="post" className="grid md:grid-cols-4 gap-2 text-sm mb-4">
+          <input type="hidden" name="csrf_token" value={csrf} />
+          <input name="title_ref" placeholder="nosso número / título" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" required />
+          <input name="debtor_name" placeholder="sacado / devedor" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="debtor_doc" placeholder="cpf/cnpj devedor" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <select name="carteira_status" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+            {OPERATION_TITLE_STATUS_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+
+          <input name="face_value" type="number" step="0.01" placeholder="valor de face" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" required />
+          <input name="present_value" type="number" step="0.01" placeholder="valor presente" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="due_date" type="date" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="expected_settlement_date" type="date" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+
+          <input name="payment_method" placeholder="forma de baixa" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="note" placeholder="observação" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <button type="submit" className="badge py-2 px-3 cursor-pointer">Adicionar título</button>
+        </form>
+
+        {query.saved ? <div className="alert ok-bg mb-3">{query.saved === "comment" ? "Comentário salvo." : query.saved === "document" ? "Documento salvo." : query.saved === "title" ? "Título salvo." : query.saved === "title_status" ? "Status do título atualizado." : "Atualizado."}</div> : null}
+        {query.error ? <div className="alert bad-bg mb-3">Erro: {query.error}</div> : null}
+
+        <div className="table-wrap">
+          <table className="min-w-[1800px] text-xs">
+            <thead className="bg-slate-900/80">
+              <tr>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Título</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Sacado</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Documento</th>
+                <th className="text-right px-2 py-2 border-b border-slate-800">Face</th>
+                <th className="text-right px-2 py-2 border-b border-slate-800">Presente</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Vencimento</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Liquidação esperada</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Baixa</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Status carteira</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Observação</th>
+                <th className="text-left px-2 py-2 border-b border-slate-800">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {titles.length === 0 ? <tr><td colSpan={11} className="px-2 py-3 text-center text-slate-400">Sem títulos vinculados ainda.</td></tr> : null}
+              {titles.map((title) => (
+                <tr key={title.id} className="odd:bg-slate-900/30 align-top">
+                  <td className="px-2 py-2 border-b border-slate-900">{title.title_ref}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.debtor_name || "-"}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.debtor_doc || "-"}</td>
+                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(title.face_value)}</td>
+                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(title.present_value)}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.due_date || "-"}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.expected_settlement_date || "-"}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.payment_method || "-"}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.carteira_status}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">{title.note || "-"}</td>
+                  <td className="px-2 py-2 border-b border-slate-900">
+                    <form action={`/api/projects/${id}/operacoes/${opId}/title/${title.id}/status`} method="post" className="space-y-1">
+                      <input type="hidden" name="csrf_token" value={csrf} />
+                      <select name="carteira_status" defaultValue={title.carteira_status} className="w-full bg-slate-950/40 border border-slate-700 rounded px-2 py-1">
+                        {OPERATION_TITLE_STATUS_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                      </select>
+                      <input name="payment_method" placeholder="forma baixa" className="w-full bg-slate-950/40 border border-slate-700 rounded px-2 py-1" />
+                      <input name="note" placeholder="nota" className="w-full bg-slate-950/40 border border-slate-700 rounded px-2 py-1" />
+                      <button type="submit" className="pill">Salvar</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
           <div className="section-head"><h2 className="title">Histórico / observações</h2><span className="kpi-chip">Timeline</span></div>
@@ -123,8 +219,6 @@ export default async function OperationDetailPage({
           <input name="note" placeholder="observação" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <button type="submit" className="badge py-2 px-3 cursor-pointer">Adicionar documento</button>
         </form>
-        {query.saved ? <div className="alert ok-bg mb-3">{query.saved === "comment" ? "Comentário salvo." : query.saved === "document" ? "Documento salvo." : "Atualizado."}</div> : null}
-        {query.error ? <div className="alert bad-bg mb-3">Erro: {query.error}</div> : null}
         <div className="table-wrap">
           <table className="min-w-full text-xs">
             <thead className="bg-slate-900/80">

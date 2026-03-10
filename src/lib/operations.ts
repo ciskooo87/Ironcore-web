@@ -10,6 +10,8 @@ export type OperationStatus =
   | "formalizada"
   | "cancelada";
 
+export type OperationTitleStatus = "a_vencer" | "vencido" | "liquidado" | "recomprado" | "prorrogado" | "inadimplente";
+
 export const OPERATION_STATUS_FLOW: { value: OperationStatus; label: string }[] = [
   { value: "em_elaboracao", label: "Em elaboração" },
   { value: "em_correcao", label: "Em correção" },
@@ -19,6 +21,15 @@ export const OPERATION_STATUS_FLOW: { value: OperationStatus; label: string }[] 
   { value: "pendente_formalizacao", label: "Pendente de formalização" },
   { value: "formalizada", label: "Formalizada" },
   { value: "cancelada", label: "Cancelada" },
+];
+
+export const OPERATION_TITLE_STATUS_OPTIONS: { value: OperationTitleStatus; label: string }[] = [
+  { value: "a_vencer", label: "A vencer" },
+  { value: "vencido", label: "Vencido" },
+  { value: "liquidado", label: "Liquidado" },
+  { value: "recomprado", label: "Recomprado" },
+  { value: "prorrogado", label: "Prorrogado" },
+  { value: "inadimplente", label: "Inadimplente" },
 ];
 
 export type FinancialOperation = {
@@ -59,6 +70,22 @@ export type OperationDocument = {
   id: string;
   document_type: string;
   document_ref: string;
+  note: string | null;
+  created_at: string;
+};
+
+export type OperationTitle = {
+  id: string;
+  title_ref: string;
+  debtor_name: string | null;
+  debtor_doc: string | null;
+  face_value: number;
+  present_value: number;
+  due_date: string | null;
+  expected_settlement_date: string | null;
+  paid_at: string | null;
+  payment_method: string | null;
+  carteira_status: OperationTitleStatus;
   note: string | null;
   created_at: string;
 };
@@ -113,6 +140,20 @@ export async function listOperationDocuments(projectId: string, opId: string) {
      from operation_documents
      where project_id=$1 and operation_id=$2
      order by created_at desc`,
+    [projectId, opId]
+  );
+  return q.rows;
+}
+
+export async function listOperationTitles(projectId: string, opId: string) {
+  const q = await dbQuery<OperationTitle>(
+    `select id, title_ref, debtor_name, debtor_doc,
+            face_value::float8, present_value::float8,
+            due_date::text, expected_settlement_date::text, paid_at::text,
+            payment_method, carteira_status, note, created_at::text
+     from operation_titles
+     where project_id=$1 and operation_id=$2
+     order by due_date asc nulls last, created_at desc`,
     [projectId, opId]
   );
   return q.rows;
@@ -229,6 +270,62 @@ export async function addOperationDocument(input: {
     `insert into operation_documents(operation_id, project_id, document_type, document_ref, note, created_by)
      values($1,$2,$3,$4,$5,$6)`,
     [input.operationId, input.projectId, input.documentType, input.documentRef, input.note || null, input.createdBy]
+  );
+}
+
+export async function addOperationTitle(input: {
+  projectId: string;
+  operationId: string;
+  titleRef: string;
+  debtorName?: string;
+  debtorDoc?: string;
+  faceValue: number;
+  presentValue?: number;
+  dueDate?: string | null;
+  expectedSettlementDate?: string | null;
+  paymentMethod?: string | null;
+  carteiraStatus: string;
+  note?: string;
+  createdBy: string | null;
+}) {
+  await dbQuery(
+    `insert into operation_titles(
+      operation_id, project_id, title_ref, debtor_name, debtor_doc, face_value, present_value,
+      due_date, expected_settlement_date, payment_method, carteira_status, note, created_by
+    ) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+    [
+      input.operationId,
+      input.projectId,
+      input.titleRef,
+      input.debtorName || null,
+      input.debtorDoc || null,
+      input.faceValue,
+      input.presentValue || input.faceValue,
+      input.dueDate || null,
+      input.expectedSettlementDate || null,
+      input.paymentMethod || null,
+      input.carteiraStatus,
+      input.note || null,
+      input.createdBy,
+    ]
+  );
+}
+
+export async function updateOperationTitleStatus(input: {
+  projectId: string;
+  titleId: string;
+  carteiraStatus: string;
+  paymentMethod?: string;
+  note?: string;
+}) {
+  await dbQuery(
+    `update operation_titles
+     set carteira_status=$3,
+         payment_method=coalesce(nullif($4,''), payment_method),
+         note=coalesce(nullif($5,''), note),
+         paid_at=case when $3='liquidado' then current_date else paid_at end
+     where project_id=$1 and id=$2`,
+    [input.projectId, input.titleId, input.carteiraStatus, input.paymentMethod || null, input.note || null]
   );
 }
 
