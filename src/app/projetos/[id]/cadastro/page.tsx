@@ -48,7 +48,12 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <label className="space-y-1"><span className="text-slate-400">FLOAT (dias)</span><input type="number" min="0" name="float_days" defaultValue={Number(project.financial_profile?.float_days || 0)} required className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" /></label>
             <label className="space-y-1"><span className="text-slate-400">TAC (R$)</span><input type="number" step="0.01" min="0" name="tac" defaultValue={Number(project.financial_profile?.tac || 0)} required className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" /></label>
             <label className="space-y-1"><span className="text-slate-400">Custo por boleto (R$)</span><input type="number" step="0.01" min="0" name="cost_per_boleto" defaultValue={Number(project.financial_profile?.cost_per_boleto || 0)} required className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" /></label>
-            <label className="space-y-1 md:col-span-2"><span className="text-slate-400">Classificação de fornecedores (formato: fornecedor|conta, 1 por linha)</span><textarea name="supplier_classes" defaultValue={(project.supplier_classes || []).map((r) => `${r.supplier}|${r.account}`).join("\n")} className="w-full min-h-24 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" /></label>
+            <label className="space-y-1 md:col-span-2"><span className="text-slate-400">Cadastro de fornecedores (formato: razão_social|tipo|natureza|subclassificação|classificação|movimentação|fluxo, 1 por linha)</span><textarea name="supplier_classes" defaultValue={(project.supplier_classes || []).map((r) => {
+              if (r.type || r.nature || r.subclassification || r.classification || r.movement || r.flow) {
+                return [r.supplier, r.type || '', r.nature || '', r.subclassification || '', r.classification || '', r.movement || '', r.flow || ''].join('|');
+              }
+              return `${r.supplier}|${r.account || ''}`;
+            }).join("\n")} className="w-full min-h-32 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" /></label>
             <button className="badge py-2 cursor-pointer md:col-span-2" type="submit">Salvar cadastro</button>
           </form>
         )}
@@ -58,15 +63,25 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <table className="min-w-full text-xs">
               <thead className="bg-slate-900/70">
                 <tr>
-                  <th className="text-left px-2 py-2 border-b border-slate-800">Fornecedor</th>
-                  <th className="text-left px-2 py-2 border-b border-slate-800">Conta classificada</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Razão social / nome</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Tipo</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Natureza</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Subclassificação</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Classificação</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Movimentação</th>
+                  <th className="text-left px-2 py-2 border-b border-slate-800">Fluxo</th>
                 </tr>
               </thead>
               <tbody>
                 {(project.supplier_classes || []).map((r, i) => (
                   <tr key={`${r.supplier}-${i}`} className="odd:bg-slate-900/30">
                     <td className="px-2 py-1.5 border-b border-slate-900">{r.supplier}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.account}</td>
+                    <td className="px-2 py-1.5 border-b border-slate-900">{r.type || '-'}</td>
+                    <td className="px-2 py-1.5 border-b border-slate-900">{r.nature || '-'}</td>
+                    <td className="px-2 py-1.5 border-b border-slate-900">{r.subclassification || '-'}</td>
+                    <td className="px-2 py-1.5 border-b border-slate-900">{r.classification || r.account || '-'}</td>
+                    <td className="px-2 py-1.5 border-b border-slate-900">{r.movement || '-'}</td>
+                    <td className="px-2 py-1.5 border-b border-slate-900">{r.flow || '-'}</td>
                   </tr>
                 ))}
               </tbody>

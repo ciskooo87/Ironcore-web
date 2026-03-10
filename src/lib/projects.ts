@@ -2,7 +2,13 @@ import { dbQuery } from "@/lib/db";
 
 export type SupplierClass = {
   supplier: string;
-  account: string;
+  account?: string;
+  type?: string;
+  nature?: string;
+  subclassification?: string;
+  classification?: string;
+  movement?: string;
+  flow?: string;
 };
 
 export type FinancialProfile = {

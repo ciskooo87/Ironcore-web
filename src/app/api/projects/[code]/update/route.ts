@@ -37,10 +37,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [supplier, account] = line.split("|").map((s) => s.trim());
+      const parts = line.split("|").map((s) => s.trim());
+      if (parts.length >= 7) {
+        const [supplier, type, nature, subclassification, classification, movement, flow] = parts;
+        return { supplier, type, nature, subclassification, classification, movement, flow };
+      }
+      const [supplier, account] = parts;
       return { supplier: supplier || "", account: account || "" };
     })
-    .filter((row) => row.supplier && row.account);
+    .filter((row) => row.supplier && ((row as any).account || (row as any).classification));
 
   if (!name || !cnpj || !legalName || !segment || accountPlan.length === 0) {
     return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=required`));
