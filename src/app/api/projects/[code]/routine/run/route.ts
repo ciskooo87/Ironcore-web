@@ -77,12 +77,26 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
     updatedBy: dbUser?.id || null,
   });
 
+  const opDecision = (out.summary.operationalDecision as Record<string, unknown> | undefined) || {};
+  const gatingStatus = String(opDecision.gatingStatus || "atencao");
+
   await updateSopStep({
     projectId: project.id,
     stepKey: "movimento_diario",
-    status: out.status === "blocked" ? "bloqueado" : "aguardando_validacao",
+    status: out.status === "blocked" || gatingStatus === "bloqueado" ? "bloqueado" : "aguardando_validacao",
     evidence: routineEvidence,
-    note: out.status === "blocked" ? "Bloqueio por alerta/pendência" : "Aguardando validação humana da decisão diária",
+    note: out.status === "blocked" || gatingStatus === "bloqueado"
+      ? `Bloqueio operacional: ${String((opDecision.blockingReasons as unknown[] | undefined)?.join?.(", ") || "alerta/pendência")}`
+      : "Aguardando validação humana da decisão diária",
+    updatedBy: dbUser?.id || null,
+  });
+
+  await updateSopStep({
+    projectId: project.id,
+    stepKey: "validacao_movimento",
+    status: gatingStatus === "bloqueado" ? "bloqueado" : "aguardando_validacao",
+    evidence: routineEvidence,
+    note: gatingStatus === "liberado" ? "Movimento pronto para validação final" : gatingStatus === "bloqueado" ? "Validação bloqueada por gatilho operacional" : "Validação depende de revisão humana",
     updatedBy: dbUser?.id || null,
   });
 

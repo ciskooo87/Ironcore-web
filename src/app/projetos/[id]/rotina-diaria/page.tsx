@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listRoutineRuns } from "@/lib/routine";
+import Link from "next/link";
 import { todayInSaoPauloISO } from "@/lib/time";
 import { ensureCsrfCookie } from "@/lib/csrf";
 import { listSopSteps, type SopStatus } from "@/lib/sop";
@@ -48,6 +49,11 @@ export default async function Page({
   return (
     <AppShell user={user} title="Projeto · Rotina Diária" subtitle="Execução síncrona: movimento + IA + fluxo + conciliação">
       <section className="card mb-4">
+        <div className="flex gap-2 flex-wrap mb-3">
+          <Link href={`/projetos/${id}/diario`} className="pill">Painel Diário</Link>
+          <Link href={`/projetos/${id}/operacoes`} className="pill">Operações</Link>
+          <Link href={`/projetos/${id}/riscos-alertas`} className="pill">Painel de Risco</Link>
+        </div>
         <form action={`/api/projects/${id}/routine/run`} method="post" className="flex gap-2 items-center flex-wrap">
           <input type="hidden" name="csrf_token" value={csrf} />
           <input name="business_date" type="date" defaultValue={todayInSaoPauloISO()} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
@@ -138,8 +144,11 @@ export default async function Page({
                   <div className="row"><span>Recompra</span><b>{String(op.carteiraRecompra ?? "-")}</b></div>
                   <div className="row"><span>FIDC carteira</span><b>{String(fidc.carteira ?? "-")}</b></div>
                   <div className="row"><span>FIDC vencido</span><b>{String(fidc.vencido ?? "-")}</b></div>
+                  <div className="row"><span>Status decisório</span><b>{String(op.gatingStatus ?? "-")}</b></div>
                   <div className="row"><span>Recomendação</span><b>{String(ai.recommendation || "-")}</b></div>
                   <div className="row"><span>Fluxo 90d</span><b>{String(cf.note || "-")}</b></div>
+                  <div className="row md:col-span-2"><span>Gatilhos de bloqueio</span><b className="truncate pl-2">{Array.isArray(op.blockingReasons) && op.blockingReasons.length ? String(op.blockingReasons.join(", ")) : "-"}</b></div>
+                  <div className="row md:col-span-2"><span>Sinais de liberação</span><b className="truncate pl-2">{Array.isArray(op.releaseSignals) && op.releaseSignals.length ? String(op.releaseSignals.join(", ")) : "-"}</b></div>
                   <div className="row md:col-span-2"><span>Payload envio</span><b className="truncate pl-2">{String(delivery.summaryText || "-")}</b></div>
                 </div>
               </div>

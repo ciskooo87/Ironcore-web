@@ -53,6 +53,19 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
         ? "warning"
         : "blocked";
 
+  const blockingReasons = [
+    evalAlerts.hasBlocking ? "alerta bloqueante ativo" : null,
+    recon.pending > 5 ? "pendências elevadas de conciliação" : null,
+    carteiraVencida > 100000 ? "carteira vencida acima do limite" : null,
+    fidcPanel.recompraOperacoes > 50000 ? "recompra relevante na carteira" : null,
+  ].filter(Boolean);
+
+  const releaseSignals = [
+    recon.pending === 0 ? "conciliação zerada" : null,
+    opPendingApproval === 0 ? "sem pendência de aprovação" : null,
+    carteiraVencida === 0 ? "sem carteira vencida" : null,
+  ].filter(Boolean);
+
   const decisionSummary = {
     opPendingApproval,
     opApprovedToday,
@@ -64,9 +77,12 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
       aVencer: fidcPanel.aVencerOperacoes || fidcPanel.aVencer,
       recompra: fidcPanel.recompraOperacoes || fidcPanel.recompras,
     },
+    blockingReasons,
+    releaseSignals,
+    gatingStatus: blockingReasons.length > 0 ? "bloqueado" : releaseSignals.length >= 2 ? "liberado" : "atencao",
     recommendation:
-      evalAlerts.hasBlocking || recon.pending > 5 || carteiraVencida > 100000
-        ? "Bloquear novas decisões sem saneamento de risco, conciliação e carteira vencida."
+      blockingReasons.length > 0
+        ? `Bloquear novas decisões: ${blockingReasons.join(", ")}.`
         : opPendingApproval > 0
           ? "Priorizar aprovação/formalização das operações pendentes antes de novas alocações."
           : carteiraRecompra > 0
