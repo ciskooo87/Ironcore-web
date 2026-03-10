@@ -6,6 +6,7 @@ import { listProjectAlerts } from "@/lib/alerts";
 import { getCashflowProjection90d } from "@/lib/cashflow";
 import { todayInSaoPauloISO } from "@/lib/time";
 import { getFidcPanel } from "@/lib/fidc";
+import { listRiskSuggestions } from "@/lib/risk-ai";
 
 const AUTO_CHECKS = [
   "Ruptura de caixa em 90 dias",
@@ -27,7 +28,10 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const onboardingComplete = isProjectOnboardingComplete(project);
   if (!onboardingComplete) return <AppShell user={user} title="Projeto · Riscos e Alertas"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de avançar para Riscos.</div></AppShell>;
 
-  const alerts = await listProjectAlerts(project.id);
+  const [alerts, suggestions] = await Promise.all([
+    listProjectAlerts(project.id),
+    listRiskSuggestions(project.id, 20),
+  ]);
   const today = todayInSaoPauloISO();
   const projection = await getCashflowProjection90d(project.id, today);
   const fidcPanel = await getFidcPanel(project.id);
@@ -71,8 +75,38 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
           <button type="submit" className="badge py-2 cursor-pointer">Salvar alerta ✦</button>
         </form>
-        {query.saved ? <div className="alert ok-bg mt-3">Alerta salvo.</div> : null}
+        {query.saved ? <div className="alert ok-bg mt-3">{query.saved === 'ai' ? 'Sugestão de risco gerada.' : query.saved === 'ai_apply' ? 'Sugestão processada.' : 'Alerta salvo.'}</div> : null}
         {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Risco assistido por IA</h2><span className="kpi-chip">Sugestão</span></div>
+        <form action={`/api/projects/${id}/risk-ai/generate`} method="post" className="grid md:grid-cols-3 gap-2 text-sm mt-3">
+          <textarea name="report" required placeholder="Relato do risco / contexto operacional" className="md:col-span-2 min-h-24 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="opportunity" placeholder="oportunidade associada" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <button type="submit" className="badge py-2 px-3 cursor-pointer">Gerar sugestão IA</button>
+        </form>
+        <div className="mt-3 space-y-2 text-sm">
+          {suggestions.length ? suggestions.map((s) => {
+            const resp = s.response as Record<string, any>;
+            return (
+              <div key={s.id} className="rounded-lg border border-slate-800 p-3">
+                <div className="font-medium">{String(resp.title || 'Sugestão IA')}</div>
+                <div className="text-xs text-slate-500 mt-1">{s.created_at} · {s.provider || '-'} · {s.model || '-'} · {s.status}</div>
+                <div className="text-sm text-slate-300 mt-2">{String(resp.rationale || '-')}</div>
+                <div className="text-xs text-slate-400 mt-2">Severidade: {String(resp.severity || '-')} · blockFlow: {String(resp.blockFlow || false)}</div>
+                <div className="mt-2 text-xs text-slate-400">Recomendações: {Array.isArray(resp.recommendations) ? resp.recommendations.join(' · ') : '-'}</div>
+                {s.status === 'suggested' ? (
+                  <form action={`/api/projects/${id}/risk-ai/apply`} method="post" className="flex gap-2 flex-wrap mt-3">
+                    <input type="hidden" name="suggestion_id" value={s.id} />
+                    <button type="submit" name="action" value="approve" className="pill">Aprovar e virar alerta</button>
+                    <button type="submit" name="action" value="discard" className="pill">Descartar</button>
+                  </form>
+                ) : null}
+              </div>
+            );
+          }) : <div className="alert muted-bg">Sem sugestões IA ainda.</div>}
+        </div>
       </section>
 
       <section className="grid md:grid-cols-2 gap-3 mb-4">
