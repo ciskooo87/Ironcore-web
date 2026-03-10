@@ -69,25 +69,32 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       financialProfile: { tx_percent: txPercent, float_days: floatDays, tac, cost_per_boleto: costPerBoleto },
       supplierClasses,
     });
-    const after = await getProjectByCode(code);
-    if (after) {
-      const dbUser = await getUserByEmail(user.email);
-      await dbQuery(
-        "insert into audit_log(project_id, action, entity, entity_id, before_data, after_data, actor_user_id) values($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)",
-        [after.id, "project.update", "projects", after.id, JSON.stringify(before), JSON.stringify(after), dbUser?.id || null]
-      );
 
-      await updateSopStep({
-        projectId: after.id,
-        stepKey: "cadastro",
-        status: "concluido",
-        evidence: `cadastro atualizado via /api/projects/${code}/update`,
-        note: "Cadastro e parâmetros financeiros salvos",
-        updatedBy: dbUser?.id || null,
-      });
+    try {
+      const after = await getProjectByCode(code);
+      if (after) {
+        const dbUser = await getUserByEmail(user.email);
+        await dbQuery(
+          "insert into audit_log(project_id, action, entity, entity_id, before_data, after_data, actor_user_id) values($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)",
+          [after.id, "project.update", "projects", after.id, JSON.stringify(before), JSON.stringify(after), dbUser?.id || null]
+        );
+
+        await updateSopStep({
+          projectId: after.id,
+          stepKey: "cadastro",
+          status: "concluido",
+          evidence: `cadastro atualizado via /api/projects/${code}/update`,
+          note: "Cadastro e parâmetros financeiros salvos",
+          updatedBy: dbUser?.id || null,
+        });
+      }
+    } catch (postSaveError) {
+      console.error("project.update post-save error", postSaveError);
     }
+
     return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?saved=1`));
-  } catch {
+  } catch (error) {
+    console.error("project.update failed", error);
     return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=db`));
   }
 }
