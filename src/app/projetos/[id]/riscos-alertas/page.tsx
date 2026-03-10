@@ -5,6 +5,7 @@ import { canAccessProject } from "@/lib/permissions";
 import { listProjectAlerts } from "@/lib/alerts";
 import { getCashflowProjection90d } from "@/lib/cashflow";
 import { todayInSaoPauloISO } from "@/lib/time";
+import { getFidcPanel } from "@/lib/fidc";
 
 const AUTO_CHECKS = [
   "Ruptura de caixa em 90 dias",
@@ -29,6 +30,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const alerts = await listProjectAlerts(project.id);
   const today = todayInSaoPauloISO();
   const projection = await getCashflowProjection90d(project.id, today);
+  const fidcPanel = await getFidcPanel(project.id);
 
   return (
     <AppShell user={user} title="Projeto · Riscos e Alertas" subtitle="Relato operacional + checklist de risco com ação e bloqueio">
@@ -85,6 +87,36 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <div className="row"><span>Ruptura no cenário base</span><b>{projection.scenarios.base.ruptureDate || "não"}</b></div>
             <div className="row"><span>Próximos vencimentos</span><b>D+7 monitorado</b></div>
             <div className="row"><span>KPI DRE/DFC</span><b>visão consolidada no módulo DRE/DFC</b></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Painel de risco FIDC</h2><span className="kpi-chip">Retorno consolidado</span></div>
+        <div className="grid md:grid-cols-5 gap-3 mt-3 text-sm">
+          <div className="metric"><div className="text-xs text-slate-400">Retornos recebidos</div><div className="text-lg font-semibold mt-1">{fidcPanel.totalRetornos}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Carteira consolidada</div><div className="text-lg font-semibold mt-1">{fidcPanel.totalCarteira.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Vencidos</div><div className="text-lg font-semibold mt-1 text-rose-300">{fidcPanel.vencidos.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">A vencer</div><div className="text-lg font-semibold mt-1 text-emerald-300">{fidcPanel.aVencer.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Recompras</div><div className="text-lg font-semibold mt-1 text-amber-300">{fidcPanel.recompras.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3 mt-4 text-sm">
+          <div className="card !p-3">
+            <div className="font-medium mb-2">Segregação por modalidade</div>
+            <div className="space-y-2">
+              {fidcPanel.byModalidade.length === 0 ? <div className="alert muted-bg">Sem retorno FIDC enviado ainda.</div> : null}
+              {fidcPanel.byModalidade.map((item) => (
+                <div key={item.modalidade} className="row"><span>{item.modalidade}</span><b>{item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b></div>
+              ))}
+            </div>
+          </div>
+          <div className="card !p-3">
+            <div className="font-medium mb-2">Leitura operacional do painel</div>
+            <div className="space-y-2 text-slate-300">
+              <div>• Último retorno: <b>{fidcPanel.latestDate || "-"}</b></div>
+              <div>• Risco concentrado sinalizado: <b>{fidcPanel.riscoConcentrado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b></div>
+              <div>• Última observação: <b>{fidcPanel.latestNotes || "sem nota"}</b></div>
+            </div>
           </div>
         </div>
       </section>

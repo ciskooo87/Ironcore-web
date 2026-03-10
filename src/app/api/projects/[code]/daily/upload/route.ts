@@ -53,6 +53,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       extrato_bancario: uploadKind === "extrato" ? parsed.extrato_bancario || parsed.faturamento || parsed.contas_receber : parsed.extrato_bancario,
       duplicatas: uploadKind === "extrato" ? 0 : parsed.duplicatas,
       notes: `${notes} | upload_kind:${uploadKind} arquivo:${file.name} linhas:${parsed.lines}`.trim(),
+      fidc_flags: uploadKind === "fidc_retorno"
+        ? {
+            vencidos: /vencid/i.test(notes),
+            recompras: /recompra|recompras/i.test(notes),
+            risco_concentrado: /concentrad|limite|inadimpl/i.test(notes),
+          }
+        : undefined,
     };
 
     const dbUser = await getUserByEmail(user.email);
