@@ -25,6 +25,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: "diagnostico_historico", label: "Diagnóstico Histórico", href: "/projetos/:id/diagnostico-historico", order: 19, section: "projeto", action: "project.view", projectScoped: true },
   { key: "delivery", label: "Delivery", href: "/projetos/:id/delivery", order: 20, section: "projeto", action: "delivery.view", projectScoped: true },
   { key: "fechamento", label: "Fechamento", href: "/projetos/:id/fechamento-mensal", order: 21, section: "projeto", action: "closure.create", projectScoped: true },
+  { key: "monitoramento_diretoria", label: "Monitoramento Diretoria", href: "/projetos/:id/monitoramento-diretoria", order: 22, section: "projeto", action: "project.view", projectScoped: true },
 
   { key: "auditoria", label: "Auditoria", href: "/auditoria-uso", order: 30, section: "governanca", action: "audit.view" },
   { key: "admin", label: "Admin", href: "/admin", order: 31, section: "governanca", action: "admin.status" },
