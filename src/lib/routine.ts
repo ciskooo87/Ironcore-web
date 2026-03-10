@@ -66,6 +66,15 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
     carteiraVencida === 0 ? "sem carteira vencida" : null,
   ].filter(Boolean);
 
+  const suggestedActions = [
+    blockingReasons.includes("alerta bloqueante ativo") ? "Revisar alertas críticos no painel de risco e remover bloqueio somente após saneamento." : null,
+    blockingReasons.includes("pendências elevadas de conciliação") ? "Executar conciliação manual dos itens pendentes antes de novas decisões." : null,
+    blockingReasons.includes("carteira vencida acima do limite") ? "Priorizar cobrança, renegociação ou revisão dos títulos vencidos da carteira." : null,
+    blockingReasons.includes("recompra relevante na carteira") ? "Validar impacto de recompra no funding e reavaliar alocação do dia." : null,
+    opPendingApproval > 0 ? "Concluir aprovação e formalização das operações pendentes." : null,
+    opApprovedToday > 0 ? "Confirmar documentação e títulos das operações aprovadas hoje." : null,
+  ].filter(Boolean);
+
   const decisionSummary = {
     opPendingApproval,
     opApprovedToday,
@@ -79,6 +88,7 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
     },
     blockingReasons,
     releaseSignals,
+    suggestedActions,
     gatingStatus: blockingReasons.length > 0 ? "bloqueado" : releaseSignals.length >= 2 ? "liberado" : "atencao",
     recommendation:
       blockingReasons.length > 0
