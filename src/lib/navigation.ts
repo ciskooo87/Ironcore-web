@@ -21,8 +21,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: "dredfc", label: "DRE / DFC", href: "/projetos/:id/dre-dfc", order: 16, section: "projeto", action: "project.view", projectScoped: true },
   { key: "rotina", label: "Rotina Diária", href: "/projetos/:id/rotina-diaria", order: 17, section: "projeto", action: "routine.run", projectScoped: true },
   { key: "workflow", label: "Fluxo de Trabalho", href: "/projetos/:id/fluxo-trabalho", order: 18, section: "projeto", action: "project.view", projectScoped: true },
-  { key: "delivery", label: "Delivery", href: "/projetos/:id/delivery", order: 19, section: "projeto", action: "delivery.view", projectScoped: true },
-  { key: "fechamento", label: "Fechamento", href: "/projetos/:id/fechamento-mensal", order: 20, section: "projeto", action: "closure.create", projectScoped: true },
+  { key: "diagnostico_historico", label: "Diagnóstico Histórico", href: "/projetos/:id/diagnostico-historico", order: 19, section: "projeto", action: "project.view", projectScoped: true },
+  { key: "delivery", label: "Delivery", href: "/projetos/:id/delivery", order: 20, section: "projeto", action: "delivery.view", projectScoped: true },
+  { key: "fechamento", label: "Fechamento", href: "/projetos/:id/fechamento-mensal", order: 21, section: "projeto", action: "closure.create", projectScoped: true },
 
   { key: "auditoria", label: "Auditoria", href: "/auditoria-uso", order: 30, section: "governanca", action: "audit.view" },
   { key: "admin", label: "Admin", href: "/admin", order: 31, section: "governanca", action: "admin.status" },
