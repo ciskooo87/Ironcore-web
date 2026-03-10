@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listClosures } from "@/lib/closure";
+import { listClosureValidations } from "@/lib/closure-validation";
+import { ensureCsrfCookie } from "@/lib/csrf";
 
 function br(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
@@ -20,7 +22,11 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const onboardingComplete = isProjectOnboardingComplete(project);
   if (!onboardingComplete) return <AppShell user={user} title="Projeto · Fechamento Mensal"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de fechar o mês.</div></AppShell>;
 
-  const closures = await listClosures(project.id, 24);
+  const [closures, validations, csrf] = await Promise.all([
+    listClosures(project.id, 24),
+    listClosureValidations(project.id, 20),
+    ensureCsrfCookie(),
+  ]);
   const latest = closures[0];
   const lastSnapshot = (latest?.snapshot || {}) as Record<string, unknown>;
   const resumo = (lastSnapshot.resumoMensal || {}) as Record<string, number>;
@@ -36,7 +42,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <input name="period_ym" placeholder="YYYY-MM" pattern="\d{4}-\d{2}" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
           <button className="badge py-2 px-3 cursor-pointer" type="submit">Fechar mês</button>
         </form>
-        {query.saved ? <div className="alert ok-bg mt-3">Fechamento realizado.</div> : null}
+        {query.saved ? <div className="alert ok-bg mt-3">{query.saved === 'validation' ? 'Validação do fechamento registrada.' : 'Fechamento realizado.'}</div> : null}
         {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
       </section>
 
@@ -57,6 +63,23 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <div className="metric"><div className="text-xs text-slate-400">DRE · resultado líquido proxy</div><div className="text-lg font-semibold mt-1">{br(accountingFeed?.dre?.resultadoLiquidoProxy || 0)}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">DFC · saldo caixa proxy</div><div className="text-lg font-semibold mt-1">{br(accountingFeed?.dfc?.saldoCaixaProxy || 0)}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Carteira vencida</div><div className="text-lg font-semibold mt-1 text-rose-300">{br(accountingFeed?.carteira?.vencido || 0)}</div></div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Validação do fechamento</h2><span className="kpi-chip">Etapa 7</span></div>
+        <form action={`/api/projects/${id}/closure/validate`} method="post" className="grid md:grid-cols-4 gap-2 text-sm mt-3">
+          <input type="hidden" name="csrf_token" value={csrf} />
+          <select name="closure_id" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+            {closures.map((c) => <option key={c.id} value={c.id}>{c.period_ym} · v{c.snapshot_version}</option>)}
+          </select>
+          <select name="decision" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+            <option value="aprovado">Aprovar fechamento</option>
+            <option value="ajustar">Enviar para ajuste</option>
+            <option value="bloquear">Bloquear fechamento</option>
+          </select>
+          <input name="note" placeholder="nota da validação" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <button type="submit" className="badge py-2 px-3 cursor-pointer">Registrar validação</button>
+        </form>
       </section>
 
       <section className="card mb-4">
@@ -94,6 +117,19 @@ export default async function Page({ params, searchParams }: { params: Promise<{
               )}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Validações registradas</h2><span className="kpi-chip">Workflow</span></div>
+        <div className="mt-3 space-y-2 text-sm">
+          {validations.length ? validations.map((v) => (
+            <div key={v.id} className="rounded-lg border border-slate-800 p-3">
+              <div className="font-medium">{v.decision}</div>
+              <div className="text-xs text-slate-500 mt-1">{v.validated_at}</div>
+              <div className="text-slate-300 mt-2 whitespace-pre-wrap">{v.summary_text || v.note || '-'}</div>
+            </div>
+          )) : <div className="alert muted-bg">Sem validações registradas ainda.</div>}
         </div>
       </section>
 
