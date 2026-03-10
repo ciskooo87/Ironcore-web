@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { getProjectByCode } from "@/lib/projects";
+import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listRoutineRuns } from "@/lib/routine";
 import { todayInSaoPauloISO } from "@/lib/time";
@@ -36,6 +36,8 @@ export default async function Page({
   if (!project) return <AppShell user={user} title="Projeto · Rotina Diária"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Rotina Diária"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
+  const onboardingComplete = isProjectOnboardingComplete(project);
+  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Rotina Diária"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de iniciar a rotina diária.</div></AppShell>;
 
   const [runs, sopSteps] = await Promise.all([
     listRoutineRuns(project.id, 25),

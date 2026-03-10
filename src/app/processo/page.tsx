@@ -136,6 +136,7 @@ export default async function ProcessoPage() {
           Cadastro → Risco e Alertas → Conciliação → Operações → Fluxo de Caixa → DRE/DFC → Rotina →
           Painel Diário → Dashboard → Fechamento → Auditoria → Projetos → Admin/Status OP/Delivery.
         </p>
+        <div className="alert muted-bg mt-3">O sistema agora aplica travas reais de onboarding: enquanto o Cadastro não estiver completo, o avanço operacional fica bloqueado nas etapas dependentes.</div>
       </section>
 
       <section className="grid gap-3 md:grid-cols-2">

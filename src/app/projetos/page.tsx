@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { listProjectsForUser } from "@/lib/projects";
+import { isProjectOnboardingComplete, listProjectsForUser } from "@/lib/projects";
 
 export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ error?: string; segment?: string }> }) {
   const user = await requireUser();
@@ -53,9 +53,11 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
           {filteredProjects.length === 0 ? <div className="alert muted-bg">Sem projetos neste filtro.</div> : null}
           {filteredProjects.map((p) => {
             const finance = p.financial_profile || {};
+            const onboardingComplete = isProjectOnboardingComplete(p);
             return (
               <Link key={p.id} href={`/projetos/${p.code}/cadastro/`} className="block rounded-xl border border-slate-800 p-3 hover:border-cyan-400">
                 <div className="row mb-2"><span className="font-medium">{p.name}</span><span className="badge">{p.code}</span></div>
+                <div className={`text-[11px] mb-2 ${onboardingComplete ? "text-emerald-300" : "text-amber-300"}`}>{onboardingComplete ? "Onboarding concluído" : "Onboarding pendente"}</div>
                 <div className="text-xs text-slate-400 mb-2">Segmento: {p.segment}</div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="row"><span>Plano de contas</span><b>{(p.account_plan || []).length}</b></div>

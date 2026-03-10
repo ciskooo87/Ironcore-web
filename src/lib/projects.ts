@@ -27,6 +27,12 @@ export type Project = {
   supplier_classes: SupplierClass[];
 };
 
+export type OnboardingCheck = {
+  key: string;
+  label: string;
+  done: boolean;
+};
+
 const BASE_SELECT = "id, code, name, cnpj, legal_name, partners, segment, timezone, account_plan, project_summary, financial_profile, supplier_classes";
 
 export async function listProjects() {
@@ -79,6 +85,27 @@ export async function createProject(input: {
     [input.code, input.name, input.cnpj, input.legalName, input.segment, JSON.stringify(input.partners), input.timezone, JSON.stringify(input.accountPlan)]
   );
   return q.rows[0];
+}
+
+export function getProjectOnboardingChecks(project: Project): OnboardingCheck[] {
+  const fp = project.financial_profile || {};
+  return [
+    { key: "name", label: "Nome do projeto preenchido", done: Boolean(project.name?.trim()) },
+    { key: "cnpj", label: "CNPJ preenchido", done: Boolean(project.cnpj?.trim()) },
+    { key: "legal_name", label: "Razão social preenchida", done: Boolean(project.legal_name?.trim()) },
+    { key: "segment", label: "Segmento preenchido", done: Boolean(project.segment?.trim()) },
+    { key: "project_summary", label: "Resumo do projeto preenchido", done: Boolean(project.project_summary?.trim()) },
+    { key: "account_plan", label: "Plano de contas preenchido", done: (project.account_plan || []).length > 0 },
+    { key: "supplier_classes", label: "Classificação de fornecedores preenchida", done: (project.supplier_classes || []).length > 0 },
+    { key: "tx_percent", label: "TX configurada", done: fp.tx_percent !== undefined && Number(fp.tx_percent) >= 0 },
+    { key: "float_days", label: "Float configurado", done: fp.float_days !== undefined && Number(fp.float_days) >= 0 },
+    { key: "tac", label: "TAC configurado", done: fp.tac !== undefined && Number(fp.tac) >= 0 },
+    { key: "cost_per_boleto", label: "Custo por boleto configurado", done: fp.cost_per_boleto !== undefined && Number(fp.cost_per_boleto) >= 0 },
+  ];
+}
+
+export function isProjectOnboardingComplete(project: Project) {
+  return getProjectOnboardingChecks(project).every((item) => item.done);
 }
 
 export async function updateProjectByCode(code: string, input: {

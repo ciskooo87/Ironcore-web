@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getProjectByCode } from "@/lib/projects";
+import { assertProjectOnboardingComplete } from "@/lib/onboarding-guard";
 import { canAccessProject } from "@/lib/permissions";
 import { runDailyRoutine } from "@/lib/routine";
 import { dbQuery } from "@/lib/db";
@@ -21,6 +22,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
 
   const allowed = await canAccessProject(user, project.id);
   if (!allowed || !can(user.role, "routine.run")) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/rotina-diaria/?error=forbidden`));
+  try {
+    assertProjectOnboardingComplete(project);
+  } catch {
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=onboarding_incomplete`));
+  }
 
   const form = await req.formData();
   const csrfOk = await validateCsrf(form);

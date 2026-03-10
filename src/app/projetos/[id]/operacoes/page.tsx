@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { getProjectByCode } from "@/lib/projects";
+import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listOperations } from "@/lib/operations";
 import { todayInSaoPauloISO } from "@/lib/time";
@@ -34,6 +34,8 @@ export default async function Page({
   if (!project) return <AppShell user={user} title="Projeto · Operações"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Operações"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
+  const onboardingComplete = isProjectOnboardingComplete(project);
+  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Operações"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de registrar operações.</div></AppShell>;
 
   const all = await listOperations(project.id, 500);
   const csrf = await ensureCsrfCookie();

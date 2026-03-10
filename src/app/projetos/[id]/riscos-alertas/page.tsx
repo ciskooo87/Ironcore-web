@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { getProjectByCode } from "@/lib/projects";
+import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listProjectAlerts } from "@/lib/alerts";
 import { getCashflowProjection90d } from "@/lib/cashflow";
@@ -23,6 +23,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!project) return <AppShell user={user} title="Projeto · Riscos e Alertas"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Riscos e Alertas"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
+  const onboardingComplete = isProjectOnboardingComplete(project);
+  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Riscos e Alertas"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de avançar para Riscos.</div></AppShell>;
 
   const alerts = await listProjectAlerts(project.id);
   const today = todayInSaoPauloISO();

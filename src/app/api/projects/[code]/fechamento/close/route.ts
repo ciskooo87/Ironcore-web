@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getProjectByCode } from "@/lib/projects";
+import { assertProjectOnboardingComplete } from "@/lib/onboarding-guard";
 import { canAccessProject } from "@/lib/permissions";
 import { getUserByEmail } from "@/lib/users";
 import { closeMonth } from "@/lib/closure";
@@ -17,6 +18,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   if (!user || !project) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/fechamento-mensal/?error=forbidden`));
   const allowed = await canAccessProject(user, project.id);
   if (!allowed || !can(user.role, "closure.create")) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/fechamento-mensal/?error=forbidden`));
+  try {
+    assertProjectOnboardingComplete(project);
+  } catch {
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=onboarding_incomplete`));
+  }
 
   const form = await req.formData();
   const periodYm = String(form.get("period_ym") || "");

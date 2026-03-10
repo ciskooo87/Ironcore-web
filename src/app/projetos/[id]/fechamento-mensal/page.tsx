@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { getProjectByCode } from "@/lib/projects";
+import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listClosures } from "@/lib/closure";
 
@@ -17,6 +17,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!project) return <AppShell user={user} title="Projeto · Fechamento Mensal"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Fechamento Mensal"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
+  const onboardingComplete = isProjectOnboardingComplete(project);
+  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Fechamento Mensal"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de fechar o mês.</div></AppShell>;
 
   const closures = await listClosures(project.id, 24);
   const latest = closures[0];

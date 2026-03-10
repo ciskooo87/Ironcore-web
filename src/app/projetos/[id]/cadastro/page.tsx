@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { getProjectByCode } from "@/lib/projects";
+import { getProjectByCode, getProjectOnboardingChecks, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
@@ -10,11 +10,26 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const query = await searchParams;
 
   const allowed = project ? await canAccessProject(user, project.id) : false;
+  const onboardingChecks = project ? getProjectOnboardingChecks(project) : [];
+  const onboardingComplete = project ? isProjectOnboardingComplete(project) : false;
 
   return (
     <AppShell user={user} title="Projeto · Cadastro" subtitle="Dados-base e governança do projeto">
       <section className="card">
         <div className="section-head"><h2 className="title">Dados mestres e parâmetros financeiros</h2><span className="kpi-chip">Setup crítico</span></div>
+        {project ? (
+          <div className={`mt-3 rounded-lg border p-3 text-sm ${onboardingComplete ? "border-emerald-500/40 bg-emerald-500/10" : "border-amber-500/40 bg-amber-500/10"}`}>
+            <div className="font-medium">Checklist de onboarding {onboardingComplete ? "concluído" : "incompleto"}</div>
+            <div className="mt-2 grid md:grid-cols-2 gap-1 text-xs">
+              {onboardingChecks.map((item) => (
+                <div key={item.key} className={item.done ? "text-emerald-300" : "text-amber-200"}>
+                  {item.done ? "✓" : "•"} {item.label}
+                </div>
+              ))}
+            </div>
+            {!onboardingComplete ? <div className="mt-2 text-xs text-slate-300">Enquanto o checklist não estiver completo, o sistema bloqueia avanço real para risco, operação diária, operações, fluxo de caixa e fechamento.</div> : null}
+          </div>
+        ) : null}
         {!project ? (
           <div className="alert bad-bg">Projeto não encontrado no banco. Crie em /projetos.</div>
         ) : !allowed ? (
@@ -60,7 +75,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         ) : null}
 
         {query.saved ? <div className="alert ok-bg mt-3">Cadastro salvo com sucesso.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Falha ao salvar ({query.error}).</div> : null}
+        {query.error ? <div className="alert bad-bg mt-3">{query.error === "onboarding_incomplete" ? "Onboarding incompleto. Preencha todo o checklist antes de avançar para as próximas etapas." : `Falha ao salvar (${query.error}).`}</div> : null}
       </section>
     </AppShell>
   );

@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
-import { getProjectByCode } from "@/lib/projects";
+import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { todayInSaoPauloISO } from "@/lib/time";
 import { getCashflowProjection90d, getOperationalMovementRows, getTodayMovement } from "@/lib/cashflow";
@@ -20,6 +20,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!project) return <AppShell user={user} title="Projeto · Fluxo de Caixa"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Fluxo de Caixa"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
+  const onboardingComplete = isProjectOnboardingComplete(project);
+  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Fluxo de Caixa"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de usar o fluxo de caixa.</div></AppShell>;
 
   const scenario = (["base", "otimista", "pessimista"].includes(query.scenario || "") ? query.scenario : "base") as ScenarioKey;
 

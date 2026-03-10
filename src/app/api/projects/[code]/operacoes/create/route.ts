@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getProjectByCode } from "@/lib/projects";
+import { assertProjectOnboardingComplete } from "@/lib/onboarding-guard";
 import { canAccessProject } from "@/lib/permissions";
 import { createOperation } from "@/lib/operations";
 import { getUserByEmail } from "@/lib/users";
@@ -17,6 +18,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   if (!user || !project) return NextResponse.redirect(new URL(`/projetos/${code}/operacoes/?error=forbidden`, req.url));
   const allowed = await canAccessProject(user, project.id);
   if (!allowed || !can(user.role, "ops.create")) return NextResponse.redirect(new URL(`/projetos/${code}/operacoes/?error=forbidden`, req.url));
+  try {
+    assertProjectOnboardingComplete(project);
+  } catch {
+    return NextResponse.redirect(new URL(`/projetos/${code}/cadastro/?error=onboarding_incomplete`, req.url));
+  }
 
   const ip = req.headers.get("x-forwarded-for") || user.email;
   const rl = checkRateLimit(`ops:${ip}`, 30, 60_000);
