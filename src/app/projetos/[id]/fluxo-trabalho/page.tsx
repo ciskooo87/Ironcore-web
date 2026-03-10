@@ -4,6 +4,7 @@ import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listSopSteps } from "@/lib/sop";
 import { buildWorkflowRuntime } from "@/lib/workflow";
+import { getHistoricalUploadAggregate, getLatestHistoricalDiagnosis } from "@/lib/historical-diagnosis";
 
 const PHASE_LABEL: Record<string, string> = {
   IMPLEMENTACAO: "Implementação",
@@ -25,10 +26,11 @@ const HEALTH_CLASS: Record<string, string> = {
   nao_funciona: "text-rose-300",
 };
 
-export default async function WorkflowPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function WorkflowPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
   const user = await requireUser();
   const { id } = await params;
   const project = await getProjectByCode(id);
+  const query = await searchParams;
 
   if (!project) return <AppShell user={user} title="Projeto · Fluxo de Trabalho"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
@@ -36,17 +38,51 @@ export default async function WorkflowPage({ params }: { params: Promise<{ id: s
 
   const sopSteps = await listSopSteps(project.id);
   const runtime = await buildWorkflowRuntime(project, sopSteps);
+  const [historicalAggregate, latestHistoricalDiagnosis] = await Promise.all([
+    getHistoricalUploadAggregate(project.id),
+    getLatestHistoricalDiagnosis(project.id),
+  ]);
 
   const groups = ["IMPLEMENTACAO", "OPERACAO_DIARIA", "FECHAMENTO"] as const;
   const totalDone = runtime.filter((r) => r.status === "concluido").length;
 
   return (
     <AppShell user={user} title="Projeto · Fluxo de Trabalho" subtitle="Planilha operacional traduzida para status real de execução no Ironcore">
+      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "historical_diagnosis" ? "Diagnóstico histórico gerado." : "Ação concluída."}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">{query.error === "historical_upload_missing" ? "Ainda não existe base histórica suficiente para gerar o diagnóstico." : query.error === "historical_diagnosis_error" ? "Falha ao gerar o diagnóstico histórico." : query.error}</div> : null}
+
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Etapas</div><div className="text-lg font-semibold mt-1">{runtime.length}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Concluídas</div><div className="text-lg font-semibold mt-1">{totalDone}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Em validação</div><div className="text-lg font-semibold mt-1">{runtime.filter((r) => r.status === "aguardando_validacao").length}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Bloqueadas</div><div className="text-lg font-semibold mt-1">{runtime.filter((r) => r.status === "bloqueado").length}</div></div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Diagnóstico histórico</h2><span className="kpi-chip">Implementação</span></div>
+        <div className="grid md:grid-cols-3 gap-3 mt-3 text-sm">
+          <div className="metric"><div className="text-xs text-slate-400">Uploads históricos</div><div className="text-lg font-semibold mt-1">{historicalAggregate.totalUploads}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Última base</div><div className="text-lg font-semibold mt-1">{historicalAggregate.latestBusinessDate || "-"}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Cobertura por origem</div><div className="text-sm font-semibold mt-1">{Object.keys(historicalAggregate.byKind).length || 0} tipos</div></div>
+        </div>
+
+        <form action={`/api/projects/${id}/historical-diagnosis/run`} method="post" className="mt-3">
+          <button type="submit" className="badge py-2 px-3 cursor-pointer">Gerar diagnóstico histórico</button>
+        </form>
+
+        <div className="mt-3 text-xs text-slate-400">
+          {Object.entries(historicalAggregate.byKind).length > 0
+            ? Object.entries(historicalAggregate.byKind).map(([k, v]) => `${k}: ${v}`).join(" · ")
+            : "Nenhum upload histórico registrado ainda."}
+        </div>
+
+        {latestHistoricalDiagnosis ? (
+          <div className="mt-4 rounded-lg border border-slate-800 p-3">
+            <div className="text-sm font-medium">Último diagnóstico</div>
+            <div className="text-xs text-slate-400 mt-1">{latestHistoricalDiagnosis.created_at} · {latestHistoricalDiagnosis.provider} · {latestHistoricalDiagnosis.model || "-"} · {latestHistoricalDiagnosis.status}</div>
+            <pre className="text-xs text-slate-300 mt-3 whitespace-pre-wrap">{latestHistoricalDiagnosis.response || latestHistoricalDiagnosis.error || "Sem conteúdo."}</pre>
+          </div>
+        ) : null}
       </section>
 
       {groups.map((phase) => {
