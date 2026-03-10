@@ -4,15 +4,23 @@ import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
 import { listRoutineRuns } from "@/lib/routine";
+import { ensureCsrfCookie } from "@/lib/csrf";
 
 function br(v: unknown) {
   const n = Number(v || 0);
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export default async function MovimentoDiarioPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MovimentoDiarioPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
   const user = await requireUser();
   const { id } = await params;
+  const query = await searchParams;
   const project = await getProjectByCode(id);
 
   if (!project) return <AppShell user={user} title="Projeto · Movimento Diário"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
@@ -26,9 +34,13 @@ export default async function MovimentoDiarioPage({ params }: { params: Promise<
   const op = (s.operationalDecision || {}) as Record<string, any>;
   const fidc = (op.fidc || {}) as Record<string, any>;
   const actions: string[] = Array.isArray(op.suggestedActions) ? op.suggestedActions : [];
+  const csrf = await ensureCsrfCookie();
 
   return (
     <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Leitura executiva da decisão operacional do dia">
+      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : "Atualizado."}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
+
       <section className="flex gap-2 flex-wrap mb-4">
         <Link href={`/projetos/${id}/rotina-diaria`} className="pill">Rotina Diária</Link>
         <Link href={`/projetos/${id}/operacoes`} className="pill">Operações</Link>
@@ -68,11 +80,36 @@ export default async function MovimentoDiarioPage({ params }: { params: Promise<
         </section>
       </section>
 
-      <section className="card">
-        <div className="section-head"><h2 className="title">Ações automáticas sugeridas</h2><span className="kpi-chip">Execução</span></div>
-        <ul className="mt-3 space-y-2 text-sm text-slate-300">
-          {actions.length ? actions.map((x, i) => <li key={i}>• {x}</li>) : <li>• nenhuma ação sugerida ainda</li>}
-        </ul>
+      <section className="grid md:grid-cols-2 gap-4 mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Validação humana</h2><span className="kpi-chip">Workflow</span></div>
+          <form action={`/api/projects/${id}/movement/validate`} method="post" className="space-y-2 mt-3 text-sm">
+            <input type="hidden" name="csrf_token" value={csrf} />
+            <input type="hidden" name="routine_run_id" value={latest?.id || ''} />
+            <select name="decision" className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+              <option value="aprovado">Aprovar movimento</option>
+              <option value="ajustar">Enviar para ajuste</option>
+              <option value="bloquear">Bloquear movimento</option>
+            </select>
+            <textarea name="note" placeholder="nota da validação" className="w-full min-h-24 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <button type="submit" className="badge py-2 px-3 cursor-pointer">Registrar validação</button>
+          </form>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Ações automáticas sugeridas</h2><span className="kpi-chip">Execução</span></div>
+          <div className="space-y-3 mt-3">
+            {actions.length ? actions.map((x, i) => (
+              <form key={i} action={`/api/projects/${id}/movement/action`} method="post" className="rounded-lg border border-slate-800 p-3">
+                <input type="hidden" name="csrf_token" value={csrf} />
+                <input type="hidden" name="routine_run_id" value={latest?.id || ''} />
+                <input type="hidden" name="action_key" value={x} />
+                <div className="text-sm text-slate-300">{x}</div>
+                <button type="submit" className="pill mt-2">Marcar ação</button>
+              </form>
+            )) : <div className="text-sm text-slate-300">• nenhuma ação sugerida ainda</div>}
+          </div>
+        </section>
       </section>
     </AppShell>
   );
