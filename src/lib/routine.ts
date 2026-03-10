@@ -2,6 +2,8 @@ import { dbQuery } from "@/lib/db";
 import { runReconciliation } from "@/lib/conciliacao";
 import { listProjectAlerts, evaluateAlerts } from "@/lib/alerts";
 import { buildDeliveryPayload } from "@/lib/delivery";
+import { listOperations, listOperationTitles } from "@/lib/operations";
+import { getFidcPanel } from "@/lib/fidc";
 
 export type RoutineRun = {
   id: string;
@@ -30,8 +32,19 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
     diff: Number((recon.details.diff as number | undefined) || 0),
     pending: recon.pending,
   });
+  const [operations, fidcPanel] = await Promise.all([
+    listOperations(projectId, 200),
+    getFidcPanel(projectId),
+  ]);
+  const titlesNested = await Promise.all(operations.slice(0, 100).map((op) => listOperationTitles(projectId, op.id)));
+  const titles = titlesNested.flat();
 
-  const riskLevel = recon.pending === 0 ? "baixo" : recon.pending <= 3 ? "medio" : "alto";
+  const opPendingApproval = operations.filter((o) => ["pendente_aprovacao", "pendente_formalizacao", "em_correcao_formalizacao"].includes(o.status)).length;
+  const opApprovedToday = operations.filter((o) => o.status === "aprovada" && o.business_date === businessDate).length;
+  const carteiraVencida = titles.filter((t) => t.carteira_status === "vencido" || t.carteira_status === "inadimplente").reduce((s, t) => s + Number(t.face_value || 0), 0);
+  const carteiraRecompra = titles.filter((t) => t.carteira_status === "recomprado").reduce((s, t) => s + Number(t.face_value || 0), 0);
+
+  const riskLevel = recon.pending === 0 && carteiraVencida === 0 ? "baixo" : (recon.pending <= 3 && carteiraVencida < 50000 ? "medio" : "alto");
   const status: RoutineRun["status"] = evalAlerts.hasBlocking
     ? "blocked"
     : recon.status === "ok"
@@ -39,6 +52,27 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
       : recon.status === "warning"
         ? "warning"
         : "blocked";
+
+  const decisionSummary = {
+    opPendingApproval,
+    opApprovedToday,
+    carteiraVencida,
+    carteiraRecompra,
+    fidc: {
+      carteira: fidcPanel.carteiraOperacoes || fidcPanel.totalCarteira,
+      vencido: fidcPanel.vencidoOperacoes || fidcPanel.vencidos,
+      aVencer: fidcPanel.aVencerOperacoes || fidcPanel.aVencer,
+      recompra: fidcPanel.recompraOperacoes || fidcPanel.recompras,
+    },
+    recommendation:
+      evalAlerts.hasBlocking || recon.pending > 5 || carteiraVencida > 100000
+        ? "Bloquear novas decisões sem saneamento de risco, conciliação e carteira vencida."
+        : opPendingApproval > 0
+          ? "Priorizar aprovação/formalização das operações pendentes antes de novas alocações."
+          : carteiraRecompra > 0
+            ? "Monitorar recompras e validar impacto no funding do dia."
+            : "Operação apta para seguir com monitoramento diário e validação de funding.",
+  };
 
   const delivery = buildDeliveryPayload({
     projectCode,
@@ -53,12 +87,13 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
     aiAnalysis: {
       explainability: true,
       riskLevel,
-      recommendation: recon.pending === 0 ? "Sem ação imediata" : "Revisar pendências e validar títulos",
+      recommendation: decisionSummary.recommendation,
     },
     cashflow90d: {
-      basedOn: "daily+projected",
-      note: recon.pending > 0 ? "Há impacto potencial por pendências de conciliação" : "Fluxo estável",
+      basedOn: "daily+projected+operations+fidc",
+      note: recon.pending > 0 ? "Há impacto potencial por pendências de conciliação" : carteiraVencida > 0 ? "Há pressão potencial por carteira vencida" : "Fluxo estável",
     },
+    operationalDecision: decisionSummary,
     reconciliation: recon,
     alertsTriggered: evalAlerts.hits.map((h) => ({ name: h.name, severity: h.severity, block: h.block_flow })),
     delivery,

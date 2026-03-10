@@ -123,6 +123,8 @@ export default async function Page({
             const cf = (s.cashflow90d as Record<string, unknown>) || {};
             const rec = (s.reconciliation as Record<string, unknown>) || {};
             const delivery = (s.delivery as Record<string, unknown>) || {};
+            const op = (s.operationalDecision as Record<string, unknown>) || {};
+            const fidc = (op.fidc as Record<string, unknown>) || {};
 
             return (
               <div key={r.id} className="card !p-3">
@@ -130,6 +132,12 @@ export default async function Page({
                 <div className="mt-2 grid md:grid-cols-2 gap-2 text-xs text-slate-300">
                   <div className="row"><span>Risco IA</span><b>{String(ai.riskLevel || "-")}</b></div>
                   <div className="row"><span>Pendências conciliação</span><b>{String((rec.pending as number | undefined) ?? "-")}</b></div>
+                  <div className="row"><span>Operações pend. aprovação</span><b>{String(op.opPendingApproval ?? "-")}</b></div>
+                  <div className="row"><span>Operações aprovadas no dia</span><b>{String(op.opApprovedToday ?? "-")}</b></div>
+                  <div className="row"><span>Carteira vencida</span><b>{String(op.carteiraVencida ?? "-")}</b></div>
+                  <div className="row"><span>Recompra</span><b>{String(op.carteiraRecompra ?? "-")}</b></div>
+                  <div className="row"><span>FIDC carteira</span><b>{String(fidc.carteira ?? "-")}</b></div>
+                  <div className="row"><span>FIDC vencido</span><b>{String(fidc.vencido ?? "-")}</b></div>
                   <div className="row"><span>Recomendação</span><b>{String(ai.recommendation || "-")}</b></div>
                   <div className="row"><span>Fluxo 90d</span><b>{String(cf.note || "-")}</b></div>
                   <div className="row md:col-span-2"><span>Payload envio</span><b className="truncate pl-2">{String(delivery.summaryText || "-")}</b></div>
