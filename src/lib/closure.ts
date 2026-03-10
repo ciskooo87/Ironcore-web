@@ -21,6 +21,31 @@ export async function listClosures(projectId: string, limit = 24) {
   }
 }
 
+export function buildMonthlyClosureNarrative(input: {
+  periodYm: string;
+  faturamento: number;
+  receber: number;
+  pagar: number;
+  resultadoOperacional: number;
+  netOperations: number;
+  carteiraVencida?: number;
+  alertasCriticos?: number;
+  conciliacoesBloqueadas?: number;
+}) {
+  const sinais = [
+    input.resultadoOperacional < 0 ? "resultado operacional pressionado" : "resultado operacional positivo",
+    (input.carteiraVencida || 0) > 0 ? "existência de carteira vencida no período" : "sem carteira vencida relevante no período",
+    (input.alertasCriticos || 0) > 0 ? "alertas críticos ativos exigem acompanhamento" : "sem alertas críticos ativos materiais",
+    (input.conciliacoesBloqueadas || 0) > 0 ? "houve conciliações bloqueadas no ciclo" : "sem bloqueios materiais de conciliação",
+  ];
+
+  return [
+    `Fechamento ${input.periodYm}: faturamento de ${input.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}, contas a receber de ${input.receber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} e contas a pagar de ${input.pagar.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.`,
+    `Resultado operacional do período em ${input.resultadoOperacional.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} e resultado líquido operacional/proxy das operações em ${input.netOperations.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.`,
+    `Leitura executiva: ${sinais.join('; ')}.`,
+  ].join(' ');
+}
+
 export async function closeMonth(input: {
   projectId: string;
   periodYm: string;

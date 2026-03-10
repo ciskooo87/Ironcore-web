@@ -4,7 +4,8 @@ import { getProjectByCode } from "@/lib/projects";
 import { assertProjectOnboardingComplete } from "@/lib/onboarding-guard";
 import { canAccessProject } from "@/lib/permissions";
 import { getUserByEmail } from "@/lib/users";
-import { closeMonth } from "@/lib/closure";
+import { buildMonthlyClosureNarrative, closeMonth } from "@/lib/closure";
+import { buildAccountingFeed, listAccountingFeeds } from "@/lib/accounting";
 import { sumNetOperations } from "@/lib/operations";
 import { dbQuery } from "@/lib/db";
 import { can } from "@/lib/rbac";
@@ -30,7 +31,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
 
   const netOps = await sumNetOperations(project.id);
 
-  const [dailyAgg, reconAgg, alertsAgg] = await Promise.all([
+  const [dailyAgg, reconAgg, alertsAgg, existingFeeds] = await Promise.all([
     dbQuery<{ faturamento: number; receber: number; pagar: number }>(
       `select
         coalesce(sum((payload->>'faturamento')::numeric),0)::float8 as faturamento,
@@ -54,12 +55,35 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
        where project_id=$1 and severity='critical'`,
       [project.id]
     ),
+    listAccountingFeeds(project.id, 20),
   ]);
 
   const faturamento = Number(dailyAgg.rows[0]?.faturamento || 0);
   const receber = Number(dailyAgg.rows[0]?.receber || 0);
   const pagar = Number(dailyAgg.rows[0]?.pagar || 0);
   const resultadoOperacional = receber - pagar;
+  let accountingFeed = existingFeeds.find((f) => f.period_ym === periodYm)?.payload as Record<string, unknown> | undefined;
+  if (!accountingFeed) {
+    accountingFeed = await buildAccountingFeed(project.id, periodYm);
+  }
+
+  const carteira = ((accountingFeed as any)?.carteira || {}) as Record<string, number>;
+  const observaveis = {
+    totalConciliacoes: Number(reconAgg.rows[0]?.total_runs || 0),
+    conciliacoesBloqueadas: Number(reconAgg.rows[0]?.blocked_runs || 0),
+    alertasCriticosAtivos: Number(alertsAgg.rows[0]?.critical_alerts || 0),
+  };
+  const narrativaExecutiva = buildMonthlyClosureNarrative({
+    periodYm,
+    faturamento,
+    receber,
+    pagar,
+    resultadoOperacional,
+    netOperations: netOps,
+    carteiraVencida: Number(carteira.vencido || 0),
+    alertasCriticos: observaveis.alertasCriticosAtivos,
+    conciliacoesBloqueadas: observaveis.conciliacoesBloqueadas,
+  });
 
   const snapshot = {
     period: periodYm,
@@ -71,11 +95,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
       contasPagar: pagar,
       resultadoOperacional,
     },
-    observaveis: {
-      totalConciliacoes: Number(reconAgg.rows[0]?.total_runs || 0),
-      conciliacoesBloqueadas: Number(reconAgg.rows[0]?.blocked_runs || 0),
-      alertasCriticosAtivos: Number(alertsAgg.rows[0]?.critical_alerts || 0),
-    },
+    observaveis,
+    accountingFeed,
+    narrativaExecutiva,
     notes: "Snapshot imutável gerado no fechamento",
   };
 

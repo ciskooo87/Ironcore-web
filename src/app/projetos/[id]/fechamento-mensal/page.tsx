@@ -25,6 +25,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const lastSnapshot = (latest?.snapshot || {}) as Record<string, unknown>;
   const resumo = (lastSnapshot.resumoMensal || {}) as Record<string, number>;
   const obs = (lastSnapshot.observaveis || {}) as Record<string, number>;
+  const accountingFeed = (lastSnapshot.accountingFeed || {}) as Record<string, any>;
+  const narrativaExecutiva = String(lastSnapshot.narrativaExecutiva || "");
 
   return (
     <AppShell user={user} title="Projeto · Fechamento Mensal" subtitle="Apresentação executiva com evolução do mês e snapshots imutáveis">
@@ -43,6 +45,18 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <div className="metric"><div className="text-xs text-slate-400">Resultado operacional</div><div className="text-lg font-semibold mt-1">{br(Number(resumo.resultadoOperacional || 0))}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Conciliações bloqueadas</div><div className="text-lg font-semibold mt-1">{Number(obs.conciliacoesBloqueadas || 0)}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Alertas críticos ativos</div><div className="text-lg font-semibold mt-1">{Number(obs.alertasCriticosAtivos || 0)}</div></div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Narrativa executiva do fechamento</h2><span className="kpi-chip">Etapa 6</span></div>
+        <div className="text-sm text-slate-300 mt-3 whitespace-pre-wrap">{narrativaExecutiva || 'Sem narrativa executiva ainda.'}</div>
+      </section>
+
+      <section className="grid md:grid-cols-4 gap-3 mb-4">
+        <div className="metric"><div className="text-xs text-slate-400">DRE · receita bruta</div><div className="text-lg font-semibold mt-1">{br(accountingFeed?.dre?.receitaBruta || 0)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">DRE · resultado líquido proxy</div><div className="text-lg font-semibold mt-1">{br(accountingFeed?.dre?.resultadoLiquidoProxy || 0)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">DFC · saldo caixa proxy</div><div className="text-lg font-semibold mt-1">{br(accountingFeed?.dfc?.saldoCaixaProxy || 0)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Carteira vencida</div><div className="text-lg font-semibold mt-1 text-rose-300">{br(accountingFeed?.carteira?.vencido || 0)}</div></div>
       </section>
 
       <section className="card mb-4">
