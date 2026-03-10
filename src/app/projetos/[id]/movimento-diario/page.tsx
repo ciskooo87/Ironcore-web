@@ -6,6 +6,7 @@ import { canAccessProject } from "@/lib/permissions";
 import { listRoutineRuns } from "@/lib/routine";
 import { ensureCsrfCookie } from "@/lib/csrf";
 import { dbQuery } from "@/lib/db";
+import { listMovementValidations } from "@/lib/movement";
 
 function br(v: unknown) {
   const n = Number(v || 0);
@@ -35,6 +36,7 @@ export default async function MovimentoDiarioPage({
     "select id, action_label, status, linked_entity, linked_entity_id, assignee_name, closed_note, created_at::text from movement_actions where project_id=$1 order by created_at desc limit 20",
     [project.id]
   ).catch(() => ({ rows: [] as any[] }))).rows;
+  const validations = await listMovementValidations(project.id, 20);
   const s = (latest?.summary || {}) as Record<string, any>;
   const op = (s.operationalDecision || {}) as Record<string, any>;
   const fidc = (op.fidc || {}) as Record<string, any>;
@@ -97,6 +99,7 @@ export default async function MovimentoDiarioPage({
               <option value="bloquear">Bloquear movimento</option>
             </select>
             <textarea name="note" placeholder="nota da validação" className="w-full min-h-24 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <label className="text-xs text-slate-300 flex items-center gap-2"><input type="checkbox" name="send_summary" value="1" /> enviar resumo validado</label>
             <button type="submit" className="badge py-2 px-3 cursor-pointer">Registrar validação</button>
           </form>
         </section>
@@ -115,6 +118,19 @@ export default async function MovimentoDiarioPage({
             )) : <div className="text-sm text-slate-300">• nenhuma ação sugerida ainda</div>}
           </div>
         </section>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Validações registradas</h2><span className="kpi-chip">Etapa 4</span></div>
+        <div className="mt-3 space-y-2 text-sm">
+          {validations.length ? validations.map((item) => (
+            <div key={item.id} className="rounded-lg border border-slate-800 p-3">
+              <div className="font-medium">{item.decision}</div>
+              <div className="text-xs text-slate-500 mt-1">{item.validated_at}</div>
+              <div className="text-slate-300 mt-1 whitespace-pre-wrap">{item.summary_text || item.note || '-'}</div>
+            </div>
+          )) : <div className="alert muted-bg">Sem validações registradas ainda.</div>}
+        </div>
       </section>
 
       <section className="card">
