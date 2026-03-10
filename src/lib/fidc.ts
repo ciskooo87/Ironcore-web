@@ -56,6 +56,7 @@ export async function getFidcPanel(projectId: string): Promise<FidcPanel> {
   for (const row of uploads.rows) {
     const payload = row.payload || {};
     const notes = String(payload.notes || "");
+    const flags = (payload.fidc_flags || {}) as Record<string, unknown>;
     const modalidade = detectModalidade(notes);
     const baseValor =
       Number(payload.contas_receber || 0) +
@@ -65,11 +66,11 @@ export async function getFidcPanel(projectId: string): Promise<FidcPanel> {
     totalCarteira += baseValor;
     modalidadeMap.set(modalidade, (modalidadeMap.get(modalidade) || 0) + baseValor);
 
-    if (/vencid/i.test(notes)) vencidos += baseValor;
+    if (Boolean(flags.vencidos) || /vencid/i.test(notes)) vencidos += baseValor;
     else aVencer += baseValor;
 
-    if (/recompra|recompras/i.test(notes)) recompras += baseValor;
-    if (/concentrad|limite|inedimpl|inadimpl/i.test(notes)) riscoConcentrado += baseValor;
+    if (Boolean(flags.recompras) || /recompra|recompras/i.test(notes)) recompras += baseValor;
+    if (Boolean(flags.risco_concentrado) || /concentrad|limite|inedimpl|inadimpl/i.test(notes)) riscoConcentrado += baseValor;
   }
 
   const operacoesVinculadas = new Set(titles.rows.map((r) => `${r.modality || 'geral'}:${r.carteira_status}`)).size;
