@@ -166,7 +166,10 @@ function assess(step: SopStepView, project: Project, facts: WorkflowFacts): Pick
         ? { health: "parcial", reason: "Base histórica já pode ser enviada, mas o diagnóstico histórico executivo ainda depende de costura de análise/IA." }
         : { health: "nao_funciona", reason: "Não há base histórica carregada para suportar a análise." };
     case "validacao_diagnostico":
-      return { health: step.status === "concluido" ? "funciona" : "nao_funciona", reason: step.status === "concluido" ? "Diagnóstico marcado como validado." : "A validação formal do diagnóstico ainda não foi concluída." };
+      return {
+        health: step.status === "concluido" ? "funciona" : step.status === "aguardando_validacao" || step.status === "em_execucao" ? "parcial" : "nao_funciona",
+        reason: step.status === "concluido" ? "Diagnóstico marcado como validado." : step.status === "aguardando_validacao" || step.status === "em_execucao" ? "Diagnóstico pronto e em validação formal." : "A validação formal do diagnóstico ainda não foi concluída.",
+      };
     case "upload_base_diaria":
       return facts.dailyUploads > 0
         ? { health: "funciona", reason: "Upload diário operacional ativo no projeto.", counts: { uploadsDiarios: facts.dailyUploads } }

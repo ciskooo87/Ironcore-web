@@ -5,6 +5,8 @@ import { canAccessProject } from "@/lib/permissions";
 import { listSopSteps } from "@/lib/sop";
 import { buildWorkflowRuntime } from "@/lib/workflow";
 import { getHistoricalUploadAggregate, getLatestHistoricalDiagnosis } from "@/lib/historical-diagnosis";
+import { listHistoricalDiagnosisValidations } from "@/lib/historical-validation";
+import { ensureCsrfCookie } from "@/lib/csrf";
 
 const PHASE_LABEL: Record<string, string> = {
   IMPLEMENTACAO: "Implementação",
@@ -38,9 +40,11 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
 
   const sopSteps = await listSopSteps(project.id);
   const runtime = await buildWorkflowRuntime(project, sopSteps);
-  const [historicalAggregate, latestHistoricalDiagnosis] = await Promise.all([
+  const [historicalAggregate, latestHistoricalDiagnosis, historicalValidations, csrf] = await Promise.all([
     getHistoricalUploadAggregate(project.id),
     getLatestHistoricalDiagnosis(project.id),
+    listHistoricalDiagnosisValidations(project.id, 20),
+    ensureCsrfCookie(),
   ]);
 
   const groups = ["IMPLEMENTACAO", "OPERACAO_DIARIA", "FECHAMENTO"] as const;
@@ -48,7 +52,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
 
   return (
     <AppShell user={user} title="Projeto · Fluxo de Trabalho" subtitle="Planilha operacional traduzida para status real de execução no Ironcore">
-      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "historical_diagnosis" ? "Diagnóstico histórico gerado." : "Ação concluída."}</div> : null}
+      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "historical_diagnosis" ? "Diagnóstico histórico gerado." : query.saved === "historical_validation" ? "Validação do diagnóstico registrada." : "Ação concluída."}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">{query.error === "historical_upload_missing" ? "Ainda não existe base histórica suficiente para gerar o diagnóstico." : query.error === "historical_diagnosis_error" ? "Falha ao gerar o diagnóstico histórico." : query.error}</div> : null}
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
@@ -81,8 +85,30 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
             <div className="text-sm font-medium">Último diagnóstico</div>
             <div className="text-xs text-slate-400 mt-1">{latestHistoricalDiagnosis.created_at} · {latestHistoricalDiagnosis.provider} · {latestHistoricalDiagnosis.model || "-"} · {latestHistoricalDiagnosis.status}</div>
             <pre className="text-xs text-slate-300 mt-3 whitespace-pre-wrap">{latestHistoricalDiagnosis.response || latestHistoricalDiagnosis.error || "Sem conteúdo."}</pre>
+
+            <form action={`/api/projects/${id}/historical-diagnosis/validate`} method="post" className="grid md:grid-cols-4 gap-2 text-sm mt-4">
+              <input type="hidden" name="csrf_token" value={csrf} />
+              <input type="hidden" name="inference_run_id" value={latestHistoricalDiagnosis.id} />
+              <select name="decision" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+                <option value="aprovado">Aprovar diagnóstico</option>
+                <option value="ajustar">Enviar para ajuste</option>
+                <option value="bloquear">Bloquear diagnóstico</option>
+              </select>
+              <input name="note" placeholder="nota da validação" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+              <button type="submit" className="badge py-2 px-3 cursor-pointer">Validar diagnóstico</button>
+            </form>
           </div>
         ) : null}
+
+        <div className="mt-4 space-y-2 text-sm">
+          {historicalValidations.length ? historicalValidations.map((v) => (
+            <div key={v.id} className="rounded-lg border border-slate-800 p-3">
+              <div className="font-medium">{v.decision}</div>
+              <div className="text-xs text-slate-500 mt-1">{v.validated_at}</div>
+              <div className="text-slate-300 mt-2 whitespace-pre-wrap">{v.summary_text || v.note || '-'}</div>
+            </div>
+          )) : null}
+        </div>
       </section>
 
       {groups.map((phase) => {
