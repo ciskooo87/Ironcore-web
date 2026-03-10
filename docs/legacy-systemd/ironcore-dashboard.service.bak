@@ -1,0 +1,15 @@
+[Unit]
+Description=Ironcore Streamlit Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=openclaw
+WorkingDirectory=/home/openclaw/.openclaw/workspace
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/openclaw/.openclaw/workspace/.venv/bin/streamlit run /home/openclaw/.openclaw/workspace/dashboard_app.py --server.port 8501 --server.address 127.0.0.1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

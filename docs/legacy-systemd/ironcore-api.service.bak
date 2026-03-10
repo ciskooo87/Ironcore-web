@@ -1,0 +1,15 @@
+[Unit]
+Description=IRONCORE API (FastAPI + Ollama)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ironcore/apps/api
+Environment="OLLAMA_URL=http://127.0.0.1:11434"
+Environment="MODEL_NAME=phi3:mini"
+ExecStart=/opt/ironcore/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
