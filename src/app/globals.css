@@ -126,3 +126,74 @@ input:focus, select:focus, textarea:focus {
   .table-wrap { border-radius: 10px; }
   table { font-size: 11px; }
 }
+
+.report-bar-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(37, 53, 83, 0.9);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #243856;
+}
+
+.report-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22d3ee, #3b82f6);
+}
+
+.report-print-only {
+  display: none;
+}
+
+@media print {
+  :root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel2: #ffffff;
+    --line: #d1d5db;
+  }
+
+  * {
+    color: #111827 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  .card,
+  .metric,
+  .trust,
+  .row,
+  .table-wrap,
+  .alert {
+    background: #ffffff !important;
+    border-color: #d1d5db !important;
+  }
+
+  .report-no-print,
+  nav,
+  aside {
+    display: none !important;
+  }
+
+  .report-print-only {
+    display: block;
+  }
+
+  .table-wrap {
+    overflow: visible !important;
+  }
+
+  table {
+    width: 100% !important;
+    page-break-inside: auto;
+  }
+
+  tr, td, th {
+    page-break-inside: avoid;
+  }
+}

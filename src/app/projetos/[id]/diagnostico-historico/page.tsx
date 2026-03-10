@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { PrintButton } from "@/components/PrintButton";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -10,6 +11,10 @@ import { listProjectAlerts } from "@/lib/alerts";
 
 function br(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
+}
+
+function n(v: number) {
+  return v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 }
 
 function parseDiagnosisSections(raw: string | null) {
@@ -29,6 +34,11 @@ function parseDiagnosisSections(raw: string | null) {
       executiveSummary: raw,
     };
   }
+}
+
+function pct(value: number, total: number) {
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, (value / total) * 100));
 }
 
 export default async function HistoricalDiagnosisExecutivePage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +66,26 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
   const avgFee = operations.length > 0 ? operations.reduce((s, o) => s + Number(o.fee_percent || 0), 0) / operations.length : 0;
   const pressure = aggregate.totals.contasPagar - aggregate.totals.contasReceber;
   const marginProxy = aggregate.totals.faturamento > 0 ? ((aggregate.totals.contasReceber - aggregate.totals.contasPagar) / aggregate.totals.faturamento) * 100 : 0;
+  const coverageKinds = Object.keys(aggregate.byKind).length;
+  const totalFinancialBase = aggregate.totals.contasReceber + aggregate.totals.contasPagar + Math.abs(aggregate.totals.extratoBancario) + aggregate.totals.duplicatas;
+  const receivableShare = pct(aggregate.totals.contasReceber, totalFinancialBase);
+  const payableShare = pct(aggregate.totals.contasPagar, totalFinancialBase);
+  const bankShare = pct(Math.abs(aggregate.totals.extratoBancario), totalFinancialBase);
+  const duplicatesShare = pct(aggregate.totals.duplicatas, totalFinancialBase);
+
+  const executiveNarrative = parsed?.executiveSummary || (
+    pressure > 0
+      ? `A leitura consolidada da base histórica indica pressão financeira sobre o projeto ${project.name}, com contas a pagar superiores às contas a receber no recorte enviado. O cenário sugere necessidade de maior disciplina de caixa, reforço de governança financeira e revisão da estratégia de funding/recebíveis.`
+      : `A leitura consolidada da base histórica do projeto ${project.name} não aponta, neste momento, pressão relevante de caixa pela comparação simples entre contas a receber e contas a pagar. Ainda assim, a consistência final do diagnóstico depende da ampliação e validação completa das bases históricas.`
+  );
+
+  const premiumParagraphs = [
+    `O presente diagnóstico situacional foi elaborado a partir das informações cadastrais do projeto, das bases históricas carregadas no Ironcore e dos sinais operacionais atualmente registrados na plataforma. O objetivo deste material é consolidar uma leitura executiva inicial do negócio, destacando padrões financeiros, potenciais desvios, riscos percebidos e ações macro sugeridas para aprofundamento da gestão.`,
+    pressure > 0
+      ? `Na consolidação histórica disponível, observa-se um nível de pressão financeira que merece atenção prioritária, uma vez que o volume agregado de contas a pagar supera o montante de contas a receber. Em contextos como este, a previsibilidade de caixa, o tratamento de passivos e a disciplina na rotina de validação operacional passam a ser fatores centrais para estabilização da operação.`
+      : `Na consolidação histórica disponível, a relação entre contas a receber e contas a pagar ainda não evidencia, por si só, deterioração material do caixa. Mesmo assim, a governança do projeto deve avançar para elevar a confiabilidade das análises, ampliar a cobertura documental e transformar o diagnóstico em rotinas consistentes de acompanhamento e tomada de decisão.` ,
+    `Do ponto de vista de maturidade operacional, o projeto já possui base suficiente para produzir leitura gerencial, porém o valor do entregável aumenta à medida que a cobertura histórica se expande, os dados são validados por origem e o fluxo de execução do Ironcore passa a refletir integralmente a rotina pretendida de implementação, operação diária e fechamento.`
+  ];
 
   const macroActions = [
     {
@@ -90,16 +120,30 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
     },
   ];
 
+  const analysisRows = [
+    ["Faturamento consolidado", br(aggregate.totals.faturamento), aggregate.totals.faturamento > 0 ? "A base evidencia histórico de faturamento suficiente para leitura inicial de performance e escala." : "Sem faturamento histórico identificado na base atual."],
+    ["Contas a receber", br(aggregate.totals.contasReceber), aggregate.totals.contasReceber > 0 ? "Os recebíveis históricos estão materializados e podem sustentar análise de liquidez e funding." : "Sem recebíveis históricos relevantes para suportar leitura de liquidez."],
+    ["Contas a pagar", br(aggregate.totals.contasPagar), aggregate.totals.contasPagar > 0 ? "Os passivos operacionais aparecem de forma relevante e influenciam diretamente a pressão de caixa." : "Sem passivos históricos relevantes mapeados na base atual."],
+    ["Extrato bancário", br(aggregate.totals.extratoBancario), aggregate.totals.extratoBancario !== 0 ? "Há movimento bancário histórico capturado, útil para validação de consistência do fluxo." : "O extrato histórico ainda está ausente ou fraco na consolidação."],
+    ["Duplicatas", br(aggregate.totals.duplicatas), aggregate.totals.duplicatas > 0 ? "Existe sinal de antecipação/duplicatas na base, o que impacta análise de funding e custo financeiro." : "Não há materialidade relevante de duplicatas na base enviada."],
+  ];
+
   return (
     <AppShell user={user} title="Projeto · Diagnóstico Histórico Executivo" subtitle="Entregável situacional consolidado a partir do cadastro e das bases históricas">
+      <div className="report-print-only mb-4 text-sm">
+        <div className="font-semibold">Diagnóstico Histórico Executivo · {project.name}</div>
+        <div>{project.legal_name} · CNPJ {project.cnpj}</div>
+      </div>
+
       <section className="card mb-4">
         <div className="section-head">
           <h2 className="title">Dados da empresa</h2>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap report-no-print">
             <Link href={`/projetos/${id}/fluxo-trabalho`} className="pill">Fluxo de Trabalho</Link>
             <form action={`/api/projects/${id}/historical-diagnosis/run`} method="post">
               <button type="submit" className="badge py-2 px-3 cursor-pointer">Atualizar diagnóstico</button>
             </form>
+            <PrintButton />
           </div>
         </div>
 
@@ -113,6 +157,16 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
         </div>
       </section>
 
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Resumo executivo</h2><span className="kpi-chip">Leitura premium</span></div>
+        <div className="text-sm text-slate-300 whitespace-pre-wrap">{executiveNarrative}</div>
+        <div className="grid md:grid-cols-3 gap-3 mt-4 text-sm text-slate-300">
+          {premiumParagraphs.map((paragraph, idx) => (
+            <div key={idx} className="rounded-lg border border-slate-800 p-3">{paragraph}</div>
+          ))}
+        </div>
+      </section>
+
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Faturamento histórico consolidado</div><div className="text-lg font-semibold mt-1">{br(aggregate.totals.faturamento)}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Contas a receber</div><div className="text-lg font-semibold mt-1">{br(aggregate.totals.contasReceber)}</div></div>
@@ -121,24 +175,62 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
       </section>
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Uploads históricos</div><div className="text-lg font-semibold mt-1">{aggregate.totalUploads}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Alertas ativos</div><div className="text-lg font-semibold mt-1">{alerts.length}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Operações registradas</div><div className="text-lg font-semibold mt-1">{operations.length}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Margem proxy histórica</div><div className={`text-lg font-semibold mt-1 ${marginProxy < 0 ? "text-rose-300" : "text-emerald-300"}`}>{marginProxy.toFixed(1)}%</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Uploads históricos</div><div className="text-lg font-semibold mt-1">{aggregate.totalUploads}</div><div className="text-xs text-slate-500 mt-1">Cobertura por {coverageKinds} tipo(s)</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Alertas ativos</div><div className="text-lg font-semibold mt-1">{alerts.length}</div><div className="text-xs text-slate-500 mt-1">Riscos operacionais monitorados</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Operações registradas</div><div className="text-lg font-semibold mt-1">{operations.length}</div><div className="text-xs text-slate-500 mt-1">Funding bruto {br(grossOps)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Margem proxy histórica</div><div className={`text-lg font-semibold mt-1 ${marginProxy < 0 ? "text-rose-300" : "text-emerald-300"}`}>{marginProxy.toFixed(1)}%</div><div className="text-xs text-slate-500 mt-1">Diferença entre receber e pagar sobre faturamento</div></div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Comparativos visuais</h2><span className="kpi-chip">Visual executivo</span></div>
+        <div className="grid md:grid-cols-2 gap-4 mt-3 text-sm">
+          <div className="rounded-lg border border-slate-800 p-3">
+            <div className="font-medium mb-3">Composição da base financeira consolidada</div>
+            {[
+              ["Recebíveis", receivableShare, br(aggregate.totals.contasReceber)],
+              ["Pagamentos", payableShare, br(aggregate.totals.contasPagar)],
+              ["Extrato", bankShare, br(Math.abs(aggregate.totals.extratoBancario))],
+              ["Duplicatas", duplicatesShare, br(aggregate.totals.duplicatas)],
+            ].map(([label, value, raw]) => (
+              <div key={String(label)} className="mb-3 last:mb-0">
+                <div className="flex justify-between gap-2 text-xs mb-1"><span>{label}</span><span>{raw} · {n(Number(value))}%</span></div>
+                <div className="report-bar-track"><div className="report-bar-fill" style={{ width: `${value}%` }} /></div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-slate-800 p-3">
+            <div className="font-medium mb-3">Comparativo situacional</div>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between gap-2 text-xs mb-1"><span>Receber x Pagar</span><span>{br(aggregate.totals.contasReceber)} vs {br(aggregate.totals.contasPagar)}</span></div>
+                <div className="report-bar-track"><div className="report-bar-fill" style={{ width: `${pct(aggregate.totals.contasReceber, Math.max(aggregate.totals.contasReceber, aggregate.totals.contasPagar, 1))}%` }} /></div>
+              </div>
+              <div>
+                <div className="flex justify-between gap-2 text-xs mb-1"><span>Funding líquido x bruto</span><span>{br(netOps)} vs {br(grossOps)}</span></div>
+                <div className="report-bar-track"><div className="report-bar-fill" style={{ width: `${pct(netOps, Math.max(grossOps, 1))}%` }} /></div>
+              </div>
+              <div>
+                <div className="flex justify-between gap-2 text-xs mb-1"><span>Cobertura histórica</span><span>{coverageKinds} tipos mapeados</span></div>
+                <div className="report-bar-track"><div className="report-bar-fill" style={{ width: `${pct(coverageKinds, 8)}%` }} /></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="card mb-4">
         <div className="section-head"><h2 className="title">Indicadores gerais e pontos de atenção</h2><span className="kpi-chip">Big Numbers</span></div>
         <div className="grid md:grid-cols-3 gap-3 mt-3 text-sm">
           <div className="rounded-lg border border-slate-800 p-3">
-            <div className="text-slate-400 text-xs">TX configurada</div>
-            <div className="font-medium mt-1">{Number(finance.tx_percent || 0).toFixed(2)}%</div>
-            <div className="text-slate-500 text-xs mt-1">Float: {Number(finance.float_days || 0)} dias</div>
+            <div className="text-slate-400 text-xs">Configuração financeira base</div>
+            <div className="font-medium mt-1">TX {Number(finance.tx_percent || 0).toFixed(2)}%</div>
+            <div className="text-slate-500 text-xs mt-1">Float {Number(finance.float_days || 0)} dias · TAC {br(Number(finance.tac || 0))}</div>
           </div>
           <div className="rounded-lg border border-slate-800 p-3">
             <div className="text-slate-400 text-xs">Pressão histórica de caixa</div>
             <div className={`font-medium mt-1 ${pressure > 0 ? "text-rose-300" : "text-emerald-300"}`}>{br(pressure)}</div>
-            <div className="text-slate-500 text-xs mt-1">Diferença entre pagar e receber consolidados</div>
+            <div className="text-slate-500 text-xs mt-1">Diferença entre contas a pagar e contas a receber consolidadas</div>
           </div>
           <div className="rounded-lg border border-slate-800 p-3">
             <div className="text-slate-400 text-xs">Funding / operações</div>
@@ -150,7 +242,7 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
 
       <section className="card mb-4">
         <div className="section-head"><h2 className="title">Leitura situacional</h2><span className="kpi-chip">Diagnóstico</span></div>
-        <div className="mt-3 text-sm text-slate-300 whitespace-pre-wrap">{parsed?.executiveSummary || parsed?.diagnosis || project.project_summary || "Sem leitura situacional disponível ainda."}</div>
+        <div className="mt-3 text-sm text-slate-300 whitespace-pre-wrap">{parsed?.diagnosis || executiveNarrative || project.project_summary || "Sem leitura situacional disponível ainda."}</div>
       </section>
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
@@ -158,9 +250,9 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
           <div className="section-head"><h2 className="title">Riscos identificados</h2><span className="kpi-chip">Atenção</span></div>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
             {(parsed?.risks && parsed.risks.length > 0 ? parsed.risks : [
-              pressure > 0 ? "Contas a pagar historicamente superiores às contas a receber consolidadas." : "Sem pressão histórica material de caixa pela consolidação simples.",
-              aggregate.totalUploads < 4 ? "Cobertura histórica ainda parcial; ampliar a base enviada para leitura mais confiável." : "Base histórica com cobertura relevante para aprofundamento do diagnóstico.",
-              alerts.length > 0 ? `Existem ${alerts.length} alertas ativos exigindo correção operacional.` : "Sem alertas ativos relevantes no momento.",
+              pressure > 0 ? "Contas a pagar historicamente superiores às contas a receber consolidadas, sugerindo pressão sobre liquidez e priorização de tesouraria." : "Sem pressão histórica material de caixa pela consolidação simples atual.",
+              aggregate.totalUploads < 4 ? "Cobertura histórica ainda parcial; ampliar a base enviada para elevar qualidade e profundidade analítica." : "Base histórica com cobertura relevante para aprofundamento do diagnóstico.",
+              alerts.length > 0 ? `Existem ${alerts.length} alertas ativos exigindo correção operacional e acompanhamento gerencial.` : "Sem alertas ativos relevantes no momento.",
             ]).map((item, idx) => (
               <li key={idx}>• {item}</li>
             ))}
@@ -171,9 +263,9 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
           <div className="section-head"><h2 className="title">Recomendações</h2><span className="kpi-chip">Próximos passos</span></div>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
             {(parsed?.recommendations && parsed.recommendations.length > 0 ? parsed.recommendations : [
-              "Concluir a cobertura das categorias históricas definidas na implementação para fortalecer o diagnóstico.",
-              "Validar a consistência entre faturamento, extrato, contas a receber e contas a pagar antes da versão final do relatório.",
-              "Priorizar governança de caixa e funding se a pressão histórica permanecer positiva sobre o contas a pagar.",
+              "Concluir a cobertura das categorias históricas definidas na implementação para fortalecer o diagnóstico e elevar a confiabilidade dos comparativos.",
+              "Validar a consistência entre faturamento, extrato, contas a receber e contas a pagar antes da versão final do relatório executivo.",
+              "Priorizar governança de caixa, funding e rotina de validação diária caso a pressão histórica permaneça positiva sobre o contas a pagar.",
             ]).map((item, idx) => (
               <li key={idx}>• {item}</li>
             ))}
@@ -193,13 +285,7 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
               </tr>
             </thead>
             <tbody>
-              {[
-                ["Faturamento consolidado", br(aggregate.totals.faturamento), aggregate.totals.faturamento > 0 ? "Base com faturamento histórico carregado." : "Sem faturamento histórico identificado."],
-                ["Contas a receber", br(aggregate.totals.contasReceber), aggregate.totals.contasReceber > 0 ? "Recebíveis históricos capturados no consolidado." : "Sem recebíveis históricos relevantes."],
-                ["Contas a pagar", br(aggregate.totals.contasPagar), aggregate.totals.contasPagar > 0 ? "Passivos operacionais presentes na base histórica." : "Sem passivos históricos relevantes."],
-                ["Extrato bancário", br(aggregate.totals.extratoBancario), aggregate.totals.extratoBancario !== 0 ? "Movimento bancário histórico já aparece no consolidado." : "Extrato histórico ainda fraco/inexistente na base."],
-                ["Duplicatas", br(aggregate.totals.duplicatas), aggregate.totals.duplicatas > 0 ? "Há sinal de antecipação/duplicatas na base consolidada." : "Sem duplicatas históricas relevantes."],
-              ].map(([label, value, note]) => (
+              {analysisRows.map(([label, value, note]) => (
                 <tr key={String(label)} className="odd:bg-slate-900/30">
                   <td className="px-2 py-2 border-b border-slate-900">{label}</td>
                   <td className="px-2 py-2 border-b border-slate-900 text-right">{value}</td>
