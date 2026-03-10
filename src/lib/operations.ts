@@ -74,6 +74,15 @@ export type OperationDocument = {
   created_at: string;
 };
 
+export type OperationEvent = {
+  id: string;
+  event_type: string;
+  event_label: string;
+  payload: Record<string, unknown>;
+  actor_name: string | null;
+  created_at: string;
+};
+
 export type OperationTitle = {
   id: string;
   title_ref: string;
@@ -138,6 +147,17 @@ export async function listOperationDocuments(projectId: string, opId: string) {
   const q = await dbQuery<OperationDocument>(
     `select id, document_type, document_ref, note, created_at::text
      from operation_documents
+     where project_id=$1 and operation_id=$2
+     order by created_at desc`,
+    [projectId, opId]
+  );
+  return q.rows;
+}
+
+export async function listOperationEvents(projectId: string, opId: string) {
+  const q = await dbQuery<OperationEvent>(
+    `select id, event_type, event_label, payload, actor_name, created_at::text
+     from operation_events
      where project_id=$1 and operation_id=$2
      order by created_at desc`,
     [projectId, opId]
@@ -223,7 +243,18 @@ export async function createOperation(input: {
       input.createdBy,
     ]
   );
-  return { id: q.rows[0]?.id, netAmount: net, riskLevel };
+  const id = q.rows[0]?.id;
+  if (id) {
+    await addOperationEvent({
+      projectId: input.projectId,
+      operationId: id,
+      eventType: "operation_created",
+      eventLabel: "Operação criada",
+      payload: { modality: input.modality || input.opType, grossAmount: input.grossAmount, netAmount: net, riskLevel },
+      actorName: input.operatorName || null,
+    });
+  }
+  return { id, netAmount: net, riskLevel };
 }
 
 export async function updateOperationStatus(input: {
@@ -242,6 +273,14 @@ export async function updateOperationStatus(input: {
      where id=$1 and project_id=$2`,
     [input.opId, input.projectId, input.status, input.note || null, input.approverName || null]
   );
+  await addOperationEvent({
+    projectId: input.projectId,
+    operationId: input.opId,
+    eventType: "status_updated",
+    eventLabel: "Status da operação atualizado",
+    payload: { status: input.status, note: input.note || null },
+    actorName: input.approverName || null,
+  });
 }
 
 export async function addOperationComment(input: {
@@ -256,6 +295,14 @@ export async function addOperationComment(input: {
      values($1,$2,$3,$4,$5)`,
     [input.operationId, input.projectId, input.authorUserId, input.authorName, input.body]
   );
+  await addOperationEvent({
+    projectId: input.projectId,
+    operationId: input.operationId,
+    eventType: "comment_added",
+    eventLabel: "Comentário adicionado",
+    payload: { body: input.body },
+    actorName: input.authorName || null,
+  });
 }
 
 export async function addOperationDocument(input: {
@@ -271,6 +318,14 @@ export async function addOperationDocument(input: {
      values($1,$2,$3,$4,$5,$6)`,
     [input.operationId, input.projectId, input.documentType, input.documentRef, input.note || null, input.createdBy]
   );
+  await addOperationEvent({
+    projectId: input.projectId,
+    operationId: input.operationId,
+    eventType: "document_added",
+    eventLabel: "Documento adicionado",
+    payload: { documentType: input.documentType, documentRef: input.documentRef },
+    actorName: null,
+  });
 }
 
 export async function addOperationTitle(input: {
@@ -309,6 +364,14 @@ export async function addOperationTitle(input: {
       input.createdBy,
     ]
   );
+  await addOperationEvent({
+    projectId: input.projectId,
+    operationId: input.operationId,
+    eventType: "title_added",
+    eventLabel: "Título adicionado à carteira",
+    payload: { titleRef: input.titleRef, faceValue: input.faceValue, carteiraStatus: input.carteiraStatus },
+    actorName: null,
+  });
 }
 
 export async function updateOperationTitleStatus(input: {
@@ -318,14 +381,41 @@ export async function updateOperationTitleStatus(input: {
   paymentMethod?: string;
   note?: string;
 }) {
-  await dbQuery(
+  const q = await dbQuery<{ operation_id: string }>(
     `update operation_titles
      set carteira_status=$3,
          payment_method=coalesce(nullif($4,''), payment_method),
          note=coalesce(nullif($5,''), note),
          paid_at=case when $3='liquidado' then current_date else paid_at end
-     where project_id=$1 and id=$2`,
+     where project_id=$1 and id=$2
+     returning operation_id`,
     [input.projectId, input.titleId, input.carteiraStatus, input.paymentMethod || null, input.note || null]
+  );
+  const operationId = q.rows[0]?.operation_id;
+  if (operationId) {
+    await addOperationEvent({
+      projectId: input.projectId,
+      operationId,
+      eventType: "title_status_updated",
+      eventLabel: "Status do título atualizado",
+      payload: { titleId: input.titleId, carteiraStatus: input.carteiraStatus, paymentMethod: input.paymentMethod || null, note: input.note || null },
+      actorName: null,
+    });
+  }
+}
+
+export async function addOperationEvent(input: {
+  projectId: string;
+  operationId: string;
+  eventType: string;
+  eventLabel: string;
+  payload?: Record<string, unknown>;
+  actorName?: string | null;
+}) {
+  await dbQuery(
+    `insert into operation_events(operation_id, project_id, event_type, event_label, payload, actor_name)
+     values($1,$2,$3,$4,$5::jsonb,$6)`,
+    [input.operationId, input.projectId, input.eventType, input.eventLabel, JSON.stringify(input.payload || {}), input.actorName || null]
   );
 }
 

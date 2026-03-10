@@ -8,6 +8,7 @@ import {
   getOperationById,
   listOperationComments,
   listOperationDocuments,
+  listOperationEvents,
   listOperationTitles,
   OPERATION_STATUS_FLOW,
   OPERATION_TITLE_STATUS_OPTIONS,
@@ -35,10 +36,11 @@ export default async function OperationDetailPage({
   const onboardingComplete = isProjectOnboardingComplete(project);
   if (!onboardingComplete) return <AppShell user={user} title="Projeto · Operação"><div className="alert bad-bg">Onboarding incompleto.</div></AppShell>;
 
-  const [operation, comments, documents, titles, csrf] = await Promise.all([
+  const [operation, comments, documents, events, titles, csrf] = await Promise.all([
     getOperationById(project.id, opId),
     listOperationComments(project.id, opId),
     listOperationDocuments(project.id, opId),
+    listOperationEvents(project.id, opId),
     listOperationTitles(project.id, opId),
     ensureCsrfCookie(),
   ]);
@@ -185,10 +187,20 @@ export default async function OperationDetailPage({
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Histórico / observações</h2><span className="kpi-chip">Timeline</span></div>
+          <div className="section-head"><h2 className="title">Histórico / timeline de eventos</h2><span className="kpi-chip">Timeline</span></div>
           <div className="text-sm text-slate-300 whitespace-pre-wrap mt-2">{operation.notes || "Sem observações gerais."}</div>
           <div className="text-xs text-slate-500 mt-3">Última atualização: {operation.updated_at || operation.created_at}</div>
           {operation.approval_note ? <div className="alert muted-bg mt-3">Nota de aprovação/status: {operation.approval_note}</div> : null}
+          <div className="space-y-2 mt-3 text-sm">
+            {events.length === 0 ? <div className="alert muted-bg">Sem eventos ainda.</div> : null}
+            {events.map((event) => (
+              <div key={event.id} className="rounded-lg border border-slate-800 p-3">
+                <div className="text-xs text-slate-500">{event.created_at} · {event.actor_name || "sistema"}</div>
+                <div className="font-medium mt-1">{event.event_label}</div>
+                <div className="text-xs text-slate-400 mt-1 whitespace-pre-wrap">{JSON.stringify(event.payload, null, 2)}</div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="card">

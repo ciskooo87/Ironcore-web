@@ -100,6 +100,12 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <div className="metric"><div className="text-xs text-slate-400">A vencer</div><div className="text-lg font-semibold mt-1 text-emerald-300">{fidcPanel.aVencer.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
           <div className="metric"><div className="text-xs text-slate-400">Recompras</div><div className="text-lg font-semibold mt-1 text-amber-300">{fidcPanel.recompras.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
         </div>
+        <div className="grid md:grid-cols-4 gap-3 mt-4 text-sm">
+          <div className="metric"><div className="text-xs text-slate-400">Carteira via operações</div><div className="text-lg font-semibold mt-1">{fidcPanel.carteiraOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Vencido via operações</div><div className="text-lg font-semibold mt-1 text-rose-300">{fidcPanel.vencidoOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">A vencer via operações</div><div className="text-lg font-semibold mt-1 text-emerald-300">{fidcPanel.aVencerOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+          <div className="metric"><div className="text-xs text-slate-400">Recompra via operações</div><div className="text-lg font-semibold mt-1 text-amber-300">{fidcPanel.recompraOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
+        </div>
         <div className="grid md:grid-cols-2 gap-3 mt-4 text-sm">
           <div className="card !p-3">
             <div className="font-medium mb-2">Segregação por modalidade</div>
@@ -115,6 +121,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <div className="space-y-2 text-slate-300">
               <div>• Último retorno: <b>{fidcPanel.latestDate || "-"}</b></div>
               <div>• Risco concentrado sinalizado: <b>{fidcPanel.riscoConcentrado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b></div>
+              <div>• Operações/títulos vinculados: <b>{fidcPanel.operacoesVinculadas}</b></div>
               <div>• Última observação: <b>{fidcPanel.latestNotes || "sem nota"}</b></div>
             </div>
           </div>
