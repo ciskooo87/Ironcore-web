@@ -26,11 +26,20 @@ npm run seed:users
 
 ## 4) Build e execução
 ```bash
-cd ironcore-web
+cd /home/openclaw/.openclaw/workspace/Ironcore-web
 npm ci
 npm run build
 npm run start -- --hostname 127.0.0.1 --port 3001
 ```
+
+### Nota operacional importante
+- Em produção, o path do app deve bater **exatamente** com o `WorkingDirectory` do serviço systemd.
+- Neste host, o diretório correto é `/home/openclaw/.openclaw/workspace/Ironcore-web`.
+- Linux é case-sensitive: `Ironcore-web` e `ironcore-web` são caminhos diferentes.
+- Se o domínio responder `502`, validar primeiro:
+  - `systemctl status ironcore-web.service`
+  - `journalctl -u ironcore-web.service -n 100 --no-pager`
+  - se o serviço está subindo em `127.0.0.1:3001`
 
 ## 5) Nginx / domínio
 - Garantir proxy para `127.0.0.1:3001`
