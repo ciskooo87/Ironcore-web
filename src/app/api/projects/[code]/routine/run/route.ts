@@ -82,15 +82,22 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
 
   // Diagnóstico IA (DeepSeek) acoplado ao fluxo de risco/SOP — best effort
   try {
+    const summary = out.summary as Record<string, any>;
     const context = {
       projectCode: project.code,
       projectName: project.name,
       businessDate,
       routineStatus: out.status,
-      summary: out.summary,
-      alertLevel: out.alertLevel,
-      riskPanelStatus: out.summary?.riskPanel?.status,
-      todayDecision: out.summary?.dailyDecision,
+      summary,
+      alertLevel: summary?.alertsTriggered?.some?.((a: any) => a?.severity === "critical" || a?.block === true)
+        ? "critical"
+        : out.status === "blocked"
+          ? "high"
+          : out.status === "warning"
+            ? "medium"
+            : "low",
+      riskPanelStatus: summary?.reconciliation?.status,
+      todayDecision: summary?.aiAnalysis?.recommendation,
     };
 
     const ai = await deepseekChat([
