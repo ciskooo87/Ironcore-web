@@ -69,7 +69,7 @@ export async function listProjectsForUser(email: string, role: string) {
 
 export async function getProjectByCode(code: string) {
   try {
-    const q = await dbQuery<Project>(`select ${BASE_SELECT} from projects where code = $1`, [code]);
+    const q = await dbQuery<Project>(`select ${BASE_SELECT} from projects where code::text = $1`, [String(code)]);
     return q.rows[0] || null;
   } catch {
     return null;
@@ -131,9 +131,9 @@ export async function updateProjectByCode(code: string, input: {
      set name=$2, cnpj=$3, legal_name=$4, segment=$5, partners=$6::jsonb, timezone=$7,
          account_plan=$8::jsonb, project_summary=$9, financial_profile=$10::jsonb, supplier_classes=$11::jsonb,
          updated_at=now()
-     where code=$1`,
+     where code::text=$1`,
     [
-      code,
+      String(code),
       input.name,
       input.cnpj,
       input.legalName,
