@@ -15,6 +15,15 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   return (
     <AppShell user={user} title="Projeto · Cadastro" subtitle="Dados-base e governança do projeto">
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Importar base de cadastro</h2><span className="kpi-chip">XLSX</span></div>
+        <form action={`/api/projects/${id}/cadastro/import`} method="post" encType="multipart/form-data" className="flex gap-2 flex-wrap items-center mt-3 text-sm">
+          <input type="file" name="file" accept=".xlsx,.xls" required className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <button type="submit" className="badge py-2 px-3 cursor-pointer">Importar base</button>
+        </form>
+        <div className="text-xs text-slate-400 mt-2">Formato esperado: aba <b>fornecedores</b> + aba <b>Plano de Contas</b>.</div>
+      </section>
+
       <section className="card">
         <div className="section-head"><h2 className="title">Dados mestres e parâmetros financeiros</h2><span className="kpi-chip">Setup crítico</span></div>
         {project ? (
@@ -89,7 +98,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           </div>
         ) : null}
 
-        {query.saved ? <div className="alert ok-bg mt-3">Cadastro salvo com sucesso.</div> : null}
+        {query.saved ? <div className="alert ok-bg mt-3">{query.saved === 'import' ? 'Base de cadastro importada com sucesso.' : 'Cadastro salvo com sucesso.'}</div> : null}
         {query.error ? <div className="alert bad-bg mt-3">{query.error === "onboarding_incomplete" ? "Onboarding incompleto. Preencha todo o checklist antes de avançar para as próximas etapas." : `Falha ao salvar (${query.error}).`}</div> : null}
       </section>
     </AppShell>
