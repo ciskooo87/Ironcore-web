@@ -80,11 +80,14 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Risco assistido por IA</h2><span className="kpi-chip">Sugestão</span></div>
+        <div className="section-head"><h2 className="title">Análise de risco com IA</h2><span className="kpi-chip">Relato → sugestão</span></div>
+        <div className="text-sm text-slate-400 mt-2">Fluxo recomendado: escreva o relato do risco, clique em <b>Analisar com IA</b> e depois aprove ou descarte a sugestão gerada.</div>
         <form action={`/api/projects/${id}/risk-ai/generate`} method="post" className="grid md:grid-cols-3 gap-2 text-sm mt-3">
-          <textarea name="report" required placeholder="Relato do risco / contexto operacional" className="md:col-span-2 min-h-24 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="opportunity" placeholder="oportunidade associada" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <button type="submit" className="badge py-2 px-3 cursor-pointer">Gerar sugestão IA</button>
+          <textarea name="report" required placeholder="Relato do risco / contexto operacional" className="md:col-span-2 min-h-32 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <div className="space-y-2">
+            <input name="opportunity" placeholder="oportunidade associada" className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <button type="submit" className="badge py-2 px-3 cursor-pointer w-full">Analisar com IA</button>
+          </div>
         </form>
         <div className="mt-3 space-y-2 text-sm">
           {suggestions.length ? suggestions.map((s) => {
@@ -102,7 +105,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                     <button type="submit" name="action" value="approve" className="pill">Aprovar e virar alerta</button>
                     <button type="submit" name="action" value="discard" className="pill">Descartar</button>
                   </form>
-                ) : null}
+                ) : (
+                  <div className="mt-3 text-xs text-slate-500">Status da sugestão: {s.status}</div>
+                )}
               </div>
             );
           }) : <div className="alert muted-bg">Sem sugestões IA ainda.</div>}
@@ -160,6 +165,11 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Cadastro manual de alerta</h2><span className="kpi-chip">Opcional</span></div>
+        <div className="text-sm text-slate-400 mt-2">Use esta área só quando quiser criar o alerta manualmente. Para o fluxo padrão, use a análise de risco com IA acima.</div>
       </section>
 
       <section className="card">
