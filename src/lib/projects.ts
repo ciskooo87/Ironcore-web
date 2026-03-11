@@ -69,7 +69,9 @@ export async function listProjectsForUser(email: string, role: string) {
 
 export async function getProjectByCode(code: string) {
   try {
-    const q = await dbQuery<Project>(`select ${BASE_SELECT} from projects where code::text = $1`, [String(code)]);
+    const normalized = String(code).trim();
+    const numeric = normalized.match(/^0+\d+$/) ? String(Number(normalized)) : normalized;
+    const q = await dbQuery<Project>(`select ${BASE_SELECT} from projects where code::text = $1 or code::text = $2`, [normalized, numeric]);
     return q.rows[0] || null;
   } catch {
     return null;
@@ -126,14 +128,17 @@ export async function updateProjectByCode(code: string, input: {
   financialProfile: FinancialProfile;
   supplierClasses: SupplierClass[];
 }) {
+  const normalized = String(code).trim();
+  const numeric = normalized.match(/^0+\d+$/) ? String(Number(normalized)) : normalized;
   await dbQuery(
     `update projects
-     set name=$2, cnpj=$3, legal_name=$4, segment=$5, partners=$6::jsonb, timezone=$7,
-         account_plan=$8::jsonb, project_summary=$9, financial_profile=$10::jsonb, supplier_classes=$11::jsonb,
+     set name=$3, cnpj=$4, legal_name=$5, segment=$6, partners=$7::jsonb, timezone=$8,
+         account_plan=$9::jsonb, project_summary=$10, financial_profile=$11::jsonb, supplier_classes=$12::jsonb,
          updated_at=now()
-     where code::text=$1`,
+     where code::text=$1 or code::text=$2`,
     [
-      String(code),
+      normalized,
+      numeric,
       input.name,
       input.cnpj,
       input.legalName,
