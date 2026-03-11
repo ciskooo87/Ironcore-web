@@ -97,8 +97,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                 <div className="font-medium">{String(resp.title || 'Sugestão IA')}</div>
                 <div className="text-xs text-slate-500 mt-1">{s.created_at} · {s.provider || '-'} · {s.model || '-'} · {s.status}</div>
                 <div className="text-sm text-slate-300 mt-2">{String(resp.rationale || '-')}</div>
-                <div className="text-xs text-slate-400 mt-2">Severidade: {String(resp.severity || '-')} · blockFlow: {String(resp.blockFlow || false)}</div>
+                <div className="text-xs text-slate-400 mt-2">Severidade: {String(resp.severity || '-')} · blockFlow: {String(resp.blockFlow || false)} · origem: {String(resp.source || '-')}</div>
                 <div className="mt-2 text-xs text-slate-400">Recomendações: {Array.isArray(resp.recommendations) ? resp.recommendations.join(' · ') : '-'}</div>
+                {resp.ai_error ? <div className="mt-2 text-xs text-amber-300">Falha IA capturada: {String(resp.ai_error)}</div> : null}
                 {s.status === 'suggested' ? (
                   <form action={`/api/projects/${id}/risk-ai/apply`} method="post" className="flex gap-2 flex-wrap mt-3">
                     <input type="hidden" name="suggestion_id" value={s.id} />

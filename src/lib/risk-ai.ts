@@ -1,6 +1,33 @@
 import { deepseekChat } from "@/lib/deepseek";
 import { dbQuery } from "@/lib/db";
 
+function extractJsonObject(raw: string) {
+  const trimmed = raw.trim();
+  if (!trimmed) throw new Error("empty_ai_response");
+  try {
+    return JSON.parse(trimmed);
+  } catch {}
+  const match = trimmed.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("json_not_found");
+  return JSON.parse(match[0]);
+}
+
+function normalizeRiskResponse(obj: any, fallbackReport: string) {
+  const title = String(obj?.title || obj?.risk || obj?.nome || "Risco identificado pela IA").trim();
+  const severityRaw = String(obj?.severity || obj?.level || obj?.criticidade || "medium").toLowerCase();
+  const severity = severityRaw.includes("crit") || severityRaw.includes("high") || severityRaw.includes("alto")
+    ? "critical"
+    : severityRaw.includes("low") || severityRaw.includes("baixo")
+      ? "low"
+      : "medium";
+  const blockFlow = Boolean(obj?.blockFlow ?? obj?.block_flow ?? obj?.bloqueia_fluxo ?? severity === "critical");
+  const rationale = String(obj?.rationale || obj?.analysis || obj?.justificativa || fallbackReport).trim();
+  const recommendations = Array.isArray(obj?.recommendations)
+    ? obj.recommendations.map((x: unknown) => String(x)).filter(Boolean)
+    : String(obj?.recommendations || obj?.recommendation || "").split(/\n|;/).map((x) => x.trim()).filter(Boolean);
+  return { title, severity, blockFlow, rationale, recommendations };
+}
+
 export type RiskSuggestion = {
   id: string;
   provider: string | null;
@@ -31,25 +58,32 @@ export async function generateRiskSuggestion(input: {
     title: 'Risco operacional sugerido',
     severity: 'medium',
     blockFlow: false,
-    rationale: 'Sugestão fallback baseada no relato informado.',
+    rationale: `Fallback: não foi possível estruturar a resposta da IA para o relato informado (${input.report.slice(0, 240)}).`,
     recommendations: ['Revisar manualmente o relato e validar se o risco deve virar alerta formal.'],
+    source: 'fallback',
   };
 
   try {
     const out = await deepseekChat([
       {
         role: 'system',
-        content: 'Você é o motor de risco do Ironcore. Responda apenas JSON com title, severity, blockFlow, rationale e recommendations.',
+        content: 'Você é o motor de risco do Ironcore. Analise o relato e responda APENAS um JSON válido com os campos: title, severity, blockFlow, rationale, recommendations. severity deve ser low, medium ou critical. recommendations deve ser array de strings.',
       },
       {
         role: 'user',
-        content: `Analise o contexto e sugira um risco para o projeto:\n${JSON.stringify(prompt)}`,
+        content: `Analise o contexto operacional abaixo e sugira UM risco principal claro, específico e aplicável.\n\nProjeto: ${input.projectCode}\nResumo: ${input.summary}\nRelato: ${input.report}\nOportunidade: ${input.opportunity || '-'}\n\nResponda apenas JSON.`,
       },
     ]);
     provider = 'deepseek';
     model = out.model;
-    response = JSON.parse(out.content || '{}');
-  } catch {}
+    const parsed = extractJsonObject(out.content || '');
+    response = { ...normalizeRiskResponse(parsed, input.report), source: 'deepseek' };
+  } catch (error) {
+    response = {
+      ...response,
+      ai_error: error instanceof Error ? error.message : String(error),
+    };
+  }
 
   const q = await dbQuery<{ id: string }>(
     `insert into risk_ai_suggestions(project_id, provider, model, prompt, response, created_by)
