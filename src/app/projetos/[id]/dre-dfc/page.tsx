@@ -44,7 +44,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   return (
     <AppShell user={user} title="Projeto · DRE / DFC" subtitle="Painel executivo da alimentação contábil: gerar, ler e usar a camada financeira para fechamento e diretoria.">
       {query.saved ? <div className="alert ok-bg mb-4">Alimentação contábil gerada.</div> : null}
-      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Não foi possível gerar a visão contábil agora. Detalhe técnico: {query.error}</div> : null}
 
       <ProductHero
         eyebrow="visão contábil executiva"

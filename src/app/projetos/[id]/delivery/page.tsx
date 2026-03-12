@@ -37,7 +37,7 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
   return (
     <AppShell user={user} title="Projeto · Delivery" subtitle="Cockpit de entrega: acompanhar o que saiu, o que falhou e onde agir rápido para garantir comunicação com o cliente.">
       {query.saved ? <div className="alert ok-bg mb-3">Retry executado.</div> : null}
-      {query.error ? <div className="alert bad-bg mb-3">Erro: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-3">Não foi possível processar a entrega agora. Detalhe técnico: {query.error}</div> : null}
 
       <ProductHero
         eyebrow="monitor de entrega"

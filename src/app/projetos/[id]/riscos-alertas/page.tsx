@@ -50,7 +50,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <StatusPill label={flowBlocking > 0 ? `${flowBlocking} bloqueia fluxo` : 'Sem bloqueio de fluxo'} tone={flowBlocking > 0 ? 'warn' : 'good'} />
       </ProductHero>
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === 'ai' ? 'Sugestão de risco gerada.' : query.saved === 'ai_apply' ? 'Sugestão processada.' : 'Alerta salvo.'}</div> : null}
-      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Não foi possível processar o alerta agora. Detalhe técnico: {query.error}</div> : null}
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <MetricCard label="Alertas abertos" value={alerts.length} tone={alerts.length > 0 ? 'warn' : 'good'} />

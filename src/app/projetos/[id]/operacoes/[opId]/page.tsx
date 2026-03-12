@@ -135,7 +135,7 @@ export default async function OperationDetailPage({
           <button type="submit" className="badge py-2 px-3 cursor-pointer">Adicionar título</button>
         </form>
         {query.saved ? <div className="alert ok-bg mb-3">{query.saved === 'comment' ? 'Comentário salvo.' : query.saved === 'document' ? 'Documento salvo.' : query.saved === 'title' ? 'Título salvo.' : query.saved === 'title_status' ? 'Status do título atualizado.' : 'Atualizado.'}</div> : null}
-        {query.error ? <div className="alert bad-bg mb-3">Erro: {query.error}</div> : null}
+        {query.error ? <div className="alert bad-bg mb-3">Não foi possível atualizar esta operação agora. Detalhe técnico: {query.error}</div> : null}
         <div className="table-wrap">
           <table className="min-w-[1800px] text-xs">
             <thead className="bg-slate-900/80"><tr><th className="text-left px-2 py-2 border-b border-slate-800">Título</th><th className="text-left px-2 py-2 border-b border-slate-800">Sacado</th><th className="text-left px-2 py-2 border-b border-slate-800">Documento</th><th className="text-right px-2 py-2 border-b border-slate-800">Face</th><th className="text-right px-2 py-2 border-b border-slate-800">Presente</th><th className="text-left px-2 py-2 border-b border-slate-800">Vencimento</th><th className="text-left px-2 py-2 border-b border-slate-800">Liquidação esperada</th><th className="text-left px-2 py-2 border-b border-slate-800">Baixa</th><th className="text-left px-2 py-2 border-b border-slate-800">Status carteira</th><th className="text-left px-2 py-2 border-b border-slate-800">Observação</th><th className="text-left px-2 py-2 border-b border-slate-800">Ação</th></tr></thead>

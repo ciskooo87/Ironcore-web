@@ -98,7 +98,7 @@ export default async function Page({
           </div>
         </div>
         {query.saved ? <div className="alert ok-bg mt-3">Operação atualizada/registrada.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
+        {query.error ? <div className="alert bad-bg mt-3">Não foi possível salvar a operação agora. Detalhe técnico: {query.error}</div> : null}
       </section>
 
       <section className="card mb-4">

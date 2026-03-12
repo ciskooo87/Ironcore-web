@@ -43,7 +43,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         </form>
       </ProductHero>
       {query.saved ? <div className="alert ok-bg mb-4">Conciliação executada.</div> : null}
-      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Não foi possível concluir a conciliação agora. Detalhe técnico: {query.error}</div> : null}
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Última execução</div><div className="text-lg font-semibold mt-1">{latest?.business_date || "sem execução"}</div><div className="text-xs text-cyan-300 mt-1">status: {latest?.status || "-"}</div></div>
