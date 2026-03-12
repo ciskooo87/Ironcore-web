@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { EmptyState, MetricCard, ProductHero } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -38,20 +39,13 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
       {query.saved ? <div className="alert ok-bg mb-3">Retry executado.</div> : null}
       {query.error ? <div className="alert bad-bg mb-3">Erro: {query.error}</div> : null}
 
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              monitor de entrega
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Delivery precisa mostrar se a comunicação saiu, falhou ou foi descartada — e deixar o retry óbvio.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Esta tela vira centro de controle de envio por canal, com histórico, filtros e retomada rápida das falhas.
-            </p>
-          </div>
-          <a className="badge px-4 py-2" href={`/api/projects/${id}/delivery/export?${exportQs.toString()}`}>Exportar CSV</a>
-        </div>
-      </section>
+      <ProductHero
+        eyebrow="monitor de entrega"
+        title="Delivery precisa mostrar se a comunicação saiu, falhou ou foi descartada — e deixar o retry óbvio."
+        description="Esta tela vira centro de controle de envio por canal, com histórico, filtros e retomada rápida das falhas."
+      >
+        <a className="badge px-4 py-2" href={`/api/projects/${id}/delivery/export?${exportQs.toString()}`}>Exportar CSV</a>
+      </ProductHero>
 
       <section className="grid md:grid-cols-3 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Sent</div><div className="text-xl font-semibold mt-1 text-emerald-200">{sent}</div></div>

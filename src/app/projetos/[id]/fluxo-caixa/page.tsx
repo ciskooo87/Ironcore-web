@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -48,22 +49,13 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   return (
     <AppShell user={user} title="Projeto · Fluxo de Caixa" subtitle="Cockpit financeiro de curto prazo: movimento do dia, projeção de 90 dias e decisão rápida para evitar ruptura de caixa.">
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              caixa e projeção
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Fluxo de caixa precisa responder rápido se o projeto atravessa os próximos 90 dias ou se vai romper.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Esta tela junta movimento do dia, leitura prospectiva e resposta sugerida para o time agir antes da ruptura acontecer.
-            </p>
-          </div>
-          <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${toneClasses(!selected.ruptureDate)}`}>
-            {selected.ruptureDate ? `Ruptura prevista em ${selected.ruptureDate}` : `Sem ruptura prevista no cenário ${scenario}`}
-          </div>
-        </div>
-      </section>
+      <ProductHero
+        eyebrow="caixa e projeção"
+        title="Fluxo de caixa precisa responder rápido se o projeto atravessa os próximos 90 dias ou se vai romper."
+        description="Esta tela junta movimento do dia, leitura prospectiva e resposta sugerida para o time agir antes da ruptura acontecer."
+      >
+        <StatusPill label={selected.ruptureDate ? `Ruptura prevista em ${selected.ruptureDate}` : `Sem ruptura prevista no cenário ${scenario}`} tone={selected.ruptureDate ? "bad" : "good"} />
+      </ProductHero>
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Entradas do dia</div><div className="text-xl font-semibold mt-1">{brl((move.contas_receber || 0) + (move.duplicatas || 0))}</div></div>

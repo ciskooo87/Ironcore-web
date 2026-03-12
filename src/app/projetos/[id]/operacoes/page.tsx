@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { EmptyState, MetricCard, ProductHero } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";

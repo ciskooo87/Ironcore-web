@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { isProjectOnboardingComplete, listProjectsForUser } from "@/lib/projects";
 import { listSopSteps } from "@/lib/sop";
@@ -66,25 +67,18 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
 
   return (
     <AppShell user={user} title="Projetos" subtitle="Carteira viva do Ironcore: onde cada projeto está, o que trava e qual é o próximo passo sem obrigar você a abrir módulo por módulo.">
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              carteira do produto
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Cada projeto precisa se comportar como uma sala de guerra com contexto, status e próxima ação.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Esta página deixa de ser listagem bruta e vira carteira ativa do Ironcore: segmentação, prioridade, gating e entrada clara para execução.
-            </p>
-          </div>
-          <div className="grid min-w-[280px] grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Projetos</div><div className="mt-1 text-2xl font-semibold text-white">{projectCards.length}</div></div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Bloqueados</div><div className="mt-1 text-2xl font-semibold text-rose-200">{blockedCount}</div></div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Em atenção</div><div className="mt-1 text-2xl font-semibold text-amber-200">{warningCount}</div></div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Segmentos</div><div className="mt-1 text-2xl font-semibold text-cyan-100">{segments.length}</div></div>
-          </div>
+      <ProductHero
+        eyebrow="carteira do produto"
+        title="Cada projeto precisa se comportar como uma sala de guerra com contexto, status e próxima ação."
+        description="Esta página deixa de ser listagem bruta e vira carteira ativa do Ironcore: segmentação, prioridade, gating e entrada clara para execução."
+      >
+        <div className="grid min-w-[280px] grid-cols-2 gap-3 text-sm">
+          <MetricCard label="Projetos" value={projectCards.length} />
+          <MetricCard label="Bloqueados" value={blockedCount} tone="bad" />
+          <MetricCard label="Em atenção" value={warningCount} tone="warn" />
+          <MetricCard label="Segmentos" value={segments.length} tone="info" />
         </div>
-      </section>
+      </ProductHero>
 
       {(user.role === "admin_master" || user.role === "head") ? (
         <section className="card mb-4">
