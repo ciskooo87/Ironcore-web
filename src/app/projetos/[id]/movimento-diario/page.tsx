@@ -13,6 +13,12 @@ function br(v: unknown) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function toneClasses(status: string) {
+  if (status === "bloqueado") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
+  if (status === "atencao") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
+  return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
+}
+
 export default async function MovimentoDiarioPage({
   params,
   searchParams,
@@ -41,22 +47,43 @@ export default async function MovimentoDiarioPage({
   const op = (s.operationalDecision || {}) as Record<string, any>;
   const fidc = (op.fidc || {}) as Record<string, any>;
   const actions: string[] = Array.isArray(op.suggestedActions) ? op.suggestedActions : [];
+  const blockingReasons: string[] = Array.isArray(op.blockingReasons) ? op.blockingReasons : [];
+  const releaseSignals: string[] = Array.isArray(op.releaseSignals) ? op.releaseSignals : [];
+  const recommendation = String((s.aiAnalysis as any)?.recommendation || op.recommendation || "Sem recomendação executiva ainda.");
   const csrf = await ensureCsrfCookie();
 
   return (
-    <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Leitura executiva da decisão operacional do dia">
+    <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Cockpit de decisão do dia: aprovar, ajustar ou bloquear com contexto operacional claro, não só com números jogados na tela.">
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : query.saved === "action_update" ? "Ação atualizada." : "Atualizado."}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error === "blocked_state_requires_action" ? "A rotina está bloqueada. Não dá para aprovar o movimento sem tratar o bloqueio ou enviar para ajuste." : query.error}</div> : null}
+
+      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              decisão do dia
+            </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">O movimento diário precisa deixar evidente se a operação pode seguir ou se deve parar.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Esta tela é o coração operacional do produto: recomendação do motor, motivos do bloqueio, sinais de liberação, validação humana e ações executadas.
+            </p>
+          </div>
+          <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${toneClasses(String(op.gatingStatus || "liberado"))}`}>
+            gating: {String(op.gatingStatus || "sem leitura")}
+          </div>
+        </div>
+      </section>
 
       <section className="flex gap-2 flex-wrap mb-4">
         <Link href={`/projetos/${id}/rotina-diaria`} className="pill">Rotina Diária</Link>
         <Link href={`/projetos/${id}/operacoes`} className="pill">Operações</Link>
         <Link href={`/projetos/${id}/riscos-alertas`} className="pill">Painel de Risco</Link>
+        <Link href={`/projetos/${id}/fluxo-trabalho`} className="pill">Fluxo</Link>
       </section>
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Status decisório</div><div className="text-lg font-semibold mt-1">{String(op.gatingStatus || '-')}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Pend. aprovação</div><div className="text-lg font-semibold mt-1">{String(op.opPendingApproval ?? '-')}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Status decisório</div><div className="text-lg font-semibold mt-1">{String(op.gatingStatus || "-")}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Pend. aprovação</div><div className="text-lg font-semibold mt-1">{String(op.opPendingApproval ?? "-")}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Carteira vencida</div><div className="text-lg font-semibold mt-1 text-rose-300">{br(op.carteiraVencida)}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Recompra</div><div className="text-lg font-semibold mt-1 text-amber-300">{br(op.carteiraRecompra)}</div></div>
       </section>
@@ -68,31 +95,33 @@ export default async function MovimentoDiarioPage({
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Recomendação executiva</h2><span className="kpi-chip">Hoje</span></div>
-        <div className="text-sm text-slate-300 mt-3 whitespace-pre-wrap">{String((s.aiAnalysis as any)?.recommendation || '-')}</div>
+        <div className="section-head"><h2 className="title">Recomendação executiva</h2><span className="kpi-chip">decisão guiada</span></div>
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/20 p-4">
+          <div className="text-sm text-slate-300">{recommendation}</div>
+        </div>
       </section>
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Gatilhos de bloqueio</h2><span className="kpi-chip">Risco</span></div>
+          <div className="section-head"><h2 className="title">Motivos de bloqueio</h2><span className="kpi-chip">risco</span></div>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {Array.isArray(op.blockingReasons) && op.blockingReasons.length ? op.blockingReasons.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• sem bloqueios ativos</li>}
+            {blockingReasons.length ? blockingReasons.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• sem bloqueios ativos</li>}
           </ul>
         </section>
         <section className="card">
-          <div className="section-head"><h2 className="title">Sinais de liberação</h2><span className="kpi-chip">Follow-up</span></div>
+          <div className="section-head"><h2 className="title">Sinais de liberação</h2><span className="kpi-chip">follow-up</span></div>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {Array.isArray(op.releaseSignals) && op.releaseSignals.length ? op.releaseSignals.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• nenhum sinal forte de liberação</li>}
+            {releaseSignals.length ? releaseSignals.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• nenhum sinal forte de liberação</li>}
           </ul>
         </section>
       </section>
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Validação humana</h2><span className="kpi-chip">Workflow</span></div>
-          <form action={`/api/projects/${id}/movement/validate`} method="post" className="space-y-2 mt-3 text-sm">
+          <div className="section-head"><h2 className="title">Validação humana</h2><span className="kpi-chip">workflow</span></div>
+          <form action={`/api/projects/${id}/movement/validate`} method="post" className="space-y-3 mt-3 text-sm">
             <input type="hidden" name="csrf_token" value={csrf} />
-            <input type="hidden" name="routine_run_id" value={latest?.id || ''} />
+            <input type="hidden" name="routine_run_id" value={latest?.id || ""} />
             <select name="decision" className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
               <option value="aprovado">Aprovar movimento</option>
               <option value="ajustar">Enviar para ajuste</option>
@@ -105,46 +134,46 @@ export default async function MovimentoDiarioPage({
         </section>
 
         <section className="card">
-          <div className="section-head"><h2 className="title">Ações automáticas sugeridas</h2><span className="kpi-chip">Execução</span></div>
+          <div className="section-head"><h2 className="title">Ações sugeridas</h2><span className="kpi-chip">execução</span></div>
           <div className="space-y-3 mt-3">
             {actions.length ? actions.map((x, i) => (
-              <form key={i} action={`/api/projects/${id}/movement/action`} method="post" className="rounded-lg border border-slate-800 p-3">
+              <form key={i} action={`/api/projects/${id}/movement/action`} method="post" className="rounded-2xl border border-slate-800 p-4">
                 <input type="hidden" name="csrf_token" value={csrf} />
-                <input type="hidden" name="routine_run_id" value={latest?.id || ''} />
+                <input type="hidden" name="routine_run_id" value={latest?.id || ""} />
                 <input type="hidden" name="action_key" value={x} />
                 <div className="text-sm text-slate-300">{x}</div>
-                <button type="submit" className="pill mt-2">Marcar ação</button>
+                <button type="submit" className="pill mt-3">Marcar ação</button>
               </form>
-            )) : <div className="text-sm text-slate-300">• nenhuma ação sugerida ainda</div>}
+            )) : <div className="alert muted-bg">Nenhuma ação sugerida ainda.</div>}
           </div>
         </section>
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Validações registradas</h2><span className="kpi-chip">Etapa 4</span></div>
+        <div className="section-head"><h2 className="title">Validações registradas</h2><span className="kpi-chip">trilha decisória</span></div>
         <div className="mt-3 space-y-2 text-sm">
           {validations.length ? validations.map((item) => (
-            <div key={item.id} className="rounded-lg border border-slate-800 p-3">
-              <div className="font-medium">{item.decision}</div>
+            <div key={item.id} className="rounded-2xl border border-slate-800 p-4">
+              <div className="font-medium text-white">{item.decision}</div>
               <div className="text-xs text-slate-500 mt-1">{item.validated_at}</div>
-              <div className="text-slate-300 mt-1 whitespace-pre-wrap">{item.summary_text || item.note || '-'}</div>
+              <div className="text-slate-300 mt-2 whitespace-pre-wrap">{item.summary_text || item.note || "-"}</div>
             </div>
           )) : <div className="alert muted-bg">Sem validações registradas ainda.</div>}
         </div>
       </section>
 
       <section className="card">
-        <div className="section-head"><h2 className="title">Histórico de ações executadas</h2><span className="kpi-chip">Automação</span></div>
+        <div className="section-head"><h2 className="title">Ações executadas</h2><span className="kpi-chip">automação + humano</span></div>
         <div className="mt-3 space-y-3 text-sm">
           {movementActions.length ? movementActions.map((item) => (
-            <div key={item.id} className="rounded-lg border border-slate-800 p-3">
-              <div className="font-medium">{item.action_label}</div>
-              <div className="text-xs text-slate-500 mt-1">status: {item.status} · vínculo: {item.linked_entity || '-'} {item.linked_entity_id ? `(${item.linked_entity_id.slice(0,8)})` : ''} · {item.created_at}</div>
-              <div className="text-xs text-slate-400 mt-1">responsável: {item.assignee_name || '-'} · nota: {item.closed_note || '-'}</div>
+            <div key={item.id} className="rounded-2xl border border-slate-800 p-4">
+              <div className="font-medium text-white">{item.action_label}</div>
+              <div className="text-xs text-slate-500 mt-1">status: {item.status} · vínculo: {item.linked_entity || "-"} {item.linked_entity_id ? `(${item.linked_entity_id.slice(0,8)})` : ""} · {item.created_at}</div>
+              <div className="text-xs text-slate-400 mt-1">responsável: {item.assignee_name || "-"} · nota: {item.closed_note || "-"}</div>
               <form action={`/api/projects/${id}/movement/action/update`} method="post" className="grid md:grid-cols-4 gap-2 mt-3">
                 <input type="hidden" name="csrf_token" value={csrf} />
                 <input type="hidden" name="action_id" value={item.id} />
-                <input name="assignee_name" defaultValue={item.assignee_name || ''} placeholder="responsável" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+                <input name="assignee_name" defaultValue={item.assignee_name || ""} placeholder="responsável" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
                 <input name="note" placeholder="nota de fechamento/reabertura" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 md:col-span-2" />
                 <div className="flex gap-2">
                   <button type="submit" name="mode" value="done" className="pill">Concluir</button>
