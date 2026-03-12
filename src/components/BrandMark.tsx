@@ -18,7 +18,7 @@ export function BrandMark({ compact = false, href = "/dashboard", showWordmark =
       </div>
       {showWordmark ? (
         <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-cyan-300">Ironcore</div>
+          <div className="text-[11px] uppercase tracking-[0.2em] text-cyan-300">IRONCORE</div>
         </div>
       ) : null}
     </div>

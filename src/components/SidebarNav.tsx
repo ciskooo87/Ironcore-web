@@ -56,7 +56,7 @@ export function SidebarNav({ user }: { user: SessionUser }) {
   return (
     <aside className="card h-fit md:sticky md:top-4">
       <div className="mb-4 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-3">
-        <BrandMark compact />
+        <BrandMark compact showWordmark />
         <div className="text-[11px] uppercase tracking-[0.16em] text-cyan-300 mt-3">navegação do produto</div>
         <div className="mt-1 text-sm text-slate-300">Organizada por missão, não por ordem histórica de módulo.</div>
       </div>
