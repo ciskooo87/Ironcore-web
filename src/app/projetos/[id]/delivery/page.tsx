@@ -29,13 +29,39 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
   if (query.from) exportQs.set("from", query.from);
   if (query.to) exportQs.set("to", query.to);
 
+  const sent = runs.filter((r) => r.status === "sent").length;
+  const failed = runs.filter((r) => r.status === "failed").length;
+  const skipped = runs.filter((r) => r.status === "skipped").length;
+
   return (
-    <AppShell user={user} title="Projeto · Delivery" subtitle="Monitor de envio por canal + retry + export CSV">
+    <AppShell user={user} title="Projeto · Delivery" subtitle="Cockpit de entrega: acompanhar o que saiu, o que falhou e onde agir rápido para garantir comunicação com o cliente.">
       {query.saved ? <div className="alert ok-bg mb-3">Retry executado.</div> : null}
       {query.error ? <div className="alert bad-bg mb-3">Erro: {query.error}</div> : null}
 
+      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              monitor de entrega
+            </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Delivery precisa mostrar se a comunicação saiu, falhou ou foi descartada — e deixar o retry óbvio.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Esta tela vira centro de controle de envio por canal, com histórico, filtros e retomada rápida das falhas.
+            </p>
+          </div>
+          <a className="badge px-4 py-2" href={`/api/projects/${id}/delivery/export?${exportQs.toString()}`}>Exportar CSV</a>
+        </div>
+      </section>
+
+      <section className="grid md:grid-cols-3 gap-3 mb-4">
+        <div className="metric"><div className="text-xs text-slate-400">Sent</div><div className="text-xl font-semibold mt-1 text-emerald-200">{sent}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Failed</div><div className="text-xl font-semibold mt-1 text-rose-200">{failed}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Skipped</div><div className="text-xl font-semibold mt-1 text-amber-200">{skipped}</div></div>
+      </section>
+
       <section className="card mb-4">
-        <form className="grid md:grid-cols-5 gap-2 text-sm" method="get">
+        <div className="section-head"><h2 className="title">Filtro de entregas</h2><span className="kpi-chip">canais</span></div>
+        <form className="grid md:grid-cols-5 gap-2 text-sm mt-3" method="get">
           <select name="channel" defaultValue={query.channel || ""} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
             <option value="">canal: todos</option>
             <option value="telegram">telegram</option>
@@ -52,25 +78,24 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
           <input name="to" type="date" defaultValue={query.to || ""} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <button className="badge py-2 cursor-pointer" type="submit">Filtrar</button>
         </form>
-        <div className="mt-2 text-sm">
-          <a className="pill" href={`/api/projects/${id}/delivery/export?${exportQs.toString()}`}>Exportar CSV</a>
-        </div>
       </section>
 
       <section className="card">
-        <h2 className="title">Histórico de entregas</h2>
-        <div className="mt-3 space-y-2 text-sm">
+        <div className="section-head"><h2 className="title">Histórico de entregas</h2><span className="kpi-chip">{runs.length} registros</span></div>
+        <div className="mt-3 space-y-3 text-sm">
           {runs.length === 0 ? <div className="alert muted-bg">Sem envios ainda.</div> : null}
           {runs.map((r) => (
-            <div key={r.id} className="row !items-start">
-              <div>
-                <div className="font-medium">{r.channel.toUpperCase()} · {r.status.toUpperCase()}</div>
-                <div className="text-xs text-slate-400">{r.provider_message || "-"}</div>
+            <div key={r.id} className="rounded-[22px] border border-slate-800 bg-slate-950/20 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium text-white">{r.channel.toUpperCase()} · {r.status.toUpperCase()}</div>
+                  <div className="text-xs text-slate-500 mt-1">{r.provider_message || "-"}</div>
+                </div>
+                <form action={`/api/projects/${id}/delivery/${r.id}/retry`} method="post">
+                  <input type="hidden" name="csrf_token" value={csrf} />
+                  <button className="pill" type="submit">Retry</button>
+                </form>
               </div>
-              <form action={`/api/projects/${id}/delivery/${r.id}/retry`} method="post">
-                <input type="hidden" name="csrf_token" value={csrf} />
-                <button className="pill" type="submit">Retry</button>
-              </form>
             </div>
           ))}
         </div>

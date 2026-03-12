@@ -6,6 +6,10 @@ import { listPendingReconItems, listReconRuns } from "@/lib/conciliacao";
 import { todayInSaoPauloISO } from "@/lib/time";
 import { ensureCsrfCookie } from "@/lib/csrf";
 
+function br(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string; business_date?: string }> }) {
   const user = await requireUser();
   const { id } = await params;
@@ -20,80 +24,96 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const runs = await listReconRuns(project.id, 25);
   const pendingItems = await listPendingReconItems(project.id, selectedDate);
   const csrf = await ensureCsrfCookie();
+  const latest = runs[0];
+  const pendingCount = pendingItems.filter((i) => i.status === "pending").length;
+  const resolvedCount = pendingItems.filter((i) => i.status !== "pending").length;
+  const pendingAmount = pendingItems.filter((i) => i.status === "pending").reduce((s, i) => s + i.amount, 0);
 
   return (
-    <AppShell user={user} title="Projeto · Conciliação" subtitle="Conciliação automática + tratamento manual de não conciliados em tabela">
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Motor de conciliação</h2><span className="kpi-chip">Auto + Manual</span></div>
-        <form action={`/api/projects/${id}/conciliacao/run`} method="post" className="flex gap-2 items-center flex-wrap">
-          <input name="business_date" type="date" defaultValue={selectedDate} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
-          <button className="badge py-2 px-3 cursor-pointer" type="submit">Rodar conciliação</button>
-        </form>
+    <AppShell user={user} title="Projeto · Conciliação" subtitle="Cockpit de consistência operacional: rodar o motor, atacar pendências e saber rápido se o dia está conciliado ou não.">
+      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              consistência operacional
+            </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Conciliação precisa deixar claro se o dia está limpo ou se ainda existe risco escondido na base.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Esta tela centraliza a execução automática, o tratamento manual e a leitura rápida do que ainda impede o fluxo de seguir limpo.
+            </p>
+          </div>
+          <form action={`/api/projects/${id}/conciliacao/run`} method="post" className="flex gap-2 items-center flex-wrap">
+            <input name="business_date" type="date" defaultValue={selectedDate} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
+            <button className="badge py-2 px-4 cursor-pointer" type="submit">Rodar conciliação</button>
+          </form>
+        </div>
         {query.saved ? <div className="alert ok-bg mt-3">Conciliação executada.</div> : null}
         {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
       </section>
 
-      <section className="card mb-4">
-        <div className="row mb-3"><span>Pagamentos não conciliados ({selectedDate})</span><span className="badge">{pendingItems.filter((i) => i.status === "pending").length} pendentes</span></div>
-        <div className="table-wrap">
-          <table className="min-w-full text-xs">
-            <thead className="bg-slate-900/80">
-              <tr>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Item</th>
-                <th className="text-right px-2 py-2 border-b border-slate-800">Valor</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Status</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Conciliação manual</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingItems.length === 0 ? (
-                <tr><td colSpan={4} className="px-2 py-3 text-center text-slate-400">Sem itens para esta data.</td></tr>
-              ) : (
-                pendingItems.map((item) => (
-                  <tr key={item.id} className="odd:bg-slate-900/30">
-                    <td className="px-2 py-1.5 border-b border-slate-900">{item.title}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900 text-right">{item.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{item.status}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">
-                      {item.status === "pending" ? (
-                        <form action={`/api/projects/${id}/conciliacao/item/${item.id}/resolve`} method="post" className="flex gap-2">
-                          <input type="hidden" name="csrf_token" value={csrf} />
-                          <input type="hidden" name="business_date" value={selectedDate} />
-                          <input name="note" required placeholder="motivo da conciliação manual" className="w-full bg-slate-950/40 border border-slate-700 rounded px-2 py-1" />
-                          <button type="submit" className="pill">Conciliar</button>
-                        </form>
-                      ) : (
-                        <span className="text-slate-400">{item.resolution_note || "resolvido"}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <section className="grid md:grid-cols-4 gap-3 mb-4">
+        <div className="metric"><div className="text-xs text-slate-400">Última execução</div><div className="text-lg font-semibold mt-1">{latest?.business_date || "sem execução"}</div><div className="text-xs text-cyan-300 mt-1">status: {latest?.status || "-"}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Pendentes do dia</div><div className="text-lg font-semibold mt-1 text-rose-200">{pendingCount}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Itens resolvidos</div><div className="text-lg font-semibold mt-1 text-emerald-200">{resolvedCount}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Valor pendente</div><div className="text-lg font-semibold mt-1 text-amber-200">{br(pendingAmount)}</div></div>
       </section>
 
-      <section className="card">
-        <h2 className="title">Histórico</h2>
-        <div className="mt-3 space-y-2 text-sm">
-          {runs.length === 0 ? <div className="alert muted-bg">Sem execuções.</div> : null}
-          {runs.map((r) => {
-            const d = r.details as Record<string, unknown>;
-            return (
-              <div key={r.id} className="card !p-3">
-                <div className="font-medium">{r.business_date} · {r.status.toUpperCase()}</div>
-                <div className="mt-2 grid md:grid-cols-2 gap-2 text-xs text-slate-300">
-                  <div className="row"><span>Match</span><b>{r.matched_items}</b></div>
-                  <div className="row"><span>Pendências</span><b>{r.pending_items}</b></div>
-                  <div className="row"><span>Extrato</span><b>{Number(d.extrato || 0).toFixed(2)}</b></div>
-                  <div className="row"><span>Receber + Duplicatas</span><b>{(Number(d.receber || 0) + Number(d.duplicatas || 0)).toFixed(2)}</b></div>
-                  <div className="row md:col-span-2"><span>Diferença (sem tolerância)</span><b>{Number(d.diff || 0).toFixed(2)}</b></div>
+      <section className="grid gap-4 xl:grid-cols-[1fr_1fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Pendências da data</h2><span className="kpi-chip">{selectedDate}</span></div>
+          <div className="mt-3 space-y-3 text-sm">
+            {pendingItems.length === 0 ? <div className="alert ok-bg">Sem itens para esta data.</div> : null}
+            {pendingItems.map((item) => (
+              <div key={item.id} className="rounded-[22px] border border-slate-800 bg-slate-950/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="font-medium text-white">{item.title}</div>
+                    <div className="text-xs text-slate-500 mt-1">status: {item.status}</div>
+                  </div>
+                  <div className="text-sm font-semibold text-white">{br(item.amount)}</div>
+                </div>
+
+                <div className="mt-3">
+                  {item.status === "pending" ? (
+                    <form action={`/api/projects/${id}/conciliacao/item/${item.id}/resolve`} method="post" className="flex gap-2 flex-wrap">
+                      <input type="hidden" name="csrf_token" value={csrf} />
+                      <input type="hidden" name="business_date" value={selectedDate} />
+                      <input name="note" required placeholder="motivo da conciliação manual" className="flex-1 min-w-[240px] bg-slate-950/40 border border-slate-700 rounded px-3 py-2" />
+                      <button type="submit" className="pill">Conciliar manualmente</button>
+                    </form>
+                  ) : (
+                    <div className="text-slate-300">{item.resolution_note || "Resolvido."}</div>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Histórico de execuções</h2><span className="kpi-chip">motor</span></div>
+          <div className="mt-3 space-y-3 text-sm">
+            {runs.length === 0 ? <div className="alert muted-bg">Sem execuções.</div> : null}
+            {runs.map((r) => {
+              const d = r.details as Record<string, unknown>;
+              return (
+                <div key={r.id} className="rounded-[22px] border border-slate-800 bg-slate-950/20 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="font-medium text-white">{r.business_date}</div>
+                    <div className={`rounded-full border px-3 py-1 text-xs font-medium ${r.status === "blocked" ? "border-rose-400/30 bg-rose-400/10 text-rose-100" : r.status === "warning" ? "border-amber-400/30 bg-amber-400/10 text-amber-100" : "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"}`}>{r.status.toUpperCase()}</div>
+                  </div>
+                  <div className="mt-3 grid md:grid-cols-2 gap-2 text-xs text-slate-300">
+                    <div className="row"><span>Match</span><b>{r.matched_items}</b></div>
+                    <div className="row"><span>Pendências</span><b>{r.pending_items}</b></div>
+                    <div className="row"><span>Extrato</span><b>{Number(d.extrato || 0).toFixed(2)}</b></div>
+                    <div className="row"><span>Receber + Duplicatas</span><b>{(Number(d.receber || 0) + Number(d.duplicatas || 0)).toFixed(2)}</b></div>
+                    <div className="row md:col-span-2"><span>Diferença</span><b>{Number(d.diff || 0).toFixed(2)}</b></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </section>
     </AppShell>
   );

@@ -83,10 +83,26 @@ export default async function Page({
   const rows = filtered.slice(start, start + pageSize);
 
   return (
-    <AppShell user={user} title="Projeto · Operações" subtitle="Esteira operacional + carteira de operações em visão gerencial">
+    <AppShell user={user} title="Projeto · Operações" subtitle="Cockpit da esteira operacional: criar, acompanhar, destravar e formalizar operações sem perder visão de carteira e status.">
+      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              esteira operacional
+            </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Operações precisam aparecer como carteira viva, não só como tabela fria de cadastro.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Esta tela vira centro de controle das operações: status da esteira, nova operação, filtro operacional e carteira completa com atualização direta.
+            </p>
+          </div>
+        </div>
+        {query.saved ? <div className="alert ok-bg mt-3">Operação atualizada/registrada.</div> : null}
+        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
+      </section>
+
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Esteira de status</h2><span className="kpi-chip">Fase A</span></div>
-        <div className="grid md:grid-cols-4 gap-3">
+        <div className="section-head"><h2 className="title">Esteira de status</h2><span className="kpi-chip">fase da operação</span></div>
+        <div className="grid md:grid-cols-4 gap-3 mt-3">
           {byStatus.map((item) => (
             <div key={item.value} className="metric">
               <div className="text-xs text-slate-400">{item.label}</div>
@@ -97,8 +113,8 @@ export default async function Page({
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Nova operação</h2><span className="kpi-chip">Cadastro operacional</span></div>
-        <form action={`/api/projects/${id}/operacoes/create`} method="post" className="grid md:grid-cols-4 gap-2 text-sm">
+        <div className="section-head"><h2 className="title">Nova operação</h2><span className="kpi-chip">entrada da esteira</span></div>
+        <form action={`/api/projects/${id}/operacoes/create`} method="post" className="grid md:grid-cols-4 gap-2 text-sm mt-3">
           <input type="hidden" name="csrf_token" value={csrf} />
           <input name="business_date" type="date" defaultValue={todayInSaoPauloISO()} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="due_date" type="date" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
@@ -109,26 +125,20 @@ export default async function Page({
             <option value="intercompany">intercompany</option>
           </select>
           <input name="modality" placeholder="modalidade" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-
           <input name="gross_amount" type="number" step="0.01" placeholder="valor bruto" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="principal_amount" type="number" step="0.01" placeholder="valor principal" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="disbursed_amount" type="number" step="0.01" placeholder="valor desembolsado" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="company_fee" type="number" step="0.01" placeholder="empresa (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-
           <input name="fee_percent" type="number" step="0.01" placeholder="taxa %" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="fund_limit" type="number" step="0.01" placeholder="limite fundo" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="receivable_available" type="number" step="0.01" placeholder="recebível disponível" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="fund_name" placeholder="fundo" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-
           <input name="operator_name" placeholder="operador" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="counterparty_name" placeholder="cedente / contraparte" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="document_ref" placeholder="documento / borderô / ref" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <input name="notes" placeholder="comentários" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-
           <button type="submit" className="badge py-2 cursor-pointer">Registrar operação</button>
         </form>
-        {query.saved ? <div className="alert ok-bg mt-3">Operação atualizada/registrada.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
       </section>
 
       <section className="grid md:grid-cols-3 gap-3 mb-4">
@@ -138,8 +148,8 @@ export default async function Page({
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Filtro operacional</h2><span className="kpi-chip">Carteira</span></div>
-        <form method="get" className="grid md:grid-cols-6 gap-2 text-sm">
+        <div className="section-head"><h2 className="title">Filtro operacional</h2><span className="kpi-chip">carteira</span></div>
+        <form method="get" className="grid md:grid-cols-6 gap-2 text-sm mt-3">
           <input name="q" defaultValue={q} placeholder="pesquisar por operação, fundo, contraparte, ref" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <select name="op_type" defaultValue={opTypeFilter} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
             <option value="">Modalidade (todas)</option>
@@ -172,8 +182,8 @@ export default async function Page({
       </section>
 
       <section className="card">
-        <div className="section-head"><h2 className="title">Todas as operações</h2><span className="kpi-chip">{filtered.length} registros</span></div>
-        <div className="table-wrap">
+        <div className="section-head"><h2 className="title">Carteira de operações</h2><span className="kpi-chip">{filtered.length} registros</span></div>
+        <div className="table-wrap mt-3">
           <table className="min-w-[2200px] text-xs">
             <thead className="bg-slate-900/80">
               <tr>
