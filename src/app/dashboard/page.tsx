@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getUsageKpis } from "@/lib/kpis";
 import { listProjectsForUser } from "@/lib/projects";
@@ -155,38 +156,18 @@ export default async function DashboardPage() {
       title="Ironcore · Cockpit"
       subtitle="Centro de comando da operação: o que exige atenção agora, qual decisão tomar e qual é a próxima melhor ação"
     >
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              missão diária do ironcore
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">O produto precisa te dizer o que resolver agora — não te fazer caçar módulo.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Use este cockpit como camada principal do Ironcore: prioridade operacional, fase do fluxo, status decisório e próximo passo por projeto.
-            </p>
-          </div>
-
-          <div className="grid min-w-[280px] grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
-              <div className="text-xs uppercase tracking-wide text-slate-400">Projetos em foco</div>
-              <div className="mt-1 text-2xl font-semibold text-white">{projectCockpit.length}</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
-              <div className="text-xs uppercase tracking-wide text-slate-400">Bloqueados agora</div>
-              <div className="mt-1 text-2xl font-semibold text-rose-200">{blockedProjects.length}</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
-              <div className="text-xs uppercase tracking-wide text-slate-400">Em atenção</div>
-              <div className="mt-1 text-2xl font-semibold text-amber-200">{warningProjects.length}</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
-              <div className="text-xs uppercase tracking-wide text-slate-400">Rotinas com sucesso</div>
-              <div className="mt-1 text-2xl font-semibold text-emerald-200">{usage.routineSuccess}/{usage.routineTotal}</div>
-            </div>
-          </div>
+      <ProductHero
+        eyebrow="missão diária do ironcore"
+        title="O produto precisa te dizer o que resolver agora — não te fazer caçar módulo."
+        description="Use este cockpit como camada principal do Ironcore: prioridade operacional, fase do fluxo, status decisório e próximo passo por projeto."
+      >
+        <div className="grid min-w-[280px] grid-cols-2 gap-3 text-sm">
+          <MetricCard label="Projetos em foco" value={projectCockpit.length} />
+          <MetricCard label="Bloqueados agora" value={blockedProjects.length} tone="bad" />
+          <MetricCard label="Em atenção" value={warningProjects.length} tone="warn" />
+          <MetricCard label="Rotinas com sucesso" value={`${usage.routineSuccess}/${usage.routineTotal}`} tone="good" />
         </div>
-      </section>
+      </ProductHero>
 
       <section className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr] mb-4">
         <section className="card">
@@ -196,14 +177,14 @@ export default async function DashboardPage() {
           </div>
 
           {!topPriority ? (
-            <div className="alert muted-bg mt-3">Ainda não há projetos visíveis para montar o cockpit.</div>
+            <div className="mt-3"><EmptyState title="Sem projetos visíveis" description="Ainda não há projetos visíveis para montar o cockpit principal do Ironcore." /></div>
           ) : (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClasses(topPriority.statusTone)}`}>{topPriority.statusLabel}</span>
-                <span className="pill">{topPriority.name}</span>
-                <span className="pill">{topPriority.phaseLabel}</span>
-                <span className="pill">gating: {topPriority.gatingStatus}</span>
+                <StatusPill label={topPriority.statusLabel} tone={topPriority.statusTone} />
+                <StatusPill label={topPriority.name} tone="neutral" />
+                <StatusPill label={topPriority.phaseLabel} tone="neutral" />
+                <StatusPill label={`gating: ${topPriority.gatingStatus}`} tone="info" />
               </div>
 
               <div>
@@ -230,9 +211,9 @@ export default async function DashboardPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Link href={topPriority.nextActionHref} className="badge px-4 py-2">Abrir próxima ação</Link>
-                <Link href={`/projetos/${topPriority.code}/fluxo-trabalho`} className="pill">Ver fluxo completo</Link>
-                <Link href={`/projetos/${topPriority.code}/movimento-diario`} className="pill">Abrir movimento diário</Link>
+                <ActionLink href={topPriority.nextActionHref} label="Abrir próxima ação" />
+                <ActionLink href={`/projetos/${topPriority.code}/fluxo-trabalho`} label="Ver fluxo completo" tone="secondary" />
+                <ActionLink href={`/projetos/${topPriority.code}/movimento-diario`} label="Abrir movimento diário" tone="secondary" />
               </div>
             </div>
           )}

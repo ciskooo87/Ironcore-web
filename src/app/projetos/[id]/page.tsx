@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { canAccessProject } from "@/lib/permissions";
 import { getProjectByCode, getProjectOnboardingChecks, isProjectOnboardingComplete } from "@/lib/projects";
@@ -103,29 +104,19 @@ export default async function ProjectWarRoomPage({ params }: { params: Promise<{
       title={`Projeto · ${project.name}`}
       subtitle="Sala de guerra do projeto: estado atual, decisão do dia, travas, fluxo e próximos passos"
     >
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="badge">{project.code}</span>
-              <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClasses(tone)}`}>{statusLabel}</span>
-              <span className="pill">{phase}</span>
-              <span className="pill">gating: {gatingStatus}</span>
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">{project.legal_name}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              {project.project_summary || "Projeto sem resumo executivo ainda. Use esta página como entrada principal para destravar operação, fechamento e governança."}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Link href={primaryAction.href} className="badge px-4 py-2">{primaryAction.label}</Link>
-            <Link href={`/projetos/${project.code}/fluxo-trabalho`} className="pill">Fluxo</Link>
-            <Link href={`/projetos/${project.code}/movimento-diario`} className="pill">Movimento</Link>
-            <Link href={`/projetos/${project.code}/rotina-diaria`} className="pill">Rotina</Link>
-          </div>
-        </div>
-      </section>
+      <ProductHero
+        eyebrow={`projeto ${project.code}`}
+        title={project.legal_name}
+        description={project.project_summary || "Projeto sem resumo executivo ainda. Use esta página como entrada principal para destravar operação, fechamento e governança."}
+      >
+        <StatusPill label={statusLabel} tone={tone} />
+        <StatusPill label={phase} tone="neutral" />
+        <StatusPill label={`gating: ${gatingStatus}`} tone="info" />
+        <ActionLink href={primaryAction.href} label={primaryAction.label} />
+        <ActionLink href={`/projetos/${project.code}/fluxo-trabalho`} label="Fluxo" tone="secondary" />
+        <ActionLink href={`/projetos/${project.code}/movimento-diario`} label="Movimento" tone="secondary" />
+        <ActionLink href={`/projetos/${project.code}/rotina-diaria`} label="Rotina" tone="secondary" />
+      </ProductHero>
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Última rotina</div><div className="text-lg font-semibold mt-1">{formatWhen(latest?.created_at || null)}</div><div className="text-xs text-cyan-300 mt-1">status: {latest?.status || "sem execução"}</div></div>

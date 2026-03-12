@@ -34,6 +34,29 @@ body {
   padding: 10px;
 }
 
+.product-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.product-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -20% -55% auto;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.18), transparent 65%);
+  pointer-events: none;
+}
+
+.product-metric {
+  min-height: 98px;
+}
+
+.product-eyebrow {
+  backdrop-filter: blur(8px);
+}
+
 .trust {
   background: rgba(9, 19, 38, 0.9);
   border: 1px solid var(--line);
