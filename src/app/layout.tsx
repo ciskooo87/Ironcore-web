@@ -15,6 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "IronCore",
   description: "Plataforma operacional financeira do IronCore",
+  icons: {
+    icon: "/brand/ironcore-logo.jpg",
+    shortcut: "/brand/ironcore-logo.jpg",
+    apple: "/brand/ironcore-logo.jpg",
+  },
+  openGraph: {
+    title: "IronCore",
+    description: "Plataforma operacional financeira do IronCore",
+    images: ["/brand/ironcore-logo.jpg"],
+  },
 };
 
 export default function RootLayout({

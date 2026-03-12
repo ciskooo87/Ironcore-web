@@ -57,6 +57,10 @@ body {
   backdrop-filter: blur(8px);
 }
 
+.brand-metal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(148,163,184,0.08));
+}
+
 .trust {
   background: rgba(9, 19, 38, 0.9);
   border: 1px solid var(--line);
