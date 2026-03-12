@@ -72,7 +72,7 @@ function pickNextAction(code: string, steps: SopStepView[]) {
 
   return firstPending && map[firstPending.key]
     ? map[firstPending.key]
-    : { label: "Abrir projeto", href: `/projetos/${code}/fluxo-trabalho` };
+    : { label: "Abrir sala de guerra", href: `/projetos/${code}` };
 }
 
 async function getPendingApprovals(projectId: string) {
