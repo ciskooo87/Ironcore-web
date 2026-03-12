@@ -20,7 +20,6 @@ type ThemeKey = "red" | "blue" | "amber";
 type Theme = {
   sectionBorder: string;
   sectionGlow: string;
-  badge: string;
   badgeText: string;
   countBadge: string;
   countBadgeText: string;
@@ -38,7 +37,6 @@ const THEMES: Record<ThemeKey, Theme> = {
   red: {
     sectionBorder: "border-rose-400/15",
     sectionGlow: "shadow-[0_10px_40px_rgba(244,63,94,0.08)]",
-    badge: "border-rose-400/20 bg-rose-400/10",
     badgeText: "text-rose-200",
     countBadge: "border-rose-300/20 bg-rose-300/10",
     countBadgeText: "text-rose-100",
@@ -54,7 +52,6 @@ const THEMES: Record<ThemeKey, Theme> = {
   blue: {
     sectionBorder: "border-cyan-400/15",
     sectionGlow: "shadow-[0_10px_40px_rgba(34,211,238,0.08)]",
-    badge: "border-cyan-400/20 bg-cyan-400/10",
     badgeText: "text-cyan-200",
     countBadge: "border-cyan-300/20 bg-cyan-300/10",
     countBadgeText: "text-cyan-100",
@@ -70,7 +67,6 @@ const THEMES: Record<ThemeKey, Theme> = {
   amber: {
     sectionBorder: "border-amber-400/15",
     sectionGlow: "shadow-[0_10px_40px_rgba(251,191,36,0.08)]",
-    badge: "border-amber-400/20 bg-amber-400/10",
     badgeText: "text-amber-200",
     countBadge: "border-amber-300/20 bg-amber-300/10",
     countBadgeText: "text-amber-100",
@@ -91,13 +87,13 @@ const WORKOUTS: WorkoutSection[] = [
     subtitle: "Peito + Tríceps + Abdômen",
     theme: "red",
     exercises: [
-      { name: "Supino reto com barra", equipment: "Rack + barra", sets: "4", reps: "8–10", estimatedWeight: "52,5kg", rest: "90s", query: "supino reto com barra execução correta" },
-      { name: "Supino inclinado com barra", equipment: "Rack + banco", sets: "3", reps: "10", estimatedWeight: "40kg", rest: "75s", query: "supino inclinado com barra execução correta" },
-      { name: "Peck deck", equipment: "Movement W2", sets: "3", reps: "12", estimatedWeight: "35kg", rest: "60s", query: "peck deck execução correta" },
-      { name: "Tríceps polia alta", equipment: "Movement W2", sets: "4", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "tríceps polia alta execução correta" },
-      { name: "Tríceps testa com barra", equipment: "Rack + barra", sets: "3", reps: "10", estimatedWeight: "30kg", rest: "60s", query: "tríceps testa com barra execução correta" },
-      { name: "Abdominal banco romano", equipment: "Banco GHD", sets: "4", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal banco romano execução correta" },
-      { name: "Elevação de pernas", equipment: "Banco romano", sets: "3", reps: "15", estimatedWeight: "Corporal", rest: "45s", query: "elevação de pernas banco romano execução correta" },
+      { name: "Supino reto com barra", equipment: "Rack multifuncional", sets: "4", reps: "8–10", estimatedWeight: "52,5kg", rest: "90s", query: "supino reto com barra execução correta" },
+      { name: "Supino inclinado com barra", equipment: "Rack multifuncional", sets: "3", reps: "10", estimatedWeight: "40kg", rest: "75s", query: "supino inclinado com barra execução correta" },
+      { name: "Crucifixo na polia (cabo cruzado)", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "15kg cada lado", rest: "60s", query: "crucifixo na polia cabo cruzado execução correta" },
+      { name: "Tríceps polia alta (corda)", equipment: "Rack multifuncional", sets: "4", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "tríceps polia alta corda execução correta" },
+      { name: "Tríceps francês na polia", equipment: "Rack multifuncional", sets: "3", reps: "10", estimatedWeight: "20kg", rest: "60s", query: "tríceps francês na polia execução correta" },
+      { name: "Abdominal supra no chão", equipment: "Chão", sets: "4", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal supra no chão execução correta" },
+      { name: "Abdominal bicicleta", equipment: "Chão", sets: "3", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal bicicleta execução correta" },
     ],
   },
   {
@@ -105,25 +101,28 @@ const WORKOUTS: WorkoutSection[] = [
     subtitle: "Costas + Bíceps + Abdômen",
     theme: "blue",
     exercises: [
-      { name: "Polia alta (lat pulldown)", equipment: "Movement W2", sets: "4", reps: "10–12", estimatedWeight: "55kg", rest: "75s", query: "lat pulldown polia alta execução correta" },
-      { name: "Remada baixa na polia", equipment: "Movement W2", sets: "4", reps: "10–12", estimatedWeight: "85kg", rest: "75s", query: "remada baixa na polia execução correta" },
-      { name: "Rosca bíceps com barra", equipment: "Rack + barra", sets: "4", reps: "10", estimatedWeight: "30kg", rest: "60s", query: "rosca bíceps com barra execução correta" },
-      { name: "Rosca na polia baixa", equipment: "Movement W2", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "rosca na polia baixa execução correta" },
-      { name: "Abdominal supra", equipment: "Banco romano", sets: "4", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal supra banco romano execução correta" },
-      { name: "Elevação de pernas", equipment: "Banco romano", sets: "3", reps: "15", estimatedWeight: "Corporal", rest: "45s", query: "elevação de pernas banco romano execução correta" },
+      { name: "Puxada frontal (lat pulldown)", equipment: "Rack multifuncional", sets: "4", reps: "10–12", estimatedWeight: "55kg", rest: "75s", query: "puxada frontal lat pulldown execução correta" },
+      { name: "Remada baixa na polia", equipment: "Rack multifuncional", sets: "4", reps: "10–12", estimatedWeight: "85kg", rest: "75s", query: "remada baixa na polia execução correta" },
+      { name: "Pullover na polia alta", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "30kg", rest: "60s", query: "pullover na polia alta execução correta" },
+      { name: "Rosca bíceps com barra", equipment: "Rack multifuncional", sets: "4", reps: "10", estimatedWeight: "30kg", rest: "60s", query: "rosca bíceps com barra execução correta" },
+      { name: "Rosca Scott na polia baixa", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "20kg", rest: "60s", query: "rosca scott na polia baixa execução correta" },
+      { name: "Abdominal infra (elevação pernas)", equipment: "Chão", sets: "4", reps: "15", estimatedWeight: "Corporal", rest: "45s", query: "abdominal infra elevação pernas execução correta" },
+      { name: "Prancha", equipment: "Chão", sets: "3", reps: "40s", estimatedWeight: "Corporal", rest: "45s", query: "prancha execução correta" },
     ],
   },
   {
     title: "📅 TREINO C — Sexta",
-    subtitle: "Pernas + Ombro + Braço",
+    subtitle: "Pernas + Ombro + Braço completo",
     theme: "amber",
     exercises: [
       { name: "Extensão de pernas", equipment: "Cadeira extensora", sets: "4", reps: "12", estimatedWeight: "53kg", rest: "60s", query: "cadeira extensora execução correta" },
       { name: "Flexão de pernas", equipment: "Cadeira flexora", sets: "4", reps: "12", estimatedWeight: "43kg", rest: "60s", query: "cadeira flexora execução correta" },
-      { name: "Desenvolvimento ombro (polia)", equipment: "Movement W2", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "desenvolvimento ombro polia execução correta" },
-      { name: "Rosca martelo na polia", equipment: "Movement W2", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "rosca martelo na polia execução correta" },
-      { name: "Tríceps polia (corda)", equipment: "Movement W2", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "tríceps polia corda execução correta" },
-      { name: "Prancha", equipment: "Chão", sets: "3", reps: "40s", estimatedWeight: "Corporal", rest: "45s", query: "prancha execução correta" },
+      { name: "Desenvolvimento com barra", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "30kg", rest: "60s", query: "desenvolvimento com barra execução correta" },
+      { name: "Elevação lateral na polia", equipment: "Rack multifuncional", sets: "3", reps: "15", estimatedWeight: "10kg cada lado", rest: "60s", query: "elevação lateral na polia execução correta" },
+      { name: "Rosca martelo na polia", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "rosca martelo na polia execução correta" },
+      { name: "Tríceps polia (barra reta)", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "tríceps polia barra reta execução correta" },
+      { name: "Abdominal bicicleta", equipment: "Chão", sets: "3", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal bicicleta execução correta" },
+      { name: "Abdominal supra", equipment: "Chão", sets: "3", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal supra execução correta" },
     ],
   },
 ];
