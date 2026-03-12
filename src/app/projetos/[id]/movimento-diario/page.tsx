@@ -150,7 +150,7 @@ export default async function MovimentoDiarioPage({
               <div className="text-xs text-slate-500 mt-1">{item.validated_at}</div>
               <div className="text-slate-300 mt-2 whitespace-pre-wrap">{item.summary_text || item.note || "-"}</div>
             </div>
-          )) : <div className="alert muted-bg">Sem validações registradas ainda.</div>}
+          )) : <EmptyState title="Nenhuma validação registrada ainda" description="Quando alguém aprovar, ajustar ou bloquear o movimento, a trilha decisória vai aparecer aqui." />}
         </div>
       </section>
 
@@ -173,7 +173,7 @@ export default async function MovimentoDiarioPage({
                 </div>
               </form>
             </div>
-          )) : <div className="alert muted-bg">Sem ações executadas ainda.</div>}
+          )) : <EmptyState title="Nenhuma ação executada ainda" description="As ações registradas pelo time ou pela automação vão aparecer aqui para dar rastreabilidade ao dia." />}
         </div>
       </section>
     </AppShell>

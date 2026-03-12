@@ -234,7 +234,7 @@ export default async function Page({
       <section className="card">
         <div className="section-head"><h2 className="title">Histórico de execuções</h2><span className="kpi-chip">últimas rotinas</span></div>
         <div className="mt-3 space-y-3 text-sm">
-          {runs.length === 0 ? <div className="alert muted-bg">Sem execuções.</div> : null}
+          {runs.length === 0 ? <EmptyState title="Nenhuma rotina executada ainda" description="Assim que o time rodar a rotina diária, o histórico vai aparecer aqui com status, risco e recomendação." /> : null}
           {runs.map((r) => {
             const view = routineView(r);
             return (

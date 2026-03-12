@@ -224,7 +224,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
               </div>
             ))}
           </div>
-        ) : null}
+        ) : <div className="mt-4"><EmptyState title="Nenhuma validação histórica registrada ainda" description="Quando o diagnóstico histórico começar a ser validado, a trilha executiva dessa etapa vai aparecer aqui." /></div>}
       </section>
 
       {phaseCards.map((phase) => (
