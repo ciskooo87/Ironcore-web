@@ -4,6 +4,7 @@ import { listProjectAlerts, evaluateAlerts } from "@/lib/alerts";
 import { buildDeliveryPayload } from "@/lib/delivery";
 import { listOperations, listOperationTitles } from "@/lib/operations";
 import { getFidcPanel } from "@/lib/fidc";
+import { evaluateMovementDecision } from "@/lib/movement-decision";
 
 export type RoutineRun = {
   id: string;
@@ -53,28 +54,16 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
         ? "warning"
         : "blocked";
 
-  const blockingReasons = [
-    evalAlerts.hasBlocking ? "alerta bloqueante ativo" : null,
-    recon.status === "blocked" ? "conciliação bloqueada" : null,
-    recon.pending > 5 ? "pendências elevadas de conciliação" : null,
-    carteiraVencida > 100000 ? "carteira vencida acima do limite" : null,
-    fidcPanel.recompraOperacoes > 50000 ? "recompra relevante na carteira" : null,
-  ].filter(Boolean);
-
-  const releaseSignals = [
-    recon.status !== "blocked" && recon.pending === 0 ? "conciliação zerada" : null,
-    recon.status !== "blocked" && opPendingApproval === 0 ? "sem pendência de aprovação" : null,
-    recon.status !== "blocked" && carteiraVencida === 0 ? "sem carteira vencida" : null,
-  ].filter(Boolean);
-
-  const suggestedActions = [
-    blockingReasons.includes("alerta bloqueante ativo") ? "Revisar alertas críticos no painel de risco e remover bloqueio somente após saneamento." : null,
-    blockingReasons.includes("pendências elevadas de conciliação") ? "Executar conciliação manual dos itens pendentes antes de novas decisões." : null,
-    blockingReasons.includes("carteira vencida acima do limite") ? "Priorizar cobrança, renegociação ou revisão dos títulos vencidos da carteira." : null,
-    blockingReasons.includes("recompra relevante na carteira") ? "Validar impacto de recompra no funding e reavaliar alocação do dia." : null,
-    opPendingApproval > 0 ? "Concluir aprovação e formalização das operações pendentes." : null,
-    opApprovedToday > 0 ? "Confirmar documentação e títulos das operações aprovadas hoje." : null,
-  ].filter(Boolean);
+  const decision = evaluateMovementDecision({
+    routineStatus: status,
+    reconciliationStatus: recon.status,
+    reconciliationPending: recon.pending,
+    hasBlockingAlert: evalAlerts.hasBlocking,
+    opPendingApproval,
+    carteiraVencida,
+    carteiraRecompra,
+    fidcRecompra: fidcPanel.recompraOperacoes || fidcPanel.recompras,
+  });
 
   const decisionSummary = {
     opPendingApproval,
@@ -87,18 +76,15 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
       aVencer: fidcPanel.aVencerOperacoes || fidcPanel.aVencer,
       recompra: fidcPanel.recompraOperacoes || fidcPanel.recompras,
     },
-    blockingReasons,
-    releaseSignals,
-    suggestedActions,
-    gatingStatus: blockingReasons.length > 0 ? "bloqueado" : releaseSignals.length >= 2 ? "liberado" : "atencao",
-    recommendation:
-      blockingReasons.length > 0
-        ? `Bloquear novas decisões: ${blockingReasons.join(", ")}.`
-        : opPendingApproval > 0
-          ? "Priorizar aprovação/formalização das operações pendentes antes de novas alocações."
-          : carteiraRecompra > 0
-            ? "Monitorar recompras e validar impacto no funding do dia."
-            : "Operação apta para seguir com monitoramento diário e validação de funding.",
+    blockingReasons: decision.blockingReasons,
+    attentionReasons: decision.attentionReasons,
+    releaseSignals: decision.releaseSignals,
+    suggestedActions: [
+      ...decision.suggestedActions,
+      opApprovedToday > 0 ? "Confirmar documentação e títulos das operações aprovadas hoje." : null,
+    ].filter(Boolean),
+    gatingStatus: decision.gatingStatus,
+    recommendation: decision.recommendation,
   };
 
   const delivery = buildDeliveryPayload({
