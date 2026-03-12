@@ -111,7 +111,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                 <div className="text-xs text-slate-500 mt-1">{v.validated_at}</div>
                 <div className="text-slate-300 mt-2 whitespace-pre-wrap">{v.summary_text || v.note || '-'}</div>
               </div>
-            )) : <div className="alert muted-bg">Sem validações registradas ainda.</div>}
+            )) : <EmptyState title="Nenhuma validação de fechamento ainda" description="Quando o fechamento começar a ser revisado, a trilha de aprovação executiva vai aparecer aqui." />}
           </div>
         </section>
       </section>

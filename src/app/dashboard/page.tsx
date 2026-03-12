@@ -184,7 +184,7 @@ export default async function DashboardPage() {
                 <StatusPill label={topPriority.statusLabel} tone={topPriority.statusTone} />
                 <StatusPill label={topPriority.name} tone="neutral" />
                 <StatusPill label={topPriority.phaseLabel} tone="neutral" />
-                <StatusPill label={`gating: ${topPriority.gatingStatus}`} tone="info" />
+                <StatusPill label={`Status decisório: ${topPriority.gatingStatus}`} tone="info" />
               </div>
 
               <div>

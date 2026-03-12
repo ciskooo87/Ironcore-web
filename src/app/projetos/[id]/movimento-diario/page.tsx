@@ -63,7 +63,7 @@ export default async function MovimentoDiarioPage({
         title="O movimento diário precisa deixar evidente se a operação pode seguir ou se deve parar."
         description="Esta tela é o coração operacional do produto: recomendação do motor, motivos do bloqueio, sinais de liberação, validação humana e ações executadas."
       >
-        <StatusPill label={`gating: ${String(op.gatingStatus || "sem leitura")}`} tone={String(op.gatingStatus || "") === "bloqueado" ? "bad" : String(op.gatingStatus || "") === "atencao" ? "warn" : "good"} />
+        <StatusPill label={`Status decisório: ${String(op.gatingStatus || "sem leitura")}`} tone={String(op.gatingStatus || "") === "bloqueado" ? "bad" : String(op.gatingStatus || "") === "atencao" ? "warn" : "good"} />
       </ProductHero>
 
       <section className="flex gap-2 flex-wrap mb-4">

@@ -77,7 +77,7 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
       <section className="card">
         <div className="section-head"><h2 className="title">Histórico de entregas</h2><span className="kpi-chip">{runs.length} registros</span></div>
         <div className="mt-3 space-y-3 text-sm">
-          {runs.length === 0 ? <div className="alert muted-bg">Sem envios ainda.</div> : null}
+          {runs.length === 0 ? <EmptyState title="Nenhuma entrega registrada ainda" description="Assim que o projeto começar a enviar atualizações, a trilha de delivery vai aparecer aqui com status, canal e retry." /> : null}
           {runs.map((r) => (
             <div key={r.id} className="rounded-[22px] border border-slate-800 bg-slate-950/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">

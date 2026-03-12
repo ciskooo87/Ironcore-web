@@ -111,7 +111,7 @@ export default async function ProjectWarRoomPage({ params }: { params: Promise<{
       >
         <StatusPill label={statusLabel} tone={tone} />
         <StatusPill label={phase} tone="neutral" />
-        <StatusPill label={`gating: ${gatingStatus}`} tone="info" />
+        <StatusPill label={`Status decisório: ${gatingStatus}`} tone="info" />
         <ActionLink href={primaryAction.href} label={primaryAction.label} />
         <ActionLink href={`/projetos/${project.code}/fluxo-trabalho`} label="Fluxo" tone="secondary" />
         <ActionLink href={`/projetos/${project.code}/movimento-diario`} label="Movimento" tone="secondary" />
