@@ -11,7 +11,7 @@ export function BrandMark({ compact = false, href = "/dashboard" }: BrandMarkPro
     <div className={`flex items-center gap-3 ${compact ? "" : "min-w-0"}`}>
       <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${compact ? "h-12 w-12" : "h-14 w-14"}`}>
         <Image
-          src="/brand/ironcore-logo.jpg"
+          src={compact ? "/brand/ironcore-symbol.png" : "/brand/ironcore-logo.jpg"}
           alt="Ironcore"
           fill
           sizes={compact ? "48px" : "56px"}

@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "IronCore",
   description: "Plataforma operacional financeira do IronCore",
   icons: {
-    icon: "/brand/ironcore-logo.jpg",
-    shortcut: "/brand/ironcore-logo.jpg",
-    apple: "/brand/ironcore-logo.jpg",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "IronCore",
