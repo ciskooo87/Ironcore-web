@@ -60,8 +60,15 @@ curl -I -L https://ironcore.lat
 journalctl -u ironcore-web.service -n 100 --no-pager
 ```
 
-### Reiniciar a aplicação
+### Deploy / restart oficial
 ```bash
+cd /home/openclaw/.openclaw/workspace/Ironcore-web
+./scripts/deploy-prod.sh
+```
+
+Se precisar apenas inspecionar ou agir manualmente:
+```bash
+sudo systemctl daemon-reload
 sudo systemctl restart ironcore-web.service
 ```
 
@@ -86,6 +93,7 @@ Correção aplicada:
 ## Regras operacionais
 
 - tratar `ironcore-web.service` como fonte oficial da web em produção
+- tratar `scripts/deploy-prod.sh` como fluxo oficial de publicação neste host
 - evitar múltiplos serviços paralelos para o mesmo produto sem documentação explícita
 - sempre validar path exato e capitalização antes de configurar systemd em Linux
 - ao diagnosticar `502`, checar nesta ordem:

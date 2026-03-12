@@ -24,18 +24,19 @@ export SEED_CONS_PASS='senha-forte-consultor'
 npm run seed:users
 ```
 
-## 4) Build e execução
+## 4) Build e deploy em produção
 ```bash
 cd /home/openclaw/.openclaw/workspace/Ironcore-web
 npm ci
-npm run build
-npm run start -- --hostname 127.0.0.1 --port 3001
+./scripts/deploy-prod.sh
 ```
 
 ### Nota operacional importante
 - Em produção, o path do app deve bater **exatamente** com o `WorkingDirectory` do serviço systemd.
 - Neste host, o diretório correto é `/home/openclaw/.openclaw/workspace/Ironcore-web`.
 - Linux é case-sensitive: `Ironcore-web` e `ironcore-web` são caminhos diferentes.
+- O caminho oficial de publicação é `./scripts/deploy-prod.sh`.
+- Esse script já faz build, `daemon-reload`, restart e healthcheck final.
 - Se o domínio responder `502`, validar primeiro:
   - `systemctl status ironcore-web.service`
   - `journalctl -u ironcore-web.service -n 100 --no-pager`
