@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ironcore.lat"),
   title: "IronCore",
   description: "Plataforma operacional financeira do IronCore",
   icons: {
