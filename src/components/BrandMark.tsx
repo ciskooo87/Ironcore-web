@@ -9,11 +9,11 @@ type BrandMarkProps = {
 export function BrandMark({ compact = false, href = "/dashboard", showWordmark = false }: BrandMarkProps) {
   const content = (
     <div className={`flex items-center ${showWordmark ? "justify-center text-center w-full" : ""} gap-3 ${compact ? "" : "min-w-0"}`}>
-      <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${compact ? (showWordmark ? "h-14 w-14" : "h-11 w-11") : "h-12 w-12"}`}>
+      <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] flex items-center justify-center ${compact ? (showWordmark ? "h-14 w-14 p-2" : "h-11 w-11 p-1.5") : "h-12 w-12 p-1.5"}`}>
         <img
           src={compact ? "/brand/ironcore-symbol.png?v=2" : "/brand/ironcore-logo-v2.jpg?v=2"}
           alt="Ironcore"
-          className="h-full w-full object-cover"
+          className="max-h-full max-w-full object-contain"
         />
       </div>
       {showWordmark ? (
