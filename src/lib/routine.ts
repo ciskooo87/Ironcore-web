@@ -55,15 +55,16 @@ export async function runDailyRoutine(projectId: string, businessDate: string, p
 
   const blockingReasons = [
     evalAlerts.hasBlocking ? "alerta bloqueante ativo" : null,
+    recon.status === "blocked" ? "conciliação bloqueada" : null,
     recon.pending > 5 ? "pendências elevadas de conciliação" : null,
     carteiraVencida > 100000 ? "carteira vencida acima do limite" : null,
     fidcPanel.recompraOperacoes > 50000 ? "recompra relevante na carteira" : null,
   ].filter(Boolean);
 
   const releaseSignals = [
-    recon.pending === 0 ? "conciliação zerada" : null,
-    opPendingApproval === 0 ? "sem pendência de aprovação" : null,
-    carteiraVencida === 0 ? "sem carteira vencida" : null,
+    recon.status !== "blocked" && recon.pending === 0 ? "conciliação zerada" : null,
+    recon.status !== "blocked" && opPendingApproval === 0 ? "sem pendência de aprovação" : null,
+    recon.status !== "blocked" && carteiraVencida === 0 ? "sem carteira vencida" : null,
   ].filter(Boolean);
 
   const suggestedActions = [

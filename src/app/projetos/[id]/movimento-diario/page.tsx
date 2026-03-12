@@ -46,7 +46,7 @@ export default async function MovimentoDiarioPage({
   return (
     <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Leitura executiva da decisão operacional do dia">
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : query.saved === "action_update" ? "Ação atualizada." : "Atualizado."}</div> : null}
-      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error === "blocked_state_requires_action" ? "A rotina está bloqueada. Não dá para aprovar o movimento sem tratar o bloqueio ou enviar para ajuste." : query.error}</div> : null}
 
       <section className="flex gap-2 flex-wrap mb-4">
         <Link href={`/projetos/${id}/rotina-diaria`} className="pill">Rotina Diária</Link>
