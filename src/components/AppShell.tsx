@@ -7,8 +7,8 @@ export function AppShell({ title, subtitle, user, children }: { title: string; s
     <main className="min-h-screen p-4 md:p-6">
       <header className="card mb-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="flex items-start gap-4 min-w-0">
-            <BrandMark />
+          <div className="flex items-start gap-3 min-w-0">
+            <BrandMark compact />
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
               {subtitle ? <p className="text-sm text-slate-400 mt-1">{subtitle}</p> : null}
