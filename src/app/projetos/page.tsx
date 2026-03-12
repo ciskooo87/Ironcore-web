@@ -2,6 +2,21 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/guards";
 import { isProjectOnboardingComplete, listProjectsForUser } from "@/lib/projects";
+import { listSopSteps } from "@/lib/sop";
+import { listRoutineRuns } from "@/lib/routine";
+
+function toneClasses(tone: "good" | "warn" | "bad") {
+  if (tone === "bad") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
+  if (tone === "warn") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
+  return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
+}
+
+function formatWhen(value: string | null | undefined) {
+  if (!value) return "sem rotina";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
 
 export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ error?: string; segment?: string }> }) {
   const user = await requireUser();
@@ -12,11 +27,68 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
   const segmentFilter = (params.segment || "all").trim();
   const filteredProjects = segmentFilter === "all" ? projects : projects.filter((p) => p.segment === segmentFilter);
 
+  const projectCards = await Promise.all(
+    filteredProjects.map(async (p) => {
+      const [steps, runs] = await Promise.all([listSopSteps(p.id), listRoutineRuns(p.id, 1)]);
+      const latest = runs[0];
+      const onboardingComplete = isProjectOnboardingComplete(p);
+      const blocked = steps.filter((s) => s.status === "bloqueado").length;
+      const waiting = steps.filter((s) => s.status === "aguardando_validacao").length;
+      const op = ((latest?.summary || {}) as Record<string, any>).operationalDecision || {};
+      const gating = String(op.gatingStatus || "sem leitura");
+      const blockingReasons = Array.isArray(op.blockingReasons) ? op.blockingReasons.length : 0;
+
+      let tone: "good" | "warn" | "bad" = "good";
+      let status = "Operação estável";
+      if (!onboardingComplete || blocked > 0 || latest?.status === "blocked" || blockingReasons > 0) {
+        tone = "bad";
+        status = !onboardingComplete ? "Implantação pendente" : "Bloqueado";
+      } else if (waiting > 0 || latest?.status === "warning") {
+        tone = "warn";
+        status = "Atenção";
+      }
+
+      return {
+        project: p,
+        onboardingComplete,
+        blocked,
+        waiting,
+        latest,
+        gating,
+        tone,
+        status,
+      };
+    })
+  );
+
+  const blockedCount = projectCards.filter((p) => p.tone === "bad").length;
+  const warningCount = projectCards.filter((p) => p.tone === "warn").length;
+
   return (
-    <AppShell user={user} title="Projetos" subtitle="Permissão por projeto, segmentação e resumo operacional por carteira">
+    <AppShell user={user} title="Projetos" subtitle="Carteira viva do Ironcore: onde cada projeto está, o que trava e qual é o próximo passo sem obrigar você a abrir módulo por módulo.">
+      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              carteira do produto
+            </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Cada projeto precisa se comportar como uma sala de guerra com contexto, status e próxima ação.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Esta página deixa de ser listagem bruta e vira carteira ativa do Ironcore: segmentação, prioridade, gating e entrada clara para execução.
+            </p>
+          </div>
+          <div className="grid min-w-[280px] grid-cols-2 gap-3 text-sm">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Projetos</div><div className="mt-1 text-2xl font-semibold text-white">{projectCards.length}</div></div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Bloqueados</div><div className="mt-1 text-2xl font-semibold text-rose-200">{blockedCount}</div></div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Em atenção</div><div className="mt-1 text-2xl font-semibold text-amber-200">{warningCount}</div></div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3"><div className="text-xs uppercase tracking-wide text-slate-400">Segmentos</div><div className="mt-1 text-2xl font-semibold text-cyan-100">{segments.length}</div></div>
+          </div>
+        </div>
+      </section>
+
       {(user.role === "admin_master" || user.role === "head") ? (
         <section className="card mb-4">
-          <h2 className="title">Novo projeto</h2>
+          <div className="section-head"><h2 className="title">Novo projeto</h2><span className="kpi-chip">entrada de carteira</span></div>
           <form action="/api/projects/create" method="post" className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
             <input name="code" required placeholder="codigo (ex: elicon)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
             <input name="name" required placeholder="nome" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
@@ -34,7 +106,10 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
 
       <section className="card mb-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h2 className="title">Segmentação de projetos disponíveis</h2>
+          <div>
+            <h2 className="title">Carteira por segmento</h2>
+            <div className="text-sm text-slate-400 mt-1">Use o filtro para organizar a leitura da carteira sem perder a visão de prioridade.</div>
+          </div>
           <form method="get" className="flex gap-2">
             <select name="segment" defaultValue={segmentFilter} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm">
               <option value="all">Todos os segmentos</option>
@@ -48,23 +123,39 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
       </section>
 
       <section className="card">
-        <h2 className="title">Projetos disponíveis</h2>
-        <div className="mt-3 grid md:grid-cols-2 gap-2">
-          {filteredProjects.length === 0 ? <div className="alert muted-bg">Sem projetos neste filtro.</div> : null}
-          {filteredProjects.map((p) => {
+        <div className="section-head"><h2 className="title">Projetos em foco</h2><span className="kpi-chip">carteira ativa</span></div>
+        <div className="mt-4 grid gap-3 xl:grid-cols-2">
+          {projectCards.length === 0 ? <div className="alert muted-bg">Sem projetos neste filtro.</div> : null}
+          {projectCards.map(({ project: p, onboardingComplete, blocked, waiting, latest, gating, tone, status }) => {
             const finance = p.financial_profile || {};
-            const onboardingComplete = isProjectOnboardingComplete(p);
             return (
-              <Link key={p.id} href={`/projetos/${p.code}/`} className="block rounded-xl border border-slate-800 p-3 hover:border-cyan-400">
-                <div className="row mb-2"><span className="font-medium">{p.name}</span><span className="badge">{p.code}</span></div>
-                <div className={`text-[11px] mb-2 ${onboardingComplete ? "text-emerald-300" : "text-amber-300"}`}>{onboardingComplete ? "Onboarding concluído" : "Onboarding pendente"}</div>
-                <div className="text-xs text-slate-400 mb-2">Segmento: {p.segment}</div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+              <Link key={p.id} href={`/projetos/${p.code}/`} className="block rounded-[24px] border border-slate-800 bg-slate-950/20 p-4 hover:border-cyan-400">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-semibold text-white">{p.name}</h3>
+                      <span className="badge">{p.code}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">{p.segment} · {p.legal_name}</div>
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClasses(tone)}`}>{status}</span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Onboarding</div><div className={`mt-1 font-medium ${onboardingComplete ? "text-emerald-200" : "text-amber-200"}`}>{onboardingComplete ? "concluído" : "pendente"}</div></div>
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Gating</div><div className="mt-1 font-medium">{gating}</div></div>
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Bloqueios</div><div className="mt-1 font-medium text-rose-200">{blocked}</div></div>
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Validações</div><div className="mt-1 font-medium text-amber-200">{waiting}</div></div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
                   <div className="row"><span>Plano de contas</span><b>{(p.account_plan || []).length}</b></div>
-                  <div className="row"><span>Fornecedores classif.</span><b>{(p.supplier_classes || []).length}</b></div>
+                  <div className="row"><span>Fornec. classif.</span><b>{(p.supplier_classes || []).length}</b></div>
                   <div className="row"><span>TX</span><b>{Number(finance.tx_percent || 0).toFixed(2)}%</b></div>
                   <div className="row"><span>Float</span><b>{Number(finance.float_days || 0)}d</b></div>
                 </div>
+
+                <div className="mt-3 text-xs text-slate-500">Última rotina: {formatWhen(latest?.created_at)}</div>
               </Link>
             );
           })}
