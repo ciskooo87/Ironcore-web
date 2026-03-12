@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -129,22 +130,13 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "historical_diagnosis" ? "Diagnóstico histórico gerado." : query.saved === "historical_validation" ? "Validação do diagnóstico registrada." : "Ação concluída."}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">{query.error === "historical_upload_missing" ? "Ainda não existe base histórica suficiente para gerar o diagnóstico." : query.error === "historical_diagnosis_error" ? "Falha ao gerar o diagnóstico histórico." : query.error}</div> : null}
 
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              timeline premium de execução
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">O fluxo precisa mostrar onde o projeto está, o que trava e o que falta validar.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Aqui a trilha do Ironcore deixa de ser checklist técnica e vira uma leitura viva do projeto: implantação, operação e fechamento em uma só narrativa.
-            </p>
-          </div>
-          <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${toneClasses(overallTone === "bad" ? "bloqueado" : overallTone === "warn" ? "aguardando_validacao" : "concluido")}`}>
-            {overallLabel}
-          </div>
-        </div>
-      </section>
+      <ProductHero
+        eyebrow="timeline premium de execução"
+        title="O fluxo precisa mostrar onde o projeto está, o que trava e o que falta validar."
+        description="Aqui a trilha do Ironcore deixa de ser checklist técnica e vira uma leitura viva do projeto: implantação, operação e fechamento em uma só narrativa."
+      >
+        <StatusPill label={overallLabel} tone={overallTone} />
+      </ProductHero>
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Etapas totais</div><div className="text-lg font-semibold mt-1">{runtime.length}</div></div>

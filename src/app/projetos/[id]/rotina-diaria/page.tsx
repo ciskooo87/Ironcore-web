@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -98,22 +99,13 @@ export default async function Page({
 
   return (
     <AppShell user={user} title="Projeto · Rotina Diária" subtitle="Cockpit de execução do dia: rodar a rotina, entender o resultado e fechar as etapas do fluxo sem se perder em tela técnica.">
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              execução do dia
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">A rotina diária precisa te dizer o que aconteceu, o que travou e o que falta fechar.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Em vez de só rodar o motor, esta tela precisa funcionar como posto de comando: entrada do processamento, leitura do resultado e amarração do SOP.
-            </p>
-          </div>
-          <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${statusTone(latest?.status || "success")}`}>
-            {latest ? `Última rotina: ${latest.status}` : "Sem rotina executada"}
-          </div>
-        </div>
-      </section>
+      <ProductHero
+        eyebrow="execução do dia"
+        title="A rotina diária precisa te dizer o que aconteceu, o que travou e o que falta fechar."
+        description="Em vez de só rodar o motor, esta tela precisa funcionar como posto de comando: entrada do processamento, leitura do resultado e amarração do SOP."
+      >
+        <StatusPill label={latest ? `Última rotina: ${latest.status}` : "Sem rotina executada"} tone={latest?.status === "blocked" ? "bad" : latest?.status === "warning" ? "warn" : "good"} />
+      </ProductHero>
 
       <section className="card mb-4">
         <div className="section-head"><h2 className="title">Rodar rotina</h2><span className="kpi-chip">ação principal</span></div>

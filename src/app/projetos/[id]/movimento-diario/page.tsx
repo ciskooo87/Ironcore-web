@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -57,22 +58,13 @@ export default async function MovimentoDiarioPage({
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : query.saved === "action_update" ? "Ação atualizada." : "Atualizado."}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error === "blocked_state_requires_action" ? "A rotina está bloqueada. Não dá para aprovar o movimento sem tratar o bloqueio ou enviar para ajuste." : query.error}</div> : null}
 
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              decisão do dia
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">O movimento diário precisa deixar evidente se a operação pode seguir ou se deve parar.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Esta tela é o coração operacional do produto: recomendação do motor, motivos do bloqueio, sinais de liberação, validação humana e ações executadas.
-            </p>
-          </div>
-          <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${toneClasses(String(op.gatingStatus || "liberado"))}`}>
-            gating: {String(op.gatingStatus || "sem leitura")}
-          </div>
-        </div>
-      </section>
+      <ProductHero
+        eyebrow="decisão do dia"
+        title="O movimento diário precisa deixar evidente se a operação pode seguir ou se deve parar."
+        description="Esta tela é o coração operacional do produto: recomendação do motor, motivos do bloqueio, sinais de liberação, validação humana e ações executadas."
+      >
+        <StatusPill label={`gating: ${String(op.gatingStatus || "sem leitura")}`} tone={String(op.gatingStatus || "") === "bloqueado" ? "bad" : String(op.gatingStatus || "") === "atencao" ? "warn" : "good"} />
+      </ProductHero>
 
       <section className="flex gap-2 flex-wrap mb-4">
         <Link href={`/projetos/${id}/rotina-diaria`} className="pill">Rotina Diária</Link>
