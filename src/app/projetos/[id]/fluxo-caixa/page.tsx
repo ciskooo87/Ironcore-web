@@ -11,6 +11,10 @@ function brl(v: number) {
 
 type ScenarioKey = "base" | "otimista" | "pessimista";
 
+function toneClasses(ok: boolean) {
+  return ok ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100" : "border-rose-400/30 bg-rose-400/10 text-rose-100";
+}
+
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ scenario?: string }> }) {
   const user = await requireUser();
   const { id } = await params;
@@ -43,28 +47,34 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const impactoProrrogacao = gap * 0.012;
 
   return (
-    <AppShell user={user} title="Projeto · Fluxo de Caixa" subtitle="Movimento do dia + projeção padrão de 90 dias">
-      <section className="grid md:grid-cols-3 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Entradas (dia)</div><div className="text-xl font-semibold mt-1">{brl((move.contas_receber || 0) + (move.duplicatas || 0))}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Saídas (dia)</div><div className="text-xl font-semibold mt-1">{brl(move.contas_pagar || 0)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Saldo base do dia</div><div className="text-xl font-semibold mt-1">{brl((move.extrato_bancario || 0) + (move.net_ops || 0))}</div></div>
+    <AppShell user={user} title="Projeto · Fluxo de Caixa" subtitle="Cockpit financeiro de curto prazo: movimento do dia, projeção de 90 dias e decisão rápida para evitar ruptura de caixa.">
+      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              caixa e projeção
+            </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Fluxo de caixa precisa responder rápido se o projeto atravessa os próximos 90 dias ou se vai romper.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Esta tela junta movimento do dia, leitura prospectiva e resposta sugerida para o time agir antes da ruptura acontecer.
+            </p>
+          </div>
+          <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${toneClasses(!selected.ruptureDate)}`}>
+            {selected.ruptureDate ? `Ruptura prevista em ${selected.ruptureDate}` : `Sem ruptura prevista no cenário ${scenario}`}
+          </div>
+        </div>
       </section>
 
-      <section className="card mb-4">
-        <h2 className="title">Movimento do dia ({today})</h2>
-        <div className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
-          <div className="row"><span>Faturamento</span><b>{brl(move.faturamento || 0)}</b></div>
-          <div className="row"><span>Contas a receber</span><b>{brl(move.contas_receber || 0)}</b></div>
-          <div className="row"><span>Contas a pagar</span><b>{brl(move.contas_pagar || 0)}</b></div>
-          <div className="row"><span>Extrato bancário</span><b>{brl(move.extrato_bancario || 0)}</b></div>
-          <div className="row"><span>Duplicatas</span><b>{brl(move.duplicatas || 0)}</b></div>
-          <div className="row"><span>Operações líquidas</span><b>{brl(move.net_ops || 0)}</b></div>
-        </div>
+      <section className="grid md:grid-cols-4 gap-3 mb-4">
+        <div className="metric"><div className="text-xs text-slate-400">Entradas do dia</div><div className="text-xl font-semibold mt-1">{brl((move.contas_receber || 0) + (move.duplicatas || 0))}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Saídas do dia</div><div className="text-xl font-semibold mt-1">{brl(move.contas_pagar || 0)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Saldo base do dia</div><div className="text-xl font-semibold mt-1">{brl((move.extrato_bancario || 0) + (move.net_ops || 0))}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Cenário ativo</div><div className="text-xl font-semibold mt-1 capitalize">{scenario}</div></div>
       </section>
 
       <section className="card mb-4">
         <div className="section-head flex-wrap">
-          <h2 className="title">Cenários de projeção</h2><span className="kpi-chip">Premium planner</span>
+          <h2 className="title">Projeção de 90 dias</h2><span className="kpi-chip">premium planner</span>
           <form method="get" className="flex gap-2">
             <select name="scenario" defaultValue={scenario} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm">
               <option value="base">Base</option>
@@ -75,40 +85,63 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           </form>
         </div>
 
-        <div className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
-          <div className="row"><span>Abertura inicial</span><b>{brl(proj.baseOpening)}</b></div>
-          <div className="row"><span>Média entradas</span><b>{brl(proj.avgIn)}</b></div>
-          <div className="row"><span>Média saídas</span><b>{brl(proj.avgOut)}</b></div>
+        <div className="mt-3 grid md:grid-cols-3 gap-3 text-sm">
+          <div className="rounded-2xl border border-slate-800 p-4"><div className="text-xs text-slate-400">Abertura inicial</div><div className="mt-1 text-lg font-semibold text-white">{brl(proj.baseOpening)}</div></div>
+          <div className="rounded-2xl border border-slate-800 p-4"><div className="text-xs text-slate-400">Média entradas</div><div className="mt-1 text-lg font-semibold text-emerald-200">{brl(proj.avgIn)}</div></div>
+          <div className="rounded-2xl border border-slate-800 p-4"><div className="text-xs text-slate-400">Média saídas</div><div className="mt-1 text-lg font-semibold text-rose-200">{brl(proj.avgOut)}</div></div>
         </div>
 
-        <div className={`alert mt-3 ${selected.ruptureDate ? "bad-bg" : "ok-bg"}`}>
+        <div className={`alert mt-4 ${selected.ruptureDate ? "bad-bg" : "ok-bg"}`}>
           {selected.ruptureDate
             ? `⚠ Ruptura de caixa prevista no cenário ${scenario} em ${selected.ruptureDate}`
             : `✅ Sem ruptura prevista em 90 dias no cenário ${scenario}`}
         </div>
 
         {firstNegative ? (
-          <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-            <div className="font-semibold">Sugestão automática para fluxo negativo</div>
-            <div className="mt-1">Gap estimado: <b>{brl(gap)}</b> · Float médio: <b>{floatDias} dias</b> · TX desconto: <b>{(txDesconto * 100).toFixed(2)}%</b></div>
-            <div className="mt-2 grid md:grid-cols-2 gap-2">
-              <div className="rounded border border-slate-700 p-2">
-                <div className="font-medium">Opção 1 · Prorrogar títulos</div>
-                <div className="text-slate-300">Impacto financeiro estimado: {brl(impactoProrrogacao)}</div>
+          <div className="mt-4 rounded-[24px] border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+            <div className="font-semibold text-white">Resposta sugerida para fluxo negativo</div>
+            <div className="mt-2 text-slate-300">Gap estimado: <b>{brl(gap)}</b> · Float médio: <b>{floatDias} dias</b> · TX desconto: <b>{(txDesconto * 100).toFixed(2)}%</b></div>
+            <div className="mt-3 grid md:grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-slate-700 p-4">
+                <div className="font-medium text-slate-100">Opção 1 · Prorrogar títulos</div>
+                <div className="text-slate-300 mt-2">Impacto financeiro estimado: {brl(impactoProrrogacao)}</div>
               </div>
-              <div className="rounded border border-slate-700 p-2">
-                <div className="font-medium">Opção 2 · Desconto de duplicatas</div>
-                <div className="text-slate-300">Recebíveis em carteira estimados: {brl(recebiveisCarteira)}</div>
-                <div className="text-slate-300">Custo projetado da operação: {brl(custoDesconto)}</div>
+              <div className="rounded-2xl border border-slate-700 p-4">
+                <div className="font-medium text-slate-100">Opção 2 · Desconto de duplicatas</div>
+                <div className="text-slate-300 mt-2">Recebíveis em carteira estimados: {brl(recebiveisCarteira)}</div>
+                <div className="text-slate-300 mt-1">Custo projetado da operação: {brl(custoDesconto)}</div>
               </div>
             </div>
           </div>
         ) : null}
       </section>
 
-      <section className="card">
-        <div className="row mb-3"><span>Movimento do dia · modelo operacional</span><span className="text-xs text-slate-400">layout estilo planilha</span></div>
-        <div className="table-wrap">
+      <section className="grid gap-4 xl:grid-cols-[1fr_1fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Movimento do dia</h2><span className="kpi-chip">{today}</span></div>
+          <div className="mt-3 grid md:grid-cols-2 gap-2 text-sm">
+            <div className="row"><span>Faturamento</span><b>{brl(move.faturamento || 0)}</b></div>
+            <div className="row"><span>Contas a receber</span><b>{brl(move.contas_receber || 0)}</b></div>
+            <div className="row"><span>Contas a pagar</span><b>{brl(move.contas_pagar || 0)}</b></div>
+            <div className="row"><span>Extrato bancário</span><b>{brl(move.extrato_bancario || 0)}</b></div>
+            <div className="row"><span>Duplicatas</span><b>{brl(move.duplicatas || 0)}</b></div>
+            <div className="row"><span>Operações líquidas</span><b>{brl(move.net_ops || 0)}</b></div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Resumo operacional</h2><span className="kpi-chip">consolidado</span></div>
+          <div className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
+            <div className="rounded-2xl border border-slate-800 p-4"><div className="text-xs text-slate-400">Entradas</div><div className="mt-1 text-lg font-semibold text-emerald-200">{brl(totalEntradas)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-4"><div className="text-xs text-slate-400">Saídas</div><div className="mt-1 text-lg font-semibold text-rose-200">{brl(totalSaidas)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-4"><div className="text-xs text-slate-400">Resultado</div><div className="mt-1 text-lg font-semibold text-white">{brl(totalEntradas - totalSaidas)}</div></div>
+          </div>
+        </section>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Movimento operacional detalhado</h2><span className="kpi-chip">base do cálculo</span></div>
+        <div className="table-wrap mt-3">
           <table className="min-w-[1300px] text-xs">
             <thead className="bg-slate-900/80">
               <tr>
@@ -123,93 +156,18 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             </thead>
             <tbody>
               {opRows.length === 0 ? (
-                <tr>
-                  <td className="px-2 py-2 border-b border-slate-900 text-center text-slate-400" colSpan={7}>Sem lançamentos diários para {today}</td>
+                <tr><td className="px-2 py-2 border-b border-slate-900 text-center text-slate-400" colSpan={7}>Sem lançamentos diários para {today}</td></tr>
+              ) : opRows.map((r, i) => (
+                <tr key={`${r.classificacao}-${i}`} className="odd:bg-slate-900/30">
+                  <td className="px-2 py-1.5 border-b border-slate-900">{r.fluxo}</td>
+                  <td className="px-2 py-1.5 border-b border-slate-900">{r.movimentacao}</td>
+                  <td className="px-2 py-1.5 border-b border-slate-900">{r.classificacao}</td>
+                  <td className="px-2 py-1.5 border-b border-slate-900">{r.subclassificacao}</td>
+                  <td className="px-2 py-1.5 border-b border-slate-900">{r.natureza}</td>
+                  <td className="px-2 py-1.5 border-b border-slate-900">{r.lancamento}</td>
+                  <td className="px-2 py-1.5 border-b border-slate-900 text-right">{brl(r.valor)}</td>
                 </tr>
-              ) : (
-                opRows.map((r, i) => (
-                  <tr key={`${r.classificacao}-${i}`} className="odd:bg-slate-900/30">
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.fluxo}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.movimentacao}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.classificacao}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.subclassificacao}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.natureza}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900">{r.lancamento}</td>
-                    <td className="px-2 py-1.5 border-b border-slate-900 text-right">{brl(r.valor)}</td>
-                  </tr>
-                ))
-              )}
-
-              <tr className="bg-slate-900/40 font-semibold">
-                <td className="px-2 py-1.5 border-b border-slate-900">TOTAL ENTRADAS</td>
-                <td className="px-2 py-1.5 border-b border-slate-900" colSpan={5}>Consolidado automático dos relatórios diários</td>
-                <td className="px-2 py-1.5 border-b border-slate-900 text-right">{brl(totalEntradas)}</td>
-              </tr>
-              <tr className="bg-slate-900/40 font-semibold">
-                <td className="px-2 py-1.5 border-b border-slate-900">TOTAL SAÍDAS</td>
-                <td className="px-2 py-1.5 border-b border-slate-900" colSpan={5}>Consolidado automático dos relatórios diários</td>
-                <td className="px-2 py-1.5 border-b border-slate-900 text-right">{brl(totalSaidas)}</td>
-              </tr>
-              <tr className="bg-slate-800/60 font-semibold">
-                <td className="px-2 py-1.5 border-b border-slate-900">RESULTADO DO DIA</td>
-                <td className="px-2 py-1.5 border-b border-slate-900" colSpan={5}>Entradas - Saídas</td>
-                <td className="px-2 py-1.5 border-b border-slate-900 text-right">{brl(totalEntradas - totalSaidas)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="card mt-4">
-        <div className="row mb-3"><span>Fluxo de 90 dias · template matriz</span><span className="text-xs text-slate-400">dados automáticos dos relatórios diários</span></div>
-        <div className="table-wrap">
-          <table className="min-w-[1800px] text-xs">
-            <thead className="bg-slate-900/80">
-              <tr>
-                <th className="text-left px-3 py-2 border-b border-slate-800">conta</th>
-                {selected.rows.map((d) => (
-                  <th key={d.date} className="text-right px-2 py-2 border-b border-slate-800 whitespace-nowrap">{d.date.slice(5)}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="px-3 py-2 border-b border-slate-900 font-semibold">entradas</td>
-                {selected.rows.map((d) => <td key={d.date+"e"} className="border-b border-slate-900" />)}
-              </tr>
-              <tr>
-                <td className="px-3 py-2 border-b border-slate-900">total de entradas</td>
-                {selected.rows.map((d) => (
-                  <td key={d.date+"te"} className="px-2 py-2 border-b border-slate-900 text-right">{Math.round(d.inflow).toLocaleString("pt-BR")}</td>
-                ))}
-              </tr>
-
-              <tr>
-                <td className="px-3 py-2 border-b border-slate-900 font-semibold">saídas</td>
-                {selected.rows.map((d) => <td key={d.date+"s"} className="border-b border-slate-900" />)}
-              </tr>
-              <tr>
-                <td className="px-3 py-2 border-b border-slate-900">total de saídas</td>
-                {selected.rows.map((d) => (
-                  <td key={d.date+"ts"} className="px-2 py-2 border-b border-slate-900 text-right">{Math.round(d.outflow).toLocaleString("pt-BR")}</td>
-                ))}
-              </tr>
-
-              <tr>
-                <td className="px-3 py-2 border-b border-slate-900">saldo do dia</td>
-                {selected.rows.map((d) => (
-                  <td key={d.date+"sd"} className="px-2 py-2 border-b border-slate-900 text-right">{Math.round(d.inflow - d.outflow).toLocaleString("pt-BR")}</td>
-                ))}
-              </tr>
-
-              <tr className="bg-slate-900/40">
-                <td className="px-3 py-2 border-b border-slate-900 font-semibold">saldo final</td>
-                {selected.rows.map((d) => (
-                  <td key={d.date+"sf"} className={`px-2 py-2 border-b border-slate-900 text-right font-semibold ${d.closing < 0 ? "text-red-300" : ""}`}>
-                    {Math.round(d.closing).toLocaleString("pt-BR")}
-                  </td>
-                ))}
-              </tr>
+              ))}
             </tbody>
           </table>
         </div>
