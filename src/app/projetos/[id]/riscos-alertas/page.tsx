@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -35,53 +36,32 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const today = todayInSaoPauloISO();
   const projection = await getCashflowProjection90d(project.id, today);
   const fidcPanel = await getFidcPanel(project.id);
+  const criticalAlerts = alerts.filter((a) => a.severity === 'critical').length;
+  const flowBlocking = alerts.filter((a) => a.block_flow).length;
 
   return (
-    <AppShell user={user} title="Projeto · Riscos e Alertas" subtitle="Relato operacional + checklist de risco com ação e bloqueio">
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Novo alerta</h2><span className="kpi-chip">Risk control</span></div>
-        <form action={`/api/projects/${id}/alerts/create`} method="post" className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
-          <input name="name" required placeholder="nome do alerta" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <select name="severity" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
-            <option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="critical">critical</option>
-          </select>
-          <select name="block_flow" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
-            <option value="false">não bloqueia</option>
-            <option value="true">bloqueia fluxo</option>
-          </select>
+    <AppShell user={user} title="Projeto · Riscos & Alertas" subtitle="Camada de risco do projeto: registrar, interpretar, priorizar e bloquear quando necessário sem perder clareza operacional.">
+      <ProductHero
+        eyebrow="camada de risco"
+        title="Risco bom não é o que fica escondido — é o que aparece cedo, com contexto e ação clara."
+        description="Esta tela junta alertas manuais, leitura assistida por IA, projeção de caixa e painel FIDC para transformar risco em decisão prática."
+      >
+        <StatusPill label={criticalAlerts > 0 ? `${criticalAlerts} crítico(s)` : 'Sem críticos'} tone={criticalAlerts > 0 ? 'bad' : 'good'} />
+        <StatusPill label={flowBlocking > 0 ? `${flowBlocking} bloqueia fluxo` : 'Sem bloqueio de fluxo'} tone={flowBlocking > 0 ? 'warn' : 'good'} />
+      </ProductHero>
+      {query.saved ? <div className="alert ok-bg mb-4">{query.saved === 'ai' ? 'Sugestão de risco gerada.' : query.saved === 'ai_apply' ? 'Sugestão processada.' : 'Alerta salvo.'}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error}</div> : null}
 
-          <label className="md:col-span-3 space-y-1">
-            <span className="text-slate-400">Relato breve do projeto (base para leitura de risco)</span>
-            <textarea name="project_report" placeholder="Contexto atual, gargalos e sinais de risco" className="w-full min-h-20 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          </label>
-
-          <label className="md:col-span-3 space-y-1">
-            <span className="text-slate-400">Oportunidade identificada</span>
-            <input name="opportunity" placeholder="Ex.: renegociação de vencimentos ou redução de custo financeiro" className="w-full bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          </label>
-
-          <input name="max_diff" type="number" step="0.01" placeholder="max_diff (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="max_pending" type="number" placeholder="max_pending" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="upload_ref" placeholder="referência de upload (url/id)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-
-          <div className="md:col-span-3 rounded-lg border border-slate-800 p-3">
-            <div className="text-slate-300 text-sm mb-2">Checklist automático (selecionar os riscos/oportunidades detectados)</div>
-            <div className="grid md:grid-cols-2 gap-1 text-sm">
-              {AUTO_CHECKS.map((item) => (
-                <label key={item} className="flex items-center gap-2"><input type="checkbox" name="auto_checks" value={item} /> {item}</label>
-              ))}
-            </div>
-          </div>
-
-          <button type="submit" className="badge py-2 cursor-pointer">Salvar alerta ✦</button>
-        </form>
-        {query.saved ? <div className="alert ok-bg mt-3">{query.saved === 'ai' ? 'Sugestão de risco gerada.' : query.saved === 'ai_apply' ? 'Sugestão processada.' : 'Alerta salvo.'}</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error}</div> : null}
+      <section className="grid md:grid-cols-4 gap-3 mb-4">
+        <MetricCard label="Alertas abertos" value={alerts.length} tone={alerts.length > 0 ? 'warn' : 'good'} />
+        <MetricCard label="Críticos" value={criticalAlerts} tone={criticalAlerts > 0 ? 'bad' : 'good'} />
+        <MetricCard label="Ruptura 90d" value={projection.scenarios.base.ruptureDate || 'não'} tone={projection.scenarios.base.ruptureDate ? 'bad' : 'good'} />
+        <MetricCard label="Recompras FIDC" value={fidcPanel.recompras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} tone={fidcPanel.recompras > 0 ? 'warn' : 'good'} />
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Análise de risco com IA</h2><span className="kpi-chip">Relato → sugestão</span></div>
-        <div className="text-sm text-slate-400 mt-2">Fluxo recomendado: escreva o relato do risco, clique em <b>Analisar com IA</b> e depois aprove ou descarte a sugestão gerada.</div>
+        <div className="section-head"><h2 className="title">Análise de risco com IA</h2><span className="kpi-chip">relato → ação</span></div>
+        <div className="text-sm text-slate-400 mt-2">Fluxo recomendado: escrever o relato, gerar sugestão com IA e então aprovar ou descartar a recomendação.</div>
         <form action={`/api/projects/${id}/risk-ai/generate`} method="post" className="grid md:grid-cols-3 gap-2 text-sm mt-3">
           <textarea name="report" required placeholder="Relato do risco / contexto operacional" className="md:col-span-2 min-h-32 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
           <div className="space-y-2">
@@ -99,92 +79,69 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                 <div className="text-sm text-slate-300 mt-2">{String(resp.rationale || '-')}</div>
                 <div className="text-xs text-slate-400 mt-2">Severidade: {String(resp.severity || '-')} · blockFlow: {String(resp.blockFlow || false)} · origem: {String(resp.source || '-')}</div>
                 <div className="mt-2 text-xs text-slate-400">Recomendações: {Array.isArray(resp.recommendations) ? resp.recommendations.join(' · ') : '-'}</div>
-                {resp.ai_error ? <div className="mt-2 text-xs text-amber-300">Falha IA capturada: {String(resp.ai_error)}</div> : null}
                 {s.status === 'suggested' ? (
                   <form action={`/api/projects/${id}/risk-ai/apply`} method="post" className="flex gap-2 flex-wrap mt-3">
                     <input type="hidden" name="suggestion_id" value={s.id} />
                     <button type="submit" name="action" value="approve" className="pill">Aprovar e virar alerta</button>
                     <button type="submit" name="action" value="discard" className="pill">Descartar</button>
                   </form>
-                ) : (
-                  <div className="mt-3 text-xs text-slate-500">Status da sugestão: {s.status}</div>
-                )}
+                ) : <div className="mt-3 text-xs text-slate-500">Status da sugestão: {s.status}</div>}
               </div>
             );
-          }) : <div className="alert muted-bg">Sem sugestões IA ainda.</div>}
-        </div>
-      </section>
-
-      <section className="grid md:grid-cols-2 gap-3 mb-4">
-        <div className="card">
-          <h2 className="title">Resumo do projeto</h2>
-          <div className="text-sm text-slate-300 mt-2 whitespace-pre-wrap">{project.project_summary || "Sem resumo preenchido em Cadastro."}</div>
-        </div>
-        <div className="card">
-          <h2 className="title">Resumo executivo automático</h2>
-          <div className="space-y-2 mt-2 text-sm">
-            <div className="row"><span>Alertas abertos</span><b>{alerts.length}</b></div>
-            <div className="row"><span>Ruptura no cenário base</span><b>{projection.scenarios.base.ruptureDate || "não"}</b></div>
-            <div className="row"><span>Próximos vencimentos</span><b>D+7 monitorado</b></div>
-            <div className="row"><span>KPI DRE/DFC</span><b>visão consolidada no módulo DRE/DFC</b></div>
-          </div>
+          }) : <EmptyState title="Sem sugestões de IA ainda" description="As análises assistidas vão aparecer aqui quando você começar a usar o fluxo de relato e sugestão." />}
         </div>
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Painel de risco FIDC</h2><span className="kpi-chip">Retorno consolidado</span></div>
-        <div className="grid md:grid-cols-5 gap-3 mt-3 text-sm">
-          <div className="metric"><div className="text-xs text-slate-400">Retornos recebidos</div><div className="text-lg font-semibold mt-1">{fidcPanel.totalRetornos}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">Carteira consolidada</div><div className="text-lg font-semibold mt-1">{fidcPanel.totalCarteira.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">Vencidos</div><div className="text-lg font-semibold mt-1 text-rose-300">{fidcPanel.vencidos.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">A vencer</div><div className="text-lg font-semibold mt-1 text-emerald-300">{fidcPanel.aVencer.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">Recompras</div><div className="text-lg font-semibold mt-1 text-amber-300">{fidcPanel.recompras.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-        </div>
-        <div className="grid md:grid-cols-4 gap-3 mt-4 text-sm">
-          <div className="metric"><div className="text-xs text-slate-400">Carteira via operações</div><div className="text-lg font-semibold mt-1">{fidcPanel.carteiraOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">Vencido via operações</div><div className="text-lg font-semibold mt-1 text-rose-300">{fidcPanel.vencidoOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">A vencer via operações</div><div className="text-lg font-semibold mt-1 text-emerald-300">{fidcPanel.aVencerOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-          <div className="metric"><div className="text-xs text-slate-400">Recompra via operações</div><div className="text-lg font-semibold mt-1 text-amber-300">{fidcPanel.recompraOperacoes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div></div>
-        </div>
-        <div className="grid md:grid-cols-2 gap-3 mt-4 text-sm">
-          <div className="card !p-3">
-            <div className="font-medium mb-2">Segregação por modalidade</div>
-            <div className="space-y-2">
-              {fidcPanel.byModalidade.length === 0 ? <div className="alert muted-bg">Sem retorno FIDC enviado ainda.</div> : null}
-              {fidcPanel.byModalidade.map((item) => (
-                <div key={item.modalidade} className="row"><span>{item.modalidade}</span><b>{item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b></div>
+        <div className="section-head"><h2 className="title">Novo alerta manual</h2><span className="kpi-chip">controle direto</span></div>
+        <form action={`/api/projects/${id}/alerts/create`} method="post" className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
+          <input name="name" required placeholder="nome do alerta" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <select name="severity" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+            <option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="critical">critical</option>
+          </select>
+          <select name="block_flow" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+            <option value="false">não bloqueia</option>
+            <option value="true">bloqueia fluxo</option>
+          </select>
+          <textarea name="project_report" placeholder="Contexto atual, gargalos e sinais de risco" className="md:col-span-3 min-h-20 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="opportunity" placeholder="oportunidade identificada" className="md:col-span-3 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="max_diff" type="number" step="0.01" placeholder="max_diff (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="max_pending" type="number" placeholder="max_pending" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <input name="upload_ref" placeholder="referência de upload (url/id)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+          <div className="md:col-span-3 rounded-lg border border-slate-800 p-3">
+            <div className="text-slate-300 text-sm mb-2">Checklist automático</div>
+            <div className="grid md:grid-cols-2 gap-1 text-sm">
+              {AUTO_CHECKS.map((item) => (
+                <label key={item} className="flex items-center gap-2"><input type="checkbox" name="auto_checks" value={item} /> {item}</label>
               ))}
             </div>
           </div>
-          <div className="card !p-3">
-            <div className="font-medium mb-2">Leitura operacional do painel</div>
-            <div className="space-y-2 text-slate-300">
-              <div>• Último retorno: <b>{fidcPanel.latestDate || "-"}</b></div>
-              <div>• Risco concentrado sinalizado: <b>{fidcPanel.riscoConcentrado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b></div>
-              <div>• Operações/títulos vinculados: <b>{fidcPanel.operacoesVinculadas}</b></div>
-              <div>• Última observação: <b>{fidcPanel.latestNotes || "sem nota"}</b></div>
-            </div>
-          </div>
-        </div>
+          <button type="submit" className="badge py-2 cursor-pointer">Salvar alerta</button>
+        </form>
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Cadastro manual de alerta</h2><span className="kpi-chip">Opcional</span></div>
-        <div className="text-sm text-slate-400 mt-2">Use esta área só quando quiser criar o alerta manualmente. Para o fluxo padrão, use a análise de risco com IA acima.</div>
+        <div className="section-head"><h2 className="title">Painel de risco FIDC</h2><span className="kpi-chip">retorno consolidado</span></div>
+        <div className="grid md:grid-cols-5 gap-3 mt-3 text-sm">
+          <MetricCard label="Retornos recebidos" value={fidcPanel.totalRetornos} />
+          <MetricCard label="Carteira consolidada" value={fidcPanel.totalCarteira.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
+          <MetricCard label="Vencidos" value={fidcPanel.vencidos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} tone="bad" />
+          <MetricCard label="A vencer" value={fidcPanel.aVencer.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} tone="good" />
+          <MetricCard label="Recompras" value={fidcPanel.recompras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} tone="warn" />
+        </div>
       </section>
 
       <section className="card">
-        <h2 className="title">Alertas cadastrados</h2>
+        <div className="section-head"><h2 className="title">Alertas cadastrados</h2><span className="kpi-chip">visão ativa</span></div>
         <div className="mt-3 space-y-2 text-sm">
-          {alerts.length === 0 ? <div className="alert muted-bg">Sem alertas.</div> : null}
-          {alerts.map((a) => (
-            <div key={a.id} className="row !items-start">
+          {alerts.length ? alerts.map((a) => (
+            <div key={a.id} className="row !items-start rounded-xl border border-slate-800 px-3 py-3">
               <div>
-                <div className="font-medium">{a.name} · {a.severity.toUpperCase()} {a.block_flow ? "· BLOCK" : ""}</div>
-                <div className="text-xs text-slate-400 whitespace-pre-wrap">{JSON.stringify(a.rule, null, 2)}</div>
+                <div className="font-medium">{a.name} · {a.severity.toUpperCase()} {a.block_flow ? '· BLOQUEIA FLUXO' : ''}</div>
+                <div className="text-xs text-slate-400 whitespace-pre-wrap mt-1">{JSON.stringify(a.rule, null, 2)}</div>
               </div>
             </div>
-          ))}
+          )) : <EmptyState title="Sem alertas abertos" description="Quando novos riscos forem identificados, eles vão aparecer aqui com contexto e bloqueio de fluxo quando necessário." />}
         </div>
       </section>
     </AppShell>
