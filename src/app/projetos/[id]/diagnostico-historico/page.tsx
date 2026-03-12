@@ -9,6 +9,17 @@ import { dbQuery } from "@/lib/db";
 import { listOperations } from "@/lib/operations";
 import { listProjectAlerts } from "@/lib/alerts";
 
+type ParsedDiagnosis = {
+  diagnosisText: string;
+  executiveSummary: string;
+  risks: string[];
+  recommendations: string[];
+  riskGroups: Array<{ label: string; items: string[] }>;
+  recommendationGroups: Array<{ label: string; items: string[] }>;
+  diagnosisHighlights: Array<{ label: string; value: string }>;
+  rawObject: Record<string, unknown> | null;
+};
+
 function br(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
 }
@@ -17,21 +28,105 @@ function n(v: number) {
   return v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 }
 
-function parseDiagnosisSections(raw: string | null) {
+function cleanJsonFence(raw: string) {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return match ? match[1].trim() : trimmed;
+}
+
+function labelize(key: string) {
+  const map: Record<string, string> = {
+    high: "Risco alto",
+    medium: "Risco médio",
+    low: "Risco baixo",
+    immediate: "Ação imediata",
+    shortTerm: "Curto prazo",
+    strategic: "Estratégico",
+    dataCoverage: "Cobertura de dados",
+    dataQuality: "Qualidade dos dados",
+    temporalAlignment: "Alinhamento temporal",
+    financialHealthIndicators: "Indicadores financeiros",
+    receivablesToPayablesRatio: "Relação receber/pagar",
+    liquidityCoverage: "Cobertura de liquidez",
+    salesConsistency: "Consistência de faturamento",
+  };
+  return map[key] || key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+}
+
+function flattenValue(value: unknown, prefix = ""): string[] {
+  if (value == null) return [];
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return [prefix ? `${prefix}: ${String(value)}` : String(value)];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => flattenValue(item, prefix));
+  }
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>).flatMap(([key, nested]) =>
+      flattenValue(nested, prefix ? `${prefix} · ${labelize(key)}` : labelize(key))
+    );
+  }
+  return [];
+}
+
+function extractGroups(value: unknown): Array<{ label: string; items: string[] }> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.entries(value as Record<string, unknown>)
+    .map(([key, nested]) => ({
+      label: labelize(key),
+      items: flattenValue(nested),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+function extractDiagnosisHighlights(value: unknown): Array<{ label: string; value: string }> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, nested]) => {
+    if (nested == null) return [];
+    if (typeof nested === "string" || typeof nested === "number" || typeof nested === "boolean") {
+      return [{ label: labelize(key), value: String(nested) }];
+    }
+    if (typeof nested === "object" && !Array.isArray(nested)) {
+      return Object.entries(nested as Record<string, unknown>).map(([subKey, subVal]) => ({
+        label: `${labelize(key)} · ${labelize(subKey)}`,
+        value: String(subVal),
+      }));
+    }
+    return [{ label: labelize(key), value: flattenValue(nested).join(" | ") }];
+  });
+}
+
+function parseDiagnosisSections(raw: string | null): ParsedDiagnosis | null {
   if (!raw) return null;
+  const cleaned = cleanJsonFence(raw);
+
   try {
-    return JSON.parse(raw) as {
-      diagnosis?: string;
-      risks?: string[];
-      recommendations?: string[];
-      executiveSummary?: string;
+    const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+    const diagnosisValue = parsed.diagnosis;
+    const risksValue = parsed.risks;
+    const recommendationsValue = parsed.recommendations;
+    const executiveSummary = typeof parsed.executiveSummary === "string" ? parsed.executiveSummary : "";
+
+    return {
+      diagnosisText: flattenValue(diagnosisValue).join("\n") || cleaned,
+      executiveSummary,
+      risks: flattenValue(risksValue),
+      recommendations: flattenValue(recommendationsValue),
+      riskGroups: extractGroups(risksValue),
+      recommendationGroups: extractGroups(recommendationsValue),
+      diagnosisHighlights: extractDiagnosisHighlights(diagnosisValue),
+      rawObject: parsed,
     };
   } catch {
     return {
-      diagnosis: raw,
+      diagnosisText: cleaned,
+      executiveSummary: cleaned,
       risks: [],
       recommendations: [],
-      executiveSummary: raw,
+      riskGroups: [],
+      recommendationGroups: [],
+      diagnosisHighlights: [],
+      rawObject: null,
     };
   }
 }
@@ -83,8 +178,8 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
     `O presente diagnóstico situacional foi elaborado a partir das informações cadastrais do projeto, das bases históricas carregadas no Ironcore e dos sinais operacionais atualmente registrados na plataforma. O objetivo deste material é consolidar uma leitura executiva inicial do negócio, destacando padrões financeiros, potenciais desvios, riscos percebidos e ações macro sugeridas para aprofundamento da gestão.`,
     pressure > 0
       ? `Na consolidação histórica disponível, observa-se um nível de pressão financeira que merece atenção prioritária, uma vez que o volume agregado de contas a pagar supera o montante de contas a receber. Em contextos como este, a previsibilidade de caixa, o tratamento de passivos e a disciplina na rotina de validação operacional passam a ser fatores centrais para estabilização da operação.`
-      : `Na consolidação histórica disponível, a relação entre contas a receber e contas a pagar ainda não evidencia, por si só, deterioração material do caixa. Mesmo assim, a governança do projeto deve avançar para elevar a confiabilidade das análises, ampliar a cobertura documental e transformar o diagnóstico em rotinas consistentes de acompanhamento e tomada de decisão.` ,
-    `Do ponto de vista de maturidade operacional, o projeto já possui base suficiente para produzir leitura gerencial, porém o valor do entregável aumenta à medida que a cobertura histórica se expande, os dados são validados por origem e o fluxo de execução do Ironcore passa a refletir integralmente a rotina pretendida de implementação, operação diária e fechamento.`
+      : `Na consolidação histórica disponível, a relação entre contas a receber e contas a pagar ainda não evidencia, por si só, deterioração material do caixa. Mesmo assim, a governança do projeto deve avançar para elevar a confiabilidade das análises, ampliar a cobertura documental e transformar o diagnóstico em rotinas consistentes de acompanhamento e tomada de decisão.`,
+    `Do ponto de vista de maturidade operacional, o projeto já possui base suficiente para produzir leitura gerencial, porém o valor do entregável aumenta à medida que a cobertura histórica se expande, os dados são validados por origem e o fluxo de execução do Ironcore passa a refletir integralmente a rotina pretendida de implementação, operação diária e fechamento.`,
   ];
 
   const macroActions = [
@@ -167,6 +262,20 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
         </div>
       </section>
 
+      {parsed?.diagnosisHighlights?.length ? (
+        <section className="card mb-4">
+          <div className="section-head"><h2 className="title">Highlights do diagnóstico</h2><span className="kpi-chip">IA estruturada</span></div>
+          <div className="grid md:grid-cols-2 gap-3 mt-3 text-sm">
+            {parsed.diagnosisHighlights.map((item) => (
+              <div key={`${item.label}-${item.value}`} className="rounded-lg border border-slate-800 p-3">
+                <div className="text-xs text-slate-400">{item.label}</div>
+                <div className="font-medium mt-1 text-slate-200">{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="grid md:grid-cols-4 gap-3 mb-4">
         <div className="metric"><div className="text-xs text-slate-400">Faturamento histórico consolidado</div><div className="text-lg font-semibold mt-1">{br(aggregate.totals.faturamento)}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Contas a receber</div><div className="text-lg font-semibold mt-1">{br(aggregate.totals.contasReceber)}</div></div>
@@ -242,34 +351,56 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
 
       <section className="card mb-4">
         <div className="section-head"><h2 className="title">Leitura situacional</h2><span className="kpi-chip">Diagnóstico</span></div>
-        <div className="mt-3 text-sm text-slate-300 whitespace-pre-wrap">{parsed?.diagnosis || executiveNarrative || project.project_summary || "Sem leitura situacional disponível ainda."}</div>
+        <div className="mt-3 text-sm text-slate-300 whitespace-pre-wrap">{parsed?.diagnosisText || executiveNarrative || project.project_summary || "Sem leitura situacional disponível ainda."}</div>
       </section>
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
           <div className="section-head"><h2 className="title">Riscos identificados</h2><span className="kpi-chip">Atenção</span></div>
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {(parsed?.risks && parsed.risks.length > 0 ? parsed.risks : [
-              pressure > 0 ? "Contas a pagar historicamente superiores às contas a receber consolidadas, sugerindo pressão sobre liquidez e priorização de tesouraria." : "Sem pressão histórica material de caixa pela consolidação simples atual.",
-              aggregate.totalUploads < 4 ? "Cobertura histórica ainda parcial; ampliar a base enviada para elevar qualidade e profundidade analítica." : "Base histórica com cobertura relevante para aprofundamento do diagnóstico.",
-              alerts.length > 0 ? `Existem ${alerts.length} alertas ativos exigindo correção operacional e acompanhamento gerencial.` : "Sem alertas ativos relevantes no momento.",
-            ]).map((item, idx) => (
-              <li key={idx}>• {item}</li>
-            ))}
-          </ul>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {parsed?.riskGroups?.length ? parsed.riskGroups.map((group) => (
+              <div key={group.label} className="rounded-lg border border-slate-800 p-3">
+                <div className="font-medium mb-2">{group.label}</div>
+                <ul className="space-y-2">
+                  {group.items.map((item) => <li key={item}>• {item}</li>)}
+                </ul>
+              </div>
+            )) : (
+              <ul className="space-y-2">
+                {(parsed?.risks.length ? parsed.risks : [
+                  pressure > 0 ? "Contas a pagar historicamente superiores às contas a receber consolidadas, sugerindo pressão sobre liquidez e priorização de tesouraria." : "Sem pressão histórica material de caixa pela consolidação simples atual.",
+                  aggregate.totalUploads < 4 ? "Cobertura histórica ainda parcial; ampliar a base enviada para elevar qualidade e profundidade analítica." : "Base histórica com cobertura relevante para aprofundamento do diagnóstico.",
+                  alerts.length > 0 ? `Existem ${alerts.length} alertas ativos exigindo correção operacional e acompanhamento gerencial.` : "Sem alertas ativos relevantes no momento.",
+                ]).map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
 
         <section className="card">
           <div className="section-head"><h2 className="title">Recomendações</h2><span className="kpi-chip">Próximos passos</span></div>
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {(parsed?.recommendations && parsed.recommendations.length > 0 ? parsed.recommendations : [
-              "Concluir a cobertura das categorias históricas definidas na implementação para fortalecer o diagnóstico e elevar a confiabilidade dos comparativos.",
-              "Validar a consistência entre faturamento, extrato, contas a receber e contas a pagar antes da versão final do relatório executivo.",
-              "Priorizar governança de caixa, funding e rotina de validação diária caso a pressão histórica permaneça positiva sobre o contas a pagar.",
-            ]).map((item, idx) => (
-              <li key={idx}>• {item}</li>
-            ))}
-          </ul>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {parsed?.recommendationGroups?.length ? parsed.recommendationGroups.map((group) => (
+              <div key={group.label} className="rounded-lg border border-slate-800 p-3">
+                <div className="font-medium mb-2">{group.label}</div>
+                <ul className="space-y-2">
+                  {group.items.map((item) => <li key={item}>• {item}</li>)}
+                </ul>
+              </div>
+            )) : (
+              <ul className="space-y-2">
+                {(parsed?.recommendations.length ? parsed.recommendations : [
+                  "Concluir a cobertura das categorias históricas definidas na implementação para fortalecer o diagnóstico e elevar a confiabilidade dos comparativos.",
+                  "Validar a consistência entre faturamento, extrato, contas a receber e contas a pagar antes da versão final do relatório executivo.",
+                  "Priorizar governança de caixa, funding e rotina de validação diária caso a pressão histórica permaneça positiva sobre o contas a pagar.",
+                ]).map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       </section>
 
@@ -321,8 +452,6 @@ export default async function HistoricalDiagnosisExecutivePage({ params }: { par
             </tbody>
           </table>
         </div>
-
-        <div className="text-xs text-slate-500 mt-4">Disclaimer: material gerado com base nas informações cadastradas e nas bases históricas enviadas para o Ironcore. O relatório é um entregável gerencial/situacional e não substitui auditoria ou parecer técnico-contábil formal.</div>
       </section>
     </AppShell>
   );
