@@ -51,7 +51,7 @@ export async function listProjects() {
 }
 
 export async function listProjectsForUser(email: string, role: string) {
-  if (role === "admin_master" || role === "diretoria") return listProjects();
+  if (role === "admin_master" || role === "diretoria" || role === "head") return listProjects();
   try {
     const q = await dbQuery<Project>(
       `select p.${BASE_SELECT} from projects p

@@ -2,7 +2,7 @@ import { dbQuery } from "@/lib/db";
 import type { SessionUser } from "@/lib/auth";
 
 export async function canAccessProject(user: SessionUser, projectId: string) {
-  if (user.role === "admin_master" || user.role === "diretoria") return true;
+  if (user.role === "admin_master" || user.role === "diretoria" || user.role === "head") return true;
 
   try {
     const q = await dbQuery<{ can_edit: boolean }>(
