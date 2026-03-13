@@ -16,7 +16,7 @@ type ProjectCockpit = {
   segment: string;
   timezone: string;
   statusLabel: string;
-  statusTone: "good" | "warn" | "bad";
+  statusTone: "good" | "warn" | "bad" | "info";
   phaseLabel: string;
   nextActionLabel: string;
   nextActionHref: string;
@@ -28,11 +28,13 @@ type ProjectCockpit = {
   blockedSteps: number;
   alertCount: number;
   lastRoutineAt: string | null;
+  summaryRisk: string;
 };
 
 function toneClasses(tone: ProjectCockpit["statusTone"]) {
   if (tone === "bad") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
   if (tone === "warn") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
+  if (tone === "info") return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
   return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
 }
 
@@ -105,19 +107,26 @@ export default async function DashboardPage() {
 
       const latest = runs[0];
       const op = ((latest?.summary || {}) as Record<string, any>).operationalDecision || {};
-      const blockingCount = Array.isArray(op.blockingReasons) ? op.blockingReasons.length : 0;
-      const attentionCount = Array.isArray(op.attentionReasons) ? op.attentionReasons.length : 0;
+      const blockingReasons = Array.isArray(op.blockingReasons) ? op.blockingReasons.map(String) : [];
+      const attentionReasons = Array.isArray(op.attentionReasons) ? op.attentionReasons.map(String) : [];
+      const blockingCount = blockingReasons.length;
+      const attentionCount = attentionReasons.length;
       const blockedSteps = steps.filter((s) => s.status === "bloqueado").length;
       const pendingSteps = steps.filter((s) => s.status !== "concluido").length;
       const nextAction = pickNextAction(project.code, steps);
       const gatingStatus = String(op.gatingStatus || "sem leitura");
+      const phaseLabel = sectionPhase(steps);
 
-      let statusLabel = "Operação liberada";
+      let statusLabel = "Operação estável";
       let statusTone: ProjectCockpit["statusTone"] = "good";
+      if (phaseLabel === "Implantação") {
+        statusLabel = "Implantação";
+        statusTone = "info";
+      }
       if (blockedSteps > 0 || blockingCount > 0 || latest?.status === "blocked") {
         statusLabel = "Bloqueado";
         statusTone = "bad";
-      } else if (pendingApprovals > 0 || attentionCount > 0 || latest?.status === "warning" || pendingSteps > 0) {
+      } else if (pendingApprovals > 0 || attentionCount > 0 || latest?.status === "warning") {
         statusLabel = "Atenção";
         statusTone = "warn";
       }
@@ -130,7 +139,7 @@ export default async function DashboardPage() {
         timezone: project.timezone,
         statusLabel,
         statusTone,
-        phaseLabel: sectionPhase(steps),
+        phaseLabel,
         nextActionLabel: nextAction.label,
         nextActionHref: nextAction.href,
         latestRoutineStatus: latest?.status || "sem rotina",
@@ -141,31 +150,33 @@ export default async function DashboardPage() {
         blockedSteps,
         alertCount: alerts.length,
         lastRoutineAt: latest?.created_at || null,
+        summaryRisk: blockingReasons[0] || attentionReasons[0] || (alerts.length > 0 ? `${alerts.length} alerta(s) aberto(s).` : "Sem risco dominante explícito."),
       } satisfies ProjectCockpit;
     })
   );
 
   const blockedProjects = projectCockpit.filter((p) => p.statusTone === "bad");
   const warningProjects = projectCockpit.filter((p) => p.statusTone === "warn");
+  const onboardingProjects = projectCockpit.filter((p) => p.statusTone === "info");
   const goodProjects = projectCockpit.filter((p) => p.statusTone === "good");
-  const topPriority = blockedProjects[0] || warningProjects[0] || projectCockpit[0] || null;
+  const topPriority = blockedProjects[0] || warningProjects[0] || onboardingProjects[0] || projectCockpit[0] || null;
 
   return (
     <AppShell
       user={user}
       title="Ironcore · Cockpit"
-      subtitle="Centro de comando da operação: o que exige atenção agora, qual decisão tomar e qual é a próxima melhor ação"
+      subtitle="Centro de comando da operação: prioridade real, leitura da carteira e próxima ação sem caçar módulo"
     >
       <ProductHero
         eyebrow="missão diária do ironcore"
-        title="O produto precisa te dizer o que resolver agora — não te fazer caçar módulo."
-        description="Use este cockpit como camada principal do Ironcore: prioridade operacional, fase do fluxo, status decisório e próximo passo por projeto."
+        title="O cockpit precisa te dizer o que resolver agora — não te fazer navegar no escuro."
+        description="Use esta camada como entrada principal do produto: prioridade da carteira, estado operacional, gating, fase do fluxo e ação mais útil por projeto."
       >
-        <div className="grid min-w-[280px] grid-cols-2 gap-3 text-sm">
+        <div className="grid min-w-[320px] grid-cols-2 gap-3 text-sm lg:grid-cols-4">
           <MetricCard label="Projetos em foco" value={projectCockpit.length} />
-          <MetricCard label="Bloqueados agora" value={blockedProjects.length} tone="bad" />
+          <MetricCard label="Bloqueados" value={blockedProjects.length} tone="bad" />
           <MetricCard label="Em atenção" value={warningProjects.length} tone="warn" />
-          <MetricCard label="Rotinas com sucesso" value={`${usage.routineSuccess}/${usage.routineTotal}`} tone="good" />
+          <MetricCard label="Implantação / estáveis" value={`${onboardingProjects.length} / ${goodProjects.length}`} tone="info" />
         </div>
       </ProductHero>
 
@@ -181,39 +192,34 @@ export default async function DashboardPage() {
           ) : (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <StatusPill label={topPriority.statusLabel} tone={topPriority.statusTone} />
+                <StatusPill label={topPriority.statusLabel} tone={topPriority.statusTone === "info" ? "info" : topPriority.statusTone} />
                 <StatusPill label={topPriority.name} tone="neutral" />
                 <StatusPill label={topPriority.phaseLabel} tone="neutral" />
                 <StatusPill label={`Gating: ${topPriority.gatingStatus}`} tone="info" />
               </div>
 
-              <div>
-                <div className="text-sm text-slate-400">Próxima melhor ação</div>
-                <div className="mt-1 text-2xl font-semibold text-white">{topPriority.nextActionLabel}</div>
-                <div className="mt-2 text-sm text-slate-300">
-                  Última rotina: <b>{formatWhen(topPriority.lastRoutineAt)}</b> · bloqueios: <b>{topPriority.blockingCount}</b> · pendências/atenções: <b>{topPriority.attentionCount}</b>
+              <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">{topPriority.nextActionLabel}</div>
+                  <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+                  <div className="mt-2 text-sm text-slate-300">{topPriority.summaryRisk}</div>
                 </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-3">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Bloqueios</div>
-                  <div className="mt-1 text-xl font-semibold text-rose-200">{topPriority.blockingCount + topPriority.blockedSteps}</div>
-                </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-3">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Atenções</div>
-                  <div className="mt-1 text-xl font-semibold text-amber-200">{topPriority.attentionCount}</div>
-                </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-3">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Etapas abertas</div>
-                  <div className="mt-1 text-xl font-semibold text-cyan-200">{topPriority.pendingSteps}</div>
+                <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Bloqueios</div><div className="mt-1 font-medium text-rose-200">{topPriority.blockingCount + topPriority.blockedSteps}</div></div>
+                    <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Atenções</div><div className="mt-1 font-medium text-amber-200">{topPriority.attentionCount}</div></div>
+                    <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Etapas abertas</div><div className="mt-1 font-medium text-cyan-200">{topPriority.pendingSteps}</div></div>
+                    <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Última rotina</div><div className="mt-1 font-medium text-white">{formatWhen(topPriority.lastRoutineAt)}</div></div>
+                  </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <ActionLink href={topPriority.nextActionHref} label="Abrir próxima ação" />
                 <ActionLink href={`/projetos/${topPriority.code}/fluxo-trabalho`} label="Ver fluxo completo" tone="secondary" />
-                <ActionLink href={`/projetos/${topPriority.code}/movimento-diario`} label="Abrir movimento diário" tone="secondary" />
+                <ActionLink href={`/projetos/${topPriority.code}`} label="Abrir sala de guerra" tone="secondary" />
               </div>
             </div>
           )}
@@ -221,11 +227,11 @@ export default async function DashboardPage() {
 
         <section className="card">
           <div className="section-head">
-            <h2 className="title">Atenção agora</h2>
-            <span className="kpi-chip">fila operacional</span>
+            <h2 className="title">Fila da carteira</h2>
+            <span className="kpi-chip">atenção agora</span>
           </div>
           <div className="mt-3 space-y-3 text-sm">
-            {blockedProjects.length === 0 && warningProjects.length === 0 ? (
+            {blockedProjects.length === 0 && warningProjects.length === 0 && onboardingProjects.length === 0 ? (
               <div className="alert ok-bg">Sem filas críticas no momento. O cockpit está limpo.</div>
             ) : null}
 
@@ -252,19 +258,31 @@ export default async function DashboardPage() {
                 </div>
               </div>
             ))}
+
+            {onboardingProjects.slice(0, 3).map((project) => (
+              <div key={`onboarding-${project.id}`} className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-medium text-cyan-100">{project.name}</div>
+                    <div className="text-xs text-cyan-200/80">Implantação em andamento · {project.pendingSteps} etapa(s) aberta(s)</div>
+                  </div>
+                  <Link href={project.nextActionHref} className="pill">Estruturar</Link>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       </section>
 
       <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Usuários ativos 30d</div><div className="text-xl font-semibold mt-1">{usage.activeUsers}</div><div className="text-xs text-cyan-300 mt-1">Adoção real da plataforma</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Inconsistências 30d</div><div className="text-xl font-semibold mt-1">{usage.inconsistencies}</div><div className="text-xs text-cyan-300 mt-1">Warnings + bloqueios de conciliação</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Conciliações manuais</div><div className="text-xl font-semibold mt-1">{usage.manualReconciliations}</div><div className="text-xs text-cyan-300 mt-1">Carga operacional da equipe</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Entregas automáticas</div><div className="text-xl font-semibold mt-1">{usage.deliverySent}</div><div className="text-xs text-cyan-300 mt-1">Falhas: {usage.deliveryFailed} · Skip: {usage.deliverySkipped}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Usuários ativos 30d</div><div className="text-xl font-semibold mt-1">{usage.activeUsers}</div><div className="text-xs text-cyan-300 mt-1">adoção real da plataforma</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Inconsistências 30d</div><div className="text-xl font-semibold mt-1">{usage.inconsistencies}</div><div className="text-xs text-cyan-300 mt-1">warnings + bloqueios de conciliação</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Conciliações manuais</div><div className="text-xl font-semibold mt-1">{usage.manualReconciliations}</div><div className="text-xs text-cyan-300 mt-1">carga operacional da equipe</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Entregas automáticas</div><div className="text-xl font-semibold mt-1">{usage.deliverySent}</div><div className="text-xs text-cyan-300 mt-1">falhas: {usage.deliveryFailed} · skip: {usage.deliverySkipped}</div></div>
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Projetos em foco</h2><span className="kpi-chip">sala de guerra</span></div>
+        <div className="section-head"><h2 className="title">Carteira em foco</h2><span className="kpi-chip">visão de comando</span></div>
         <div className="mt-4 grid gap-3 xl:grid-cols-2">
           {projectCockpit.length === 0 ? <div className="alert muted-bg">Sem projetos disponíveis.</div> : null}
           {projectCockpit.map((project) => (
@@ -274,27 +292,44 @@ export default async function DashboardPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-semibold text-white">{project.name}</h3>
                     <span className="badge">{project.code}</span>
+                    {project.segment ? <StatusPill label={project.segment} tone="info" /> : null}
                   </div>
-                  <div className="mt-1 text-xs text-slate-400">{project.segment} · {project.timezone}</div>
+                  <div className="mt-1 text-xs text-slate-400">{project.timezone}</div>
                 </div>
                 <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClasses(project.statusTone)}`}>{project.statusLabel}</span>
               </div>
 
+              <div className="mt-4 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
+                <div className="rounded-[22px] border border-slate-800 bg-slate-950/40 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+                  <div className="mt-2 text-sm font-medium text-white">{project.nextActionLabel}</div>
+                  <div className="mt-3 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+                  <div className="mt-2 text-sm text-slate-300">{project.summaryRisk}</div>
+                </div>
+                <div className="rounded-[22px] border border-slate-800 bg-slate-950/40 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <StatusPill label={`Fase: ${project.phaseLabel}`} tone="neutral" />
+                    <StatusPill label={`Gating: ${project.gatingStatus}`} tone={project.gatingStatus === "bloqueado" ? "bad" : project.gatingStatus === "atencao" ? "warn" : "info"} />
+                  </div>
+                  <div className="mt-3 text-xs text-slate-400">Última rotina: {formatWhen(project.lastRoutineAt)}</div>
+                  <div className="mt-1 text-xs text-slate-500">Runtime: {project.latestRoutineStatus}</div>
+                </div>
+              </div>
+
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
-                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Fase</div><div className="mt-1 font-medium">{project.phaseLabel}</div></div>
-                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Gating</div><div className="mt-1 font-medium">{project.gatingStatus}</div></div>
                 <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Bloqueios</div><div className="mt-1 font-medium text-rose-200">{project.blockingCount + project.blockedSteps}</div></div>
-                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Alertas</div><div className="mt-1 font-medium text-amber-200">{project.alertCount}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Atenções</div><div className="mt-1 font-medium text-amber-200">{project.attentionCount}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Etapas abertas</div><div className="mt-1 font-medium text-cyan-100">{project.pendingSteps}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Alertas</div><div className="mt-1 font-medium text-white">{project.alertCount}</div></div>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                <Link href={project.nextActionHref} className="badge px-4 py-2">{project.nextActionLabel}</Link>
+                <Link href={project.nextActionHref} className="badge px-4 py-2">Abrir próxima ação</Link>
+                <Link href={`/projetos/${project.code}`} className="pill">Sala de guerra</Link>
                 <Link href={`/projetos/${project.code}/fluxo-trabalho`} className="pill">Fluxo</Link>
                 <Link href={`/projetos/${project.code}/rotina-diaria`} className="pill">Rotina</Link>
-                <Link href={`/projetos/${project.code}/diagnostico-historico`} className="pill">Diagnóstico</Link>
               </div>
-
-              <div className="mt-3 text-xs text-slate-500">Última rotina: {formatWhen(project.lastRoutineAt)} · status runtime: {project.latestRoutineStatus}</div>
             </article>
           ))}
         </div>
@@ -302,11 +337,11 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <section className="card">
-          <div className="section-head"><h2 className="title">Timeline do fluxo</h2><span className="kpi-chip">modelo de produto</span></div>
+          <div className="section-head"><h2 className="title">Mapa da carteira</h2><span className="kpi-chip">modelo do produto</span></div>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             {[
-              ["Implantação", `${projectCockpit.filter((p) => p.phaseLabel === "Implantação").length} projeto(s)`, "Cadastro, riscos, base histórica, diagnóstico"],
-              ["Operação", `${projectCockpit.filter((p) => p.phaseLabel === "Operação diária").length} projeto(s)`, "Upload diário, risco, movimento e validação"],
+              ["Implantação", `${projectCockpit.filter((p) => p.phaseLabel === "Implantação").length} projeto(s)`, "Cadastro, riscos, base histórica e diagnóstico"],
+              ["Operação", `${projectCockpit.filter((p) => p.phaseLabel === "Operação diária").length} projeto(s)`, "Base diária, risco, movimento e validação"],
               ["Fechamento", `${projectCockpit.filter((p) => p.phaseLabel === "Fechamento").length} projeto(s)`, "Alimentação contábil, fechamento e validação"],
               ["Governança", `${goodProjects.length} projeto(s) estáveis`, "Diretoria, auditoria e monitoramento contínuo"],
             ].map(([title, count, desc]) => (
