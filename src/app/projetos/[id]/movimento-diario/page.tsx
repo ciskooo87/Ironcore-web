@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -14,10 +14,11 @@ function br(v: unknown) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function toneClasses(status: string) {
-  if (status === "bloqueado") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
-  if (status === "atencao") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
-  return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
+function formatWhen(value: string | null | undefined) {
+  if (!value) return "sem execução";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
 export default async function MovimentoDiarioPage({
@@ -50,20 +51,33 @@ export default async function MovimentoDiarioPage({
   const actions: string[] = Array.isArray(op.suggestedActions) ? op.suggestedActions : [];
   const blockingReasons: string[] = Array.isArray(op.blockingReasons) ? op.blockingReasons : [];
   const releaseSignals: string[] = Array.isArray(op.releaseSignals) ? op.releaseSignals : [];
+  const attentionReasons: string[] = Array.isArray(op.attentionReasons) ? op.attentionReasons : [];
   const recommendation = String((s.aiAnalysis as any)?.recommendation || op.recommendation || "Sem recomendação executiva ainda.");
+  const gatingStatus = String(op.gatingStatus || "sem leitura");
   const csrf = await ensureCsrfCookie();
 
+  const mainAction = blockingReasons[0]
+    || (actions[0] ? `Executar: ${actions[0]}` : null)
+    || attentionReasons[0]
+    || "Operação sem ação crítica explícita na leitura atual.";
+
+  const mainRisk = blockingReasons[0]
+    || (Number(op.carteiraVencida || 0) > 0 ? `Carteira vencida em ${br(op.carteiraVencida)} pressionando a decisão.` : null)
+    || (Number(op.carteiraRecompra || 0) > 0 ? `Recompra em ${br(op.carteiraRecompra)} exigindo leitura adicional.` : null)
+    || "Sem risco crítico dominante na última rotina.";
+
   return (
-    <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Cockpit de decisão do dia: aprovar, ajustar ou bloquear com contexto operacional claro, não só com números jogados na tela.">
+    <AppShell user={user} title="Projeto · Movimento Diário" subtitle="Decisão operacional do dia com contexto claro, fila de ação e trilha de validação">
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === "validation" ? "Validação registrada." : query.saved === "action" ? "Ação registrada." : query.saved === "action_update" ? "Ação atualizada." : "Atualizado."}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">Erro: {query.error === "blocked_state_requires_action" ? "A rotina está bloqueada. Não dá para aprovar o movimento sem tratar o bloqueio ou enviar para ajuste." : query.error}</div> : null}
 
       <ProductHero
         eyebrow="decisão do dia"
-        title="O movimento diário precisa deixar evidente se a operação pode seguir ou se deve parar."
-        description="Esta tela é o coração operacional do produto: recomendação do motor, motivos do bloqueio, sinais de liberação, validação humana e ações executadas."
+        title="Movimento diário é lugar de decidir, não de adivinhar."
+        description="A tela agora organiza o que importa para o dia: leitura do motor, risco principal, ação prioritária, validação humana e execução registrada."
       >
-        <StatusPill label={`Status decisório: ${String(op.gatingStatus || "sem leitura")}`} tone={String(op.gatingStatus || "") === "bloqueado" ? "bad" : String(op.gatingStatus || "") === "atencao" ? "warn" : "good"} />
+        <StatusPill label={`Gating: ${gatingStatus}`} tone={gatingStatus === "bloqueado" ? "bad" : gatingStatus === "atencao" ? "warn" : gatingStatus === "liberado" ? "good" : "neutral"} />
+        <StatusPill label={`Rotina: ${latest?.status || "sem leitura"}`} tone={latest?.status === "blocked" ? "bad" : latest?.status === "warning" ? "warn" : latest?.status === "success" ? "good" : "neutral"} />
       </ProductHero>
 
       <section className="flex gap-2 flex-wrap mb-4">
@@ -73,44 +87,60 @@ export default async function MovimentoDiarioPage({
         <Link href={`/projetos/${id}/fluxo-trabalho`} className="pill">Fluxo</Link>
       </section>
 
-      <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Status decisório</div><div className="text-lg font-semibold mt-1">{String(op.gatingStatus || "-")}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Pend. aprovação</div><div className="text-lg font-semibold mt-1">{String(op.opPendingApproval ?? "-")}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Carteira vencida</div><div className="text-lg font-semibold mt-1 text-rose-300">{br(op.carteiraVencida)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Recompra</div><div className="text-lg font-semibold mt-1 text-amber-300">{br(op.carteiraRecompra)}</div></div>
-      </section>
-
-      <section className="grid md:grid-cols-3 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">FIDC carteira</div><div className="text-lg font-semibold mt-1">{br(fidc.carteira)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">FIDC vencido</div><div className="text-lg font-semibold mt-1 text-rose-300">{br(fidc.vencido)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">FIDC recompra</div><div className="text-lg font-semibold mt-1 text-amber-300">{br(fidc.recompra)}</div></div>
-      </section>
-
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Recomendação executiva</h2><span className="kpi-chip">decisão guiada</span></div>
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/20 p-4">
-          <div className="text-sm text-slate-300">{recommendation}</div>
-        </div>
-      </section>
-
-      <section className="grid md:grid-cols-2 gap-4 mb-4">
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Motivos de bloqueio</h2><span className="kpi-chip">risco</span></div>
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {blockingReasons.length ? blockingReasons.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• sem bloqueios ativos</li>}
-          </ul>
+          <div className="section-head"><h2 className="title">Comando do dia</h2><span className="kpi-chip">prioridade executiva</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
+            </div>
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leitura do motor</div>
+              <div className="mt-2 text-base font-semibold text-white">{recommendation}</div>
+              <div className="mt-4 space-y-2 text-xs text-slate-400">
+                <div>Última rotina: <span className="text-slate-200">{formatWhen(latest?.created_at)}</span></div>
+                <div>Pend. aprovação: <span className="text-slate-200">{String(op.opPendingApproval ?? "-")}</span></div>
+                <div>Validações registradas: <span className="text-slate-200">{validations.length}</span></div>
+              </div>
+            </div>
+          </div>
         </section>
+
         <section className="card">
-          <div className="section-head"><h2 className="title">Sinais de liberação</h2><span className="kpi-chip">follow-up</span></div>
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {releaseSignals.length ? releaseSignals.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• nenhum sinal forte de liberação</li>}
-          </ul>
+          <div className="section-head"><h2 className="title">Checkpoint operacional</h2><span className="kpi-chip">sinais do dia</span></div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Carteira vencida</div><div className="mt-1 font-medium text-rose-300">{br(op.carteiraVencida)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Recompra</div><div className="mt-1 font-medium text-amber-300">{br(op.carteiraRecompra)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">FIDC vencido</div><div className="mt-1 font-medium text-rose-300">{br(fidc.vencido)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">FIDC recompra</div><div className="mt-1 font-medium text-amber-300">{br(fidc.recompra)}</div></div>
+          </div>
         </section>
       </section>
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Validação humana</h2><span className="kpi-chip">workflow</span></div>
+          <div className="section-head"><h2 className="title">Bloqueios e atenções</h2><span className="kpi-chip">leitura de risco</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-rose-400/15 bg-rose-400/5 p-4">
+              <div className="font-medium text-rose-100 mb-2">Bloqueios</div>
+              <ul className="space-y-2 text-sm text-slate-300">
+                {blockingReasons.length ? blockingReasons.map((x: string, i: number) => <li key={i}>• {x}</li>) : <li>• sem bloqueios ativos</li>}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-amber-400/15 bg-amber-400/5 p-4">
+              <div className="font-medium text-amber-100 mb-2">Sinais de liberação / atenção</div>
+              <ul className="space-y-2 text-sm text-slate-300">
+                {releaseSignals.length ? releaseSignals.map((x: string, i: number) => <li key={i}>• {x}</li>) : attentionReasons.length ? attentionReasons.map((x: string, i: number) => <li key={`a-${i}`}>• {x}</li>) : <li>• nenhum sinal forte adicional</li>}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Validar decisão</h2><span className="kpi-chip">workflow humano</span></div>
           <form action={`/api/projects/${id}/movement/validate`} method="post" className="space-y-3 mt-3 text-sm">
             <input type="hidden" name="csrf_token" value={csrf} />
             <input type="hidden" name="routine_run_id" value={latest?.id || ""} />
@@ -124,9 +154,11 @@ export default async function MovimentoDiarioPage({
             <button type="submit" className="badge py-2 px-3 cursor-pointer">Registrar validação</button>
           </form>
         </section>
+      </section>
 
+      <section className="grid md:grid-cols-2 gap-4 mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Ações sugeridas</h2><span className="kpi-chip">execução</span></div>
+          <div className="section-head"><h2 className="title">Fila de ação</h2><span className="kpi-chip">execução</span></div>
           <div className="space-y-3 mt-3">
             {actions.length ? actions.map((x, i) => (
               <form key={i} action={`/api/projects/${id}/movement/action`} method="post" className="rounded-2xl border border-slate-800 p-4">
@@ -139,19 +171,19 @@ export default async function MovimentoDiarioPage({
             )) : <div className="alert muted-bg">Nenhuma ação sugerida ainda.</div>}
           </div>
         </section>
-      </section>
 
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Validações registradas</h2><span className="kpi-chip">trilha decisória</span></div>
-        <div className="mt-3 space-y-2 text-sm">
-          {validations.length ? validations.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-slate-800 p-4">
-              <div className="font-medium text-white">{item.decision}</div>
-              <div className="text-xs text-slate-500 mt-1">{item.validated_at}</div>
-              <div className="text-slate-300 mt-2 whitespace-pre-wrap">{item.summary_text || item.note || "-"}</div>
-            </div>
-          )) : <EmptyState title="Nenhuma validação registrada ainda" description="Quando alguém aprovar, ajustar ou bloquear o movimento, a trilha decisória vai aparecer aqui." />}
-        </div>
+        <section className="card">
+          <div className="section-head"><h2 className="title">Validações registradas</h2><span className="kpi-chip">trilha decisória</span></div>
+          <div className="mt-3 space-y-2 text-sm">
+            {validations.length ? validations.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-slate-800 p-4">
+                <div className="font-medium text-white">{item.decision}</div>
+                <div className="text-xs text-slate-500 mt-1">{item.validated_at}</div>
+                <div className="text-slate-300 mt-2 whitespace-pre-wrap">{item.summary_text || item.note || "-"}</div>
+              </div>
+            )) : <EmptyState title="Nenhuma validação registrada ainda" description="Quando alguém aprovar, ajustar ou bloquear o movimento, a trilha decisória vai aparecer aqui." />}
+          </div>
+        </section>
       </section>
 
       <section className="card">

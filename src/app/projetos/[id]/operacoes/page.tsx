@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { EmptyState, MetricCard, ProductHero } from "@/components/product-ui";
+import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -77,6 +77,9 @@ export default async function Page({
   };
 
   const byStatus = OPERATION_STATUS_FLOW.map((s) => ({ ...s, count: filtered.filter((o) => o.status === s.value).length }));
+  const pendingApproval = filtered.filter((o) => ["pendente_aprovacao", "pendente_formalizacao", "em_correcao_formalizacao"].includes(o.status)).length;
+  const formalized = filtered.filter((o) => o.status === "formalizada").length;
+  const highRisk = filtered.filter((o) => o.risk_level === "alto").length;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -84,68 +87,68 @@ export default async function Page({
   const rows = filtered.slice(start, start + pageSize);
 
   return (
-    <AppShell user={user} title="Projeto · Operações" subtitle="Cockpit da esteira operacional: criar, acompanhar, destravar e formalizar operações sem perder visão de carteira e status.">
-      <section className="mb-4 rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              esteira operacional
-            </div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Operações precisam aparecer como carteira viva, não só como tabela fria de cadastro.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Esta tela vira centro de controle das operações: status da esteira, nova operação, filtro operacional e carteira completa com atualização direta.
-            </p>
+    <AppShell user={user} title="Projeto · Operações" subtitle="Carteira operacional com leitura de fila, risco e andamento da esteira">
+      <ProductHero
+        eyebrow="esteira operacional"
+        title="Operações precisam parecer carteira viva, não tabela fria."
+        description="A tela agora organiza criação, leitura de fila, filtros e carteira com uma lógica mais executiva: o que está travando, o que está andando e o que já foi formalizado."
+      >
+        <StatusPill label={`Pendentes: ${pendingApproval}`} tone={pendingApproval > 0 ? "warn" : "good"} />
+        <StatusPill label={`Risco alto: ${highRisk}`} tone={highRisk > 0 ? "bad" : "good"} />
+        <StatusPill label={`Formalizadas: ${formalized}`} tone="info" />
+      </ProductHero>
+
+      {query.saved ? <div className="alert ok-bg mb-4">Operação atualizada/registrada.</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Não foi possível salvar a operação agora. Detalhe técnico: {query.error}</div> : null}
+
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Leitura da esteira</h2><span className="kpi-chip">macro da carteira</span></div>
+          <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Valor bruto</div><div className="mt-1 font-medium text-white">{brl(totals.bruto)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Valor líquido</div><div className="mt-1 font-medium text-white">{brl(totals.liquido)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Empresa / custo</div><div className="mt-1 font-medium text-white">{brl(totals.empresa)}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Registros</div><div className="mt-1 font-medium text-white">{filtered.length}</div></div>
           </div>
-        </div>
-        {query.saved ? <div className="alert ok-bg mt-3">Operação atualizada/registrada.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Não foi possível salvar a operação agora. Detalhe técnico: {query.error}</div> : null}
-      </section>
 
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Esteira de status</h2><span className="kpi-chip">fase da operação</span></div>
-        <div className="grid md:grid-cols-4 gap-3 mt-3">
-          {byStatus.map((item) => (
-            <div key={item.value} className="metric">
-              <div className="text-xs text-slate-400">{item.label}</div>
-              <div className={`text-lg font-semibold mt-1 ${STATUS_CLASS[item.value]}`}>{item.count}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+          <div className="mt-4 grid md:grid-cols-4 gap-3">
+            {byStatus.map((item) => (
+              <div key={item.value} className="metric">
+                <div className="text-xs text-slate-400">{item.label}</div>
+                <div className={`text-lg font-semibold mt-1 ${STATUS_CLASS[item.value]}`}>{item.count}</div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Nova operação</h2><span className="kpi-chip">entrada da esteira</span></div>
-        <form action={`/api/projects/${id}/operacoes/create`} method="post" className="grid md:grid-cols-4 gap-2 text-sm mt-3">
-          <input type="hidden" name="csrf_token" value={csrf} />
-          <input name="business_date" type="date" defaultValue={todayInSaoPauloISO()} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="due_date" type="date" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <select name="op_type" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
-            <option value="desconto_duplicata">desconto_duplicata</option>
-            <option value="comissaria">comissaria</option>
-            <option value="fomento">fomento</option>
-            <option value="intercompany">intercompany</option>
-          </select>
-          <input name="modality" placeholder="modalidade" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="gross_amount" type="number" step="0.01" placeholder="valor bruto" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="principal_amount" type="number" step="0.01" placeholder="valor principal" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="disbursed_amount" type="number" step="0.01" placeholder="valor desembolsado" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="company_fee" type="number" step="0.01" placeholder="empresa (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="fee_percent" type="number" step="0.01" placeholder="taxa %" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="fund_limit" type="number" step="0.01" placeholder="limite fundo" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="receivable_available" type="number" step="0.01" placeholder="recebível disponível" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="fund_name" placeholder="fundo" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="operator_name" placeholder="operador" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="counterparty_name" placeholder="cedente / contraparte" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="document_ref" placeholder="documento / borderô / ref" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="notes" placeholder="comentários" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <button type="submit" className="badge py-2 cursor-pointer">Registrar operação</button>
-        </form>
-      </section>
-
-      <section className="grid md:grid-cols-3 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Valor bruto</div><div className="text-lg font-semibold mt-1">{brl(totals.bruto)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Valor líquido</div><div className="text-lg font-semibold mt-1">{brl(totals.liquido)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Empresa / custo</div><div className="text-lg font-semibold mt-1">{brl(totals.empresa)}</div></div>
+        <section className="card">
+          <div className="section-head"><h2 className="title">Nova operação</h2><span className="kpi-chip">entrada da fila</span></div>
+          <form action={`/api/projects/${id}/operacoes/create`} method="post" className="grid md:grid-cols-2 gap-2 text-sm mt-3">
+            <input type="hidden" name="csrf_token" value={csrf} />
+            <input name="business_date" type="date" defaultValue={todayInSaoPauloISO()} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="due_date" type="date" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <select name="op_type" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+              <option value="desconto_duplicata">desconto_duplicata</option>
+              <option value="comissaria">comissaria</option>
+              <option value="fomento">fomento</option>
+              <option value="intercompany">intercompany</option>
+            </select>
+            <input name="modality" placeholder="modalidade" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="gross_amount" type="number" step="0.01" placeholder="valor bruto" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="principal_amount" type="number" step="0.01" placeholder="valor principal" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="disbursed_amount" type="number" step="0.01" placeholder="valor desembolsado" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="company_fee" type="number" step="0.01" placeholder="empresa (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="fee_percent" type="number" step="0.01" placeholder="taxa %" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="fund_limit" type="number" step="0.01" placeholder="limite fundo" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="receivable_available" type="number" step="0.01" placeholder="recebível disponível" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="fund_name" placeholder="fundo" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="operator_name" placeholder="operador" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="counterparty_name" placeholder="cedente / contraparte" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="document_ref" placeholder="documento / borderô / ref" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="notes" placeholder="comentários" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <button type="submit" className="badge py-2 cursor-pointer md:col-span-2">Registrar operação</button>
+          </form>
+        </section>
       </section>
 
       <section className="card mb-4">
@@ -184,68 +187,46 @@ export default async function Page({
 
       <section className="card">
         <div className="section-head"><h2 className="title">Carteira de operações</h2><span className="kpi-chip">{filtered.length} registros</span></div>
-        <div className="table-wrap mt-3">
-          <table className="min-w-[2200px] text-xs">
-            <thead className="bg-slate-900/80">
-              <tr>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Operação</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Status</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Modalidade</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Operador</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Contraparte</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Fundo</th>
-                <th className="text-right px-2 py-2 border-b border-slate-800">Valor bruto</th>
-                <th className="text-right px-2 py-2 border-b border-slate-800">Principal</th>
-                <th className="text-right px-2 py-2 border-b border-slate-800">Desembolsado</th>
-                <th className="text-right px-2 py-2 border-b border-slate-800">Empresa</th>
-                <th className="text-right px-2 py-2 border-b border-slate-800">Valor líquido</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Data op.</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Venc.</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Risco</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Ref.</th>
-                <th className="text-left px-2 py-2 border-b border-slate-800">Atualizar status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr><td colSpan={16} className="px-2 py-3 text-center text-slate-400">Sem operações para o filtro.</td></tr>
-              ) : rows.map((o) => (
-                <tr key={o.id} className="odd:bg-slate-900/30 align-top">
-                  <td className="px-2 py-2 border-b border-slate-900">
+        {rows.length === 0 ? <div className="mt-4"><EmptyState title="Sem operações neste filtro" description="Ajuste os filtros ou registre uma nova operação para alimentar a carteira." /></div> : null}
+        <div className="mt-4 space-y-3">
+          {rows.map((o) => (
+            <div key={o.id} className="rounded-[24px] border border-slate-800 bg-slate-950/20 p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
                     <Link href={`/projetos/${id}/operacoes/${o.id}/`} className="font-medium text-cyan-300 hover:underline">{o.id.slice(0, 8)}</Link>
-                    <div className="text-[11px] text-slate-500">{o.notes || "-"}</div>
-                  </td>
-                  <td className={`px-2 py-2 border-b border-slate-900 font-medium ${STATUS_CLASS[o.status]}`}>{OPERATION_STATUS_FLOW.find((s) => s.value === o.status)?.label || o.status}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.modality || o.op_type}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.operator_name || "-"}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.counterparty_name || "-"}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.fund_name || "-"}</td>
-                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(o.gross_amount)}</td>
-                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(Number(o.principal_amount || 0))}</td>
-                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(Number(o.disbursed_amount || 0))}</td>
-                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(Number(o.company_fee || 0))}</td>
-                  <td className="px-2 py-2 border-b border-slate-900 text-right">{brl(o.net_amount)}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.business_date}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.due_date || "-"}</td>
-                  <td className={`px-2 py-2 border-b border-slate-900 ${o.risk_level === "alto" ? "text-rose-300" : o.risk_level === "medio" ? "text-amber-300" : "text-emerald-300"}`}>{o.risk_level}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">{o.document_ref || "-"}</td>
-                  <td className="px-2 py-2 border-b border-slate-900">
-                    <form action={`/api/projects/${id}/operacoes/${o.id}/status`} method="post" className="space-y-1">
-                      <input type="hidden" name="csrf_token" value={csrf} />
-                      <select name="status" defaultValue={o.status} className="w-full bg-slate-950/40 border border-slate-700 rounded px-2 py-1">
-                        {OPERATION_STATUS_FLOW.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                      </select>
-                      <input name="note" placeholder="nota" className="w-full bg-slate-950/40 border border-slate-700 rounded px-2 py-1" />
-                      <button type="submit" className="pill">Salvar</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <StatusPill label={OPERATION_STATUS_FLOW.find((s) => s.value === o.status)?.label || o.status} tone={o.status === "cancelada" ? "bad" : o.status === "pendente_aprovacao" || o.status === "pendente_formalizacao" || o.status === "em_correcao" || o.status === "em_correcao_formalizacao" ? "warn" : o.status === "formalizada" || o.status === "aprovada" ? "good" : "neutral"} />
+                    <StatusPill label={o.modality || o.op_type} tone="info" />
+                  </div>
+                  <div className="mt-2 text-sm text-slate-300">{o.notes || "Sem comentário operacional."}</div>
+                  <div className="mt-2 text-xs text-slate-500">{o.counterparty_name || "-"} · {o.fund_name || "-"} · operador: {o.operator_name || "-"} · ref: {o.document_ref || "-"}</div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm min-w-[260px]">
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Bruto</div><div className="mt-1 font-medium text-white">{brl(o.gross_amount)}</div></div>
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Líquido</div><div className="mt-1 font-medium text-white">{brl(o.net_amount)}</div></div>
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Empresa</div><div className="mt-1 font-medium text-white">{brl(Number(o.company_fee || 0))}</div></div>
+                  <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Risco</div><div className={`mt-1 font-medium ${o.risk_level === "alto" ? "text-rose-300" : o.risk_level === "medio" ? "text-amber-300" : "text-emerald-300"}`}>{o.risk_level}</div></div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-end gap-2 text-xs text-slate-400">
+                <span>Data op.: <b className="text-slate-200">{o.business_date}</b></span>
+                <span>Venc.: <b className="text-slate-200">{o.due_date || "-"}</b></span>
+              </div>
+
+              <form action={`/api/projects/${id}/operacoes/${o.id}/status`} method="post" className="grid md:grid-cols-[1fr_1.5fr_auto] gap-2 mt-4 text-sm">
+                <input type="hidden" name="csrf_token" value={csrf} />
+                <select name="status" defaultValue={o.status} className="w-full bg-slate-950/40 border border-slate-700 rounded px-3 py-2">
+                  {OPERATION_STATUS_FLOW.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                <input name="note" placeholder="nota de atualização" className="w-full bg-slate-950/40 border border-slate-700 rounded px-3 py-2" />
+                <button type="submit" className="pill">Salvar</button>
+              </form>
+            </div>
+          ))}
         </div>
 
-        <div className="flex items-center justify-between mt-3 text-xs text-slate-400">
+        <div className="flex items-center justify-between mt-4 text-xs text-slate-400">
           <span>Página {currentPage} de {totalPages}</span>
           <div className="flex gap-2">
             {currentPage > 1 ? <Link className="pill" href={`?q=${encodeURIComponent(q)}&op_type=${opTypeFilter}&status=${statusFilter}&risk=${riskFilter}&operator=${operatorFilter}&from=${from}&to=${to}&page=${currentPage - 1}`}>Anterior</Link> : null}
