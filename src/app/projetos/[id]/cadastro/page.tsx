@@ -65,6 +65,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       <section className="card">
         <div className="section-head"><h2 className="title">Dados mestres e parâmetros financeiros</h2><span className="kpi-chip">setup crítico</span></div>
+        <div className="text-sm text-slate-400 mt-2">Aqui ficam os dados que sustentam risco, rotina, fluxo de caixa, operações e fechamento. Trate esta área como configuração-base do projeto.</div>
         {!project ? (
           <div className="alert bad-bg">Projeto não encontrado no banco. Crie em /projetos.</div>
         ) : !allowed ? (

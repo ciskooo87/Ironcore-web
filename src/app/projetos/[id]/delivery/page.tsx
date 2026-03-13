@@ -98,6 +98,7 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
 
       <section className="card">
         <div className="section-head"><h2 className="title">Histórico de entregas</h2><span className="kpi-chip">{runs.length} registros</span></div>
+        <div className="text-sm text-slate-400 mt-2">Use retry apenas quando fizer sentido operacionalmente; esta trilha serve para confirmar entrega real, falha ou descarte por regra.</div>
         <div className="mt-3 space-y-3 text-sm">
           {runs.length === 0 ? <EmptyState title="Nenhuma entrega registrada ainda" description="Quando o projeto começar a enviar atualizações, esta tela vira a trilha de comunicação com status, canal e retry. Por enquanto, vale revisar se a rotina e os envios automáticos já estão ativos." /> : null}
           {runs.map((r) => (
