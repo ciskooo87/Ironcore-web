@@ -18,6 +18,10 @@ function toneClass(tone: Tone) {
   }
 }
 
+export function toneClassName(tone: Tone) {
+  return toneClass(tone);
+}
+
 export function ProductHero({
   eyebrow,
   title,

@@ -1,34 +1,14 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { MetricCard, ProductHero, StatusPill, toneClassName } from "@/components/product-ui";
+import { CheckpointPanel, CommandPanel } from "@/components/product-blocks";
+import { productStageLabel, productTone, type ProductStage } from "@/lib/product-state";
 import { requireUser } from "@/lib/guards";
 import { isProjectOnboardingComplete, listProjectsForUser } from "@/lib/projects";
 import { listSopSteps, type SopStepView } from "@/lib/sop";
 import { listRoutineRuns } from "@/lib/routine";
 
-type PortfolioTone = "good" | "warn" | "bad" | "info";
-type PortfolioStage = "ok" | "atencao" | "bloqueado" | "implantacao";
-
-function toneClasses(tone: PortfolioTone) {
-  if (tone === "bad") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
-  if (tone === "warn") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
-  if (tone === "info") return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
-  return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
-}
-
-function statusTone(stage: PortfolioStage): PortfolioTone {
-  if (stage === "bloqueado") return "bad";
-  if (stage === "atencao") return "warn";
-  if (stage === "implantacao") return "info";
-  return "good";
-}
-
-function stageLabel(stage: PortfolioStage) {
-  if (stage === "bloqueado") return "Bloqueado";
-  if (stage === "atencao") return "Atenção";
-  if (stage === "implantacao") return "Implantação";
-  return "Operação estável";
-}
+type PortfolioStage = ProductStage;
 
 function formatWhen(value: string | null | undefined) {
   if (!value) return "sem rotina";
@@ -131,8 +111,8 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
         latest,
         gating,
         stage,
-        tone: statusTone(stage),
-        status: stageLabel(stage),
+        tone: productTone(stage),
+        status: productStageLabel(stage),
         nextStep,
         nextAction: describeNextAction({ onboardingComplete, blocked, waiting, gating, nextStep, blockingReasons, attentionReasons }),
         mainRisk: describeRisk({ blocked, waiting, blockingReasons, attentionReasons, onboardingComplete }),
@@ -214,7 +194,7 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
                     </div>
                     <div className="mt-1 text-xs text-slate-400">{p.legal_name}</div>
                   </div>
-                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClasses(tone)}`}>{status}</span>
+                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClassName(tone)}`}>{status}</span>
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-[1.3fr_1fr]">

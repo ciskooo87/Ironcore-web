@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { ActionLink, ProductHero, StatusPill } from "@/components/product-ui";
+import { ActionLink, ProductHero, StatusPill, toneClassName } from "@/components/product-ui";
+import { CheckpointPanel, CommandPanel } from "@/components/product-blocks";
 import { requireUser } from "@/lib/guards";
 import { canAccessProject } from "@/lib/permissions";
 import { getProjectByCode, getProjectOnboardingChecks, isProjectOnboardingComplete } from "@/lib/projects";
@@ -8,13 +9,6 @@ import { listSopSteps } from "@/lib/sop";
 import { listRoutineRuns } from "@/lib/routine";
 import { listProjectAlerts } from "@/lib/alerts";
 import { dbQuery } from "@/lib/db";
-
-function toneClasses(tone: "good" | "warn" | "bad" | "info") {
-  if (tone === "bad") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
-  if (tone === "warn") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
-  if (tone === "info") return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
-  return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
-}
 
 function formatWhen(value: string | null) {
   if (!value) return "ainda não executado";
@@ -187,21 +181,15 @@ export default async function ProjectWarRoomPage({ params }: { params: Promise<{
         <section className="card">
           <div className="section-head"><h2 className="title">Comando do dia</h2><span className="kpi-chip">prioridade executiva</span></div>
           <div className="mt-4 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
-              <div className="mt-2 text-lg font-semibold text-white">{describePriority({ onboardingPending, blockedSteps, blockingReasons, pendingApprovals, waitingValidation, openClosures })}</div>
-              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
-              <div className="mt-2 text-sm text-slate-300">{describeMainRisk({ alerts: alerts.length, blockingReasons, attentionReasons, latestStatus: latest?.status, onboardingPending })}</div>
-            </div>
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leitura do motor</div>
-              <div className="mt-2 text-base font-semibold text-white">{recommendation}</div>
+            <CommandPanel action={<>{describePriority({ onboardingPending, blockedSteps, blockingReasons, pendingApprovals, waitingValidation, openClosures })}</>} risk={<>{describeMainRisk({ alerts: alerts.length, blockingReasons, attentionReasons, latestStatus: latest?.status, onboardingPending })}</>} />
+            <CheckpointPanel title="Leitura do motor">
+              <div className="text-base font-semibold text-white">{recommendation}</div>
               <div className="mt-4 space-y-2 text-xs text-slate-400">
                 <div>Última rotina: <span className="text-slate-200">{formatWhen(latest?.created_at || null)}</span></div>
                 <div>Status da rotina: <span className="text-slate-200">{latest?.status || "sem execução"}</span></div>
                 <div>Alertas ativos: <span className="text-slate-200">{alerts.length}</span></div>
               </div>
-            </div>
+            </CheckpointPanel>
           </div>
         </section>
 
@@ -251,7 +239,7 @@ export default async function ProjectWarRoomPage({ params }: { params: Promise<{
                   <div className="font-medium text-slate-100">{step.title}</div>
                   <div className="text-xs text-slate-500">{step.phase}</div>
                 </div>
-                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${step.status === "bloqueado" ? toneClasses("bad") : step.status === "aguardando_validacao" ? toneClasses("warn") : step.status === "concluido" ? toneClasses("good") : step.status === "em_execucao" ? toneClasses("info") : "border-slate-700 bg-slate-900/40 text-slate-300"}`}>{step.status}</span>
+                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${step.status === "bloqueado" ? toneClassName("bad") : step.status === "aguardando_validacao" ? toneClassName("warn") : step.status === "concluido" ? toneClassName("good") : step.status === "em_execucao" ? toneClassName("info") : "border-slate-700 bg-slate-900/40 text-slate-300"}`}>{step.status}</span>
               </div>
             ))}
           </div>

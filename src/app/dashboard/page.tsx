@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill, toneClassName } from "@/components/product-ui";
+import { CheckpointPanel, CommandPanel } from "@/components/product-blocks";
 import { requireUser } from "@/lib/guards";
 import { getUsageKpis } from "@/lib/kpis";
 import { listProjectsForUser } from "@/lib/projects";
@@ -30,13 +31,6 @@ type ProjectCockpit = {
   lastRoutineAt: string | null;
   summaryRisk: string;
 };
-
-function toneClasses(tone: ProjectCockpit["statusTone"]) {
-  if (tone === "bad") return "border-rose-400/30 bg-rose-400/10 text-rose-100";
-  if (tone === "warn") return "border-amber-400/30 bg-amber-400/10 text-amber-100";
-  if (tone === "info") return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
-  return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
-}
 
 function formatWhen(value: string | null) {
   if (!value) return "ainda não executado";
@@ -199,21 +193,15 @@ export default async function DashboardPage() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
-                  <div className="mt-2 text-2xl font-semibold text-white">{topPriority.nextActionLabel}</div>
-                  <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
-                  <div className="mt-2 text-sm text-slate-300">{topPriority.summaryRisk}</div>
-                </div>
-                <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <CommandPanel action={<>{topPriority.nextActionLabel}</>} risk={<>{topPriority.summaryRisk}</>} />
+                <CheckpointPanel>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Bloqueios</div><div className="mt-1 font-medium text-rose-200">{topPriority.blockingCount + topPriority.blockedSteps}</div></div>
                     <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Atenções</div><div className="mt-1 font-medium text-amber-200">{topPriority.attentionCount}</div></div>
                     <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Etapas abertas</div><div className="mt-1 font-medium text-cyan-200">{topPriority.pendingSteps}</div></div>
                     <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Última rotina</div><div className="mt-1 font-medium text-white">{formatWhen(topPriority.lastRoutineAt)}</div></div>
                   </div>
-                </div>
+                </CheckpointPanel>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -296,7 +284,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="mt-1 text-xs text-slate-400">{project.timezone}</div>
                 </div>
-                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClasses(project.statusTone)}`}>{project.statusLabel}</span>
+                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${toneClassName(project.statusTone)}`}>{project.statusLabel}</span>
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
