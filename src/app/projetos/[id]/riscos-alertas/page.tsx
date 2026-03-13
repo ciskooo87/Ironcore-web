@@ -38,13 +38,15 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const fidcPanel = await getFidcPanel(project.id);
   const criticalAlerts = alerts.filter((a) => a.severity === 'critical').length;
   const flowBlocking = alerts.filter((a) => a.block_flow).length;
+  const mainAction = criticalAlerts > 0 ? `Tratar ${criticalAlerts} alerta(s) crítico(s) antes de liberar o fluxo.` : flowBlocking > 0 ? `Revisar ${flowBlocking} alerta(s) que bloqueiam operação.` : suggestions.find((s) => s.status === 'suggested') ? 'Revisar e aprovar a próxima sugestão de risco da IA.' : 'Manter monitoramento e registrar novos sinais relevantes.';
+  const mainRisk = projection.scenarios.base.ruptureDate ? `Possível ruptura de caixa em ${projection.scenarios.base.ruptureDate}.` : fidcPanel.recompras > 0 ? `Recompra FIDC em ${fidcPanel.recompras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.` : 'Sem risco dominante automático na leitura atual.';
 
   return (
-    <AppShell user={user} title="Projeto · Riscos & Alertas" subtitle="Camada de risco do projeto: registrar, interpretar, priorizar e bloquear quando necessário sem perder clareza operacional.">
+    <AppShell user={user} title="Projeto · Riscos & Alertas" subtitle="Camada de risco com leitura clara, prioridade e ação prática">
       <ProductHero
         eyebrow="camada de risco"
-        title="Risco bom não é o que fica escondido — é o que aparece cedo, com contexto e ação clara."
-        description="Esta tela junta alertas manuais, leitura assistida por IA, projeção de caixa e painel FIDC para transformar risco em decisão prática."
+        title="Risco bom não fica escondido — aparece cedo, com contexto e ação clara."
+        description="A tela agora organiza alerta manual, sugestão de IA, projeção de caixa e painel FIDC como uma peça única de decisão."
       >
         <StatusPill label={criticalAlerts > 0 ? `${criticalAlerts} crítico(s)` : 'Sem críticos'} tone={criticalAlerts > 0 ? 'bad' : 'good'} />
         <StatusPill label={flowBlocking > 0 ? `${flowBlocking} bloqueia fluxo` : 'Sem bloqueio de fluxo'} tone={flowBlocking > 0 ? 'warn' : 'good'} />
@@ -52,11 +54,55 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {query.saved ? <div className="alert ok-bg mb-4">{query.saved === 'ai' ? 'Sugestão de risco gerada.' : query.saved === 'ai_apply' ? 'Sugestão processada.' : 'Alerta salvo.'}</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">Não foi possível processar o alerta agora. Detalhe técnico: {query.error}</div> : null}
 
-      <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <MetricCard label="Alertas abertos" value={alerts.length} tone={alerts.length > 0 ? 'warn' : 'good'} />
-        <MetricCard label="Críticos" value={criticalAlerts} tone={criticalAlerts > 0 ? 'bad' : 'good'} />
-        <MetricCard label="Ruptura 90d" value={projection.scenarios.base.ruptureDate || 'não'} tone={projection.scenarios.base.ruptureDate ? 'bad' : 'good'} />
-        <MetricCard label="Recompras FIDC" value={fidcPanel.recompras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} tone={fidcPanel.recompras > 0 ? 'warn' : 'good'} />
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Comando de risco</h2><span className="kpi-chip">prioridade executiva</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
+            </div>
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Alertas abertos</div><div className="mt-1 font-medium text-white">{alerts.length}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Críticos</div><div className="mt-1 font-medium text-rose-300">{criticalAlerts}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Ruptura 90d</div><div className="mt-1 font-medium text-white">{projection.scenarios.base.ruptureDate || 'não'}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Recompras FIDC</div><div className="mt-1 font-medium text-amber-300">{fidcPanel.recompras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Novo alerta manual</h2><span className="kpi-chip">controle direto</span></div>
+          <form action={`/api/projects/${id}/alerts/create`} method="post" className="mt-3 grid md:grid-cols-2 gap-2 text-sm">
+            <input name="name" required placeholder="nome do alerta" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <select name="severity" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
+              <option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="critical">critical</option>
+            </select>
+            <select name="block_flow" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 md:col-span-2">
+              <option value="false">não bloqueia</option>
+              <option value="true">bloqueia fluxo</option>
+            </select>
+            <textarea name="project_report" placeholder="Contexto atual, gargalos e sinais de risco" className="md:col-span-2 min-h-20 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="opportunity" placeholder="oportunidade identificada" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="max_diff" type="number" step="0.01" placeholder="max_diff (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="max_pending" type="number" placeholder="max_pending" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <input name="upload_ref" placeholder="referência de upload (url/id)" className="md:col-span-2 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
+            <div className="md:col-span-2 rounded-lg border border-slate-800 p-3">
+              <div className="text-slate-300 text-sm mb-2">Checklist automático</div>
+              <div className="grid md:grid-cols-2 gap-1 text-sm">
+                {AUTO_CHECKS.map((item) => (
+                  <label key={item} className="flex items-center gap-2"><input type="checkbox" name="auto_checks" value={item} /> {item}</label>
+                ))}
+              </div>
+            </div>
+            <button type="submit" className="badge py-2 cursor-pointer md:col-span-2">Salvar alerta</button>
+          </form>
+        </section>
       </section>
 
       <section className="card mb-4">
@@ -93,34 +139,6 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Novo alerta manual</h2><span className="kpi-chip">controle direto</span></div>
-        <form action={`/api/projects/${id}/alerts/create`} method="post" className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
-          <input name="name" required placeholder="nome do alerta" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <select name="severity" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
-            <option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="critical">critical</option>
-          </select>
-          <select name="block_flow" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">
-            <option value="false">não bloqueia</option>
-            <option value="true">bloqueia fluxo</option>
-          </select>
-          <textarea name="project_report" placeholder="Contexto atual, gargalos e sinais de risco" className="md:col-span-3 min-h-20 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="opportunity" placeholder="oportunidade identificada" className="md:col-span-3 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="max_diff" type="number" step="0.01" placeholder="max_diff (R$)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="max_pending" type="number" placeholder="max_pending" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <input name="upload_ref" placeholder="referência de upload (url/id)" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" />
-          <div className="md:col-span-3 rounded-lg border border-slate-800 p-3">
-            <div className="text-slate-300 text-sm mb-2">Checklist automático</div>
-            <div className="grid md:grid-cols-2 gap-1 text-sm">
-              {AUTO_CHECKS.map((item) => (
-                <label key={item} className="flex items-center gap-2"><input type="checkbox" name="auto_checks" value={item} /> {item}</label>
-              ))}
-            </div>
-          </div>
-          <button type="submit" className="badge py-2 cursor-pointer">Salvar alerta</button>
-        </form>
-      </section>
-
-      <section className="card mb-4">
         <div className="section-head"><h2 className="title">Painel de risco FIDC</h2><span className="kpi-chip">retorno consolidado</span></div>
         <div className="grid md:grid-cols-5 gap-3 mt-3 text-sm">
           <MetricCard label="Retornos recebidos" value={fidcPanel.totalRetornos} />
@@ -135,11 +153,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <div className="section-head"><h2 className="title">Alertas cadastrados</h2><span className="kpi-chip">visão ativa</span></div>
         <div className="mt-3 space-y-2 text-sm">
           {alerts.length ? alerts.map((a) => (
-            <div key={a.id} className="row !items-start rounded-xl border border-slate-800 px-3 py-3">
-              <div>
-                <div className="font-medium">{a.name} · {a.severity.toUpperCase()} {a.block_flow ? '· BLOQUEIA FLUXO' : ''}</div>
-                <div className="text-xs text-slate-400 whitespace-pre-wrap mt-1">{JSON.stringify(a.rule, null, 2)}</div>
-              </div>
+            <div key={a.id} className="rounded-xl border border-slate-800 px-3 py-3">
+              <div className="font-medium">{a.name} · {a.severity.toUpperCase()} {a.block_flow ? '· BLOQUEIA FLUXO' : ''}</div>
+              <div className="text-xs text-slate-400 whitespace-pre-wrap mt-1">{JSON.stringify(a.rule, null, 2)}</div>
             </div>
           )) : <EmptyState title="Sem alertas abertos" description="Quando novos riscos forem identificados, eles vão aparecer aqui com contexto e bloqueio de fluxo quando necessário." />}
         </div>

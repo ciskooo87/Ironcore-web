@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -29,27 +29,51 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const pendingCount = pendingItems.filter((i) => i.status === "pending").length;
   const resolvedCount = pendingItems.filter((i) => i.status !== "pending").length;
   const pendingAmount = pendingItems.filter((i) => i.status === "pending").reduce((s, i) => s + i.amount, 0);
+  const mainAction = pendingCount > 0 ? `Conciliar ${pendingCount} pendência(s) da data ${selectedDate}.` : 'Rodar a conciliação para confirmar que o dia está limpo.';
+  const mainRisk = pendingAmount > 0 ? `Valor pendente em aberto: ${br(pendingAmount)}.` : 'Sem valor pendente relevante na data selecionada.';
 
   return (
-    <AppShell user={user} title="Projeto · Conciliação" subtitle="Cockpit de consistência operacional: rodar o motor, atacar pendências e saber rápido se o dia está conciliado ou não.">
+    <AppShell user={user} title="Projeto · Conciliação" subtitle="Consistência operacional com leitura rápida do que ainda impede o dia de fechar limpo">
       <ProductHero
         eyebrow="consistência operacional"
-        title="Conciliação precisa deixar claro se o dia está limpo ou se ainda existe risco escondido na base."
-        description="Esta tela centraliza a execução automática, o tratamento manual e a leitura rápida do que ainda impede o fluxo de seguir limpo."
+        title="Conciliação precisa mostrar se o dia está limpo ou se ainda existe risco escondido na base."
+        description="A tela agora combina execução automática, tratamento manual e leitura rápida de pendências em um fluxo mais executivo."
       >
-        <form action={`/api/projects/${id}/conciliacao/run`} method="post" className="flex gap-2 items-center flex-wrap">
-          <input name="business_date" type="date" defaultValue={selectedDate} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
-          <button className="badge py-2 px-4 cursor-pointer" type="submit">Rodar conciliação</button>
-        </form>
+        <StatusPill label={`Pendentes: ${pendingCount}`} tone={pendingCount > 0 ? 'bad' : 'good'} />
+        <StatusPill label={`Resolvidos: ${resolvedCount}`} tone="info" />
       </ProductHero>
       {query.saved ? <div className="alert ok-bg mb-4">Conciliação executada.</div> : null}
       {query.error ? <div className="alert bad-bg mb-4">Não foi possível concluir a conciliação agora. Detalhe técnico: {query.error}</div> : null}
 
-      <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Última execução</div><div className="text-lg font-semibold mt-1">{latest?.business_date || "sem execução"}</div><div className="text-xs text-cyan-300 mt-1">status: {latest?.status || "-"}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Pendentes do dia</div><div className="text-lg font-semibold mt-1 text-rose-200">{pendingCount}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Itens resolvidos</div><div className="text-lg font-semibold mt-1 text-emerald-200">{resolvedCount}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Valor pendente</div><div className="text-lg font-semibold mt-1 text-amber-200">{br(pendingAmount)}</div></div>
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Comando da conciliação</h2><span className="kpi-chip">prioridade do dia</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
+            </div>
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Rodar conciliação</div>
+              <form action={`/api/projects/${id}/conciliacao/run`} method="post" className="mt-3 flex gap-2 items-center flex-wrap">
+                <input name="business_date" type="date" defaultValue={selectedDate} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
+                <button className="badge py-2 px-4 cursor-pointer" type="submit">Rodar conciliação</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Checkpoint</h2><span className="kpi-chip">leitura rápida</span></div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Última execução</div><div className="mt-1 font-medium text-white">{latest?.business_date || 'sem execução'}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Status</div><div className="mt-1 font-medium text-white">{latest?.status || '-'}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Pendentes</div><div className="mt-1 font-medium text-rose-200">{pendingCount}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Valor pendente</div><div className="mt-1 font-medium text-amber-200">{br(pendingAmount)}</div></div>
+          </div>
+        </section>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr] mb-4">

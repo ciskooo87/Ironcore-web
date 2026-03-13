@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { ActionLink, EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -96,15 +96,18 @@ export default async function Page({
   const current = routineView(latest);
   const blockedSop = sopSteps.filter((step) => step.status === "bloqueado").length;
   const waitingSop = sopSteps.filter((step) => step.status === "aguardando_validacao").length;
+  const mainAction = current.blockingReasons[0] || current.suggestedActions[0] || "Rodar a rotina e revisar o resultado operacional do dia.";
+  const mainRisk = current.blockingReasons[0] || (current.pendingRecon > 0 ? `${current.pendingRecon} pendência(s) de conciliação ainda abertas.` : current.overdueWallet > 0 ? `Carteira vencida em ${current.overdueWallet}.` : "Sem risco dominante explícito na leitura atual.");
 
   return (
-    <AppShell user={user} title="Projeto · Rotina Diária" subtitle="Cockpit de execução do dia: rodar a rotina, entender o resultado e fechar as etapas do fluxo sem se perder em tela técnica.">
+    <AppShell user={user} title="Projeto · Rotina Diária" subtitle="Execução do dia com leitura clara, sequência de ação e amarração do SOP">
       <ProductHero
         eyebrow="execução do dia"
-        title="A rotina diária precisa te dizer o que aconteceu, o que travou e o que falta fechar."
-        description="Em vez de só rodar o motor, esta tela precisa funcionar como posto de comando: entrada do processamento, leitura do resultado e amarração do SOP."
+        title="Rotina diária precisa te dizer o que aconteceu, o que travou e o que falta fechar."
+        description="A tela agora se comporta como posto de comando: disparo da rotina, leitura do motor, próximos passos e governança operacional em uma linha só."
       >
-        <StatusPill label={latest ? `Última rotina: ${latest.status}` : "Sem rotina executada"} tone={latest?.status === "blocked" ? "bad" : latest?.status === "warning" ? "warn" : "good"} />
+        <StatusPill label={latest ? `Rotina: ${latest.status}` : "Sem rotina executada"} tone={latest?.status === "blocked" ? "bad" : latest?.status === "warning" ? "warn" : latest?.status === "success" ? "good" : "neutral"} />
+        <StatusPill label={`Gating: ${current.gatingStatus}`} tone={current.gatingStatus === "bloqueado" ? "bad" : current.gatingStatus === "atencao" ? "warn" : "neutral"} />
       </ProductHero>
 
       <section className="card mb-4">
@@ -140,22 +143,42 @@ export default async function Page({
                 : query.error}</div> : null}
       </section>
 
-      <section className="grid md:grid-cols-4 gap-3 mb-4">
-        <div className="metric"><div className="text-xs text-slate-400">Status da rotina</div><div className="text-lg font-semibold mt-1">{latest?.status || "sem execução"}</div><div className="text-xs text-cyan-300 mt-1">{formatWhen(latest?.created_at)}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Pendências de conciliação</div><div className="text-lg font-semibold mt-1">{current.pendingRecon}</div><div className="text-xs text-cyan-300 mt-1">status: {current.reconStatus}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">Gating operacional</div><div className="text-lg font-semibold mt-1">{current.gatingStatus}</div><div className="text-xs text-cyan-300 mt-1">risco IA: {current.riskLevel}</div></div>
-        <div className="metric"><div className="text-xs text-slate-400">SOP do dia</div><div className="text-lg font-semibold mt-1">{blockedSop} bloqueio(s)</div><div className="text-xs text-cyan-300 mt-1">{waitingSop} aguardando validação</div></div>
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Comando da rotina</h2><span className="kpi-chip">prioridade operacional</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
+            </div>
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leitura do motor</div>
+              <div className="mt-2 text-base font-semibold text-white">{current.recommendation}</div>
+              <div className="mt-4 space-y-2 text-xs text-slate-400">
+                <div>Última rotina: <span className="text-slate-200">{formatWhen(latest?.created_at)}</span></div>
+                <div>Pend. aprovação: <span className="text-slate-200">{current.pendingApprovals}</span></div>
+                <div>Risco IA: <span className="text-slate-200">{current.riskLevel}</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Checkpoint do dia</h2><span className="kpi-chip">sinais operacionais</span></div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Status da rotina</div><div className="mt-1 font-medium text-white">{latest?.status || "sem execução"}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Pendências conciliação</div><div className="mt-1 font-medium text-white">{current.pendingRecon}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Gating operacional</div><div className="mt-1 font-medium text-white">{current.gatingStatus}</div></div>
+            <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">SOP do dia</div><div className="mt-1 font-medium text-white">{blockedSop} bloqueios / {waitingSop} validações</div></div>
+          </div>
+        </section>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Leitura executiva da rotina</h2><span className="kpi-chip">resultado do motor</span></div>
-          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/20 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Recomendação</div>
-            <div className="mt-2 text-lg font-semibold text-white">{current.recommendation}</div>
-            <div className="mt-3 text-sm text-slate-300">{current.cashflowNote}</div>
-          </div>
-
+          <div className="section-head"><h2 className="title">Bloqueios e sinais de liberação</h2><span className="kpi-chip">resultado do motor</span></div>
           <div className="mt-4 grid md:grid-cols-2 gap-3 text-sm">
             <div className="rounded-2xl border border-rose-400/15 bg-rose-400/5 p-4">
               <div className="font-medium text-rose-100 mb-2">Bloqueios</div>
@@ -170,6 +193,10 @@ export default async function Page({
               </ul>
             </div>
           </div>
+          <div className="mt-4 rounded-2xl border border-slate-800 p-4 text-sm text-slate-300">
+            <div className="font-medium text-white">Resumo de delivery</div>
+            <div className="mt-2">{current.deliveryText}</div>
+          </div>
         </section>
 
         <section className="card">
@@ -180,10 +207,6 @@ export default async function Page({
                 <div className="font-medium text-slate-100">{action}</div>
               </div>
             )) : <div className="alert muted-bg">Sem ações sugeridas além da execução normal.</div>}
-          </div>
-          <div className="mt-4 rounded-2xl border border-slate-800 p-4 text-sm text-slate-300">
-            <div className="font-medium text-white">Resumo de delivery</div>
-            <div className="mt-2">{current.deliveryText}</div>
           </div>
         </section>
       </section>
@@ -210,18 +233,8 @@ export default async function Page({
                 </select>
               </div>
               <div className="grid md:grid-cols-2 gap-2 mt-3">
-                <input
-                  name="evidence"
-                  defaultValue={step.evidence}
-                  placeholder="Evidência (obrigatória para Concluído): link, ID, log, arquivo"
-                  className="bg-slate-950/40 border border-slate-700 rounded px-3 py-2 text-xs"
-                />
-                <input
-                  name="note"
-                  defaultValue={step.note}
-                  placeholder="Observação (opcional)"
-                  className="bg-slate-950/40 border border-slate-700 rounded px-3 py-2 text-xs"
-                />
+                <input name="evidence" defaultValue={step.evidence} placeholder="Evidência (obrigatória para Concluído)" className="bg-slate-950/40 border border-slate-700 rounded px-3 py-2 text-xs" />
+                <input name="note" defaultValue={step.note} placeholder="Observação (opcional)" className="bg-slate-950/40 border border-slate-700 rounded px-3 py-2 text-xs" />
               </div>
               <div className="mt-3">
                 <button type="submit" className="pill">Salvar etapa</button>
