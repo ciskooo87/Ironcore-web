@@ -138,7 +138,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <section className="card">
         <h2 className="title">Últimos lançamentos</h2>
         <div className="mt-3 space-y-2 text-sm">
-          {entries.length === 0 ? <div className="alert muted-bg">Sem lançamentos ainda.</div> : null}
+          {entries.length === 0 ? <div className="alert muted-bg">Sem lançamentos ainda. Comece com um lançamento manual ou envie a primeira base do dia para abrir a trilha operacional.</div> : null}
           {entries.map((e) => {
             const p = e.payload as Record<string, unknown>;
             return (

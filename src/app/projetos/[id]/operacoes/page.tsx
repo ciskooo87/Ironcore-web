@@ -99,7 +99,7 @@ export default async function Page({
       </ProductHero>
 
       {query.saved ? <div className="alert ok-bg mb-4">Operação atualizada/registrada.</div> : null}
-      {query.error ? <div className="alert bad-bg mb-4">Não foi possível salvar a operação agora. Detalhe técnico: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Não foi possível salvar a operação agora. Revise os campos obrigatórios e tente novamente.</div> : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">

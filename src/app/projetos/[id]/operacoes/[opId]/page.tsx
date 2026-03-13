@@ -35,7 +35,7 @@ export default async function OperationDetailPage({
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Operação"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
   const onboardingComplete = isProjectOnboardingComplete(project);
-  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Operação"><div className="alert bad-bg">Onboarding incompleto.</div></AppShell>;
+  if (!onboardingComplete) return <AppShell user={user} title="Projeto · Operação"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de detalhar ou operar esta esteira.</div></AppShell>;
 
   const [operation, comments, documents, events, titles, csrf] = await Promise.all([
     getOperationById(project.id, opId),

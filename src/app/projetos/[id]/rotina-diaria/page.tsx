@@ -132,15 +132,15 @@ export default async function Page({
         </form>
         {query.saved ? <div className="alert ok-bg mt-3">Rotina executada.</div> : null}
         {query.sop_saved ? <div className="alert ok-bg mt-3">Workflow SOP atualizado.</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">Erro: {query.error === "evidence_required"
-          ? "evidência obrigatória para concluir etapa"
+        {query.error ? <div className="alert bad-bg mt-3">{query.error === "evidence_required"
+          ? "Esta etapa exige evidência para ser concluída."
           : query.error === "sop_prereq_cadastro"
-            ? "pré-requisito SOP: concluir Cadastro antes da rotina"
+            ? "Conclua o Cadastro do projeto antes de rodar esta etapa da rotina."
             : query.error === "sop_prereq_upload_base_diaria"
-              ? "pré-requisito SOP: concluir Upload Base Diária antes da rotina"
+              ? "Suba a Base Diária antes de continuar esta rotina."
               : query.error === "approval_role_required"
-                ? "você não tem perfil para concluir esta etapa (exige aprovação superior)"
-                : query.error}</div> : null}
+                ? "Seu perfil atual não pode concluir esta etapa. Peça aprovação a um perfil superior."
+                : "Não foi possível concluir esta ação da rotina agora. Tente novamente."}</div> : null}
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">

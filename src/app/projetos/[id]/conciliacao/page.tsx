@@ -43,7 +43,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <StatusPill label={`Resolvidos: ${resolvedCount}`} tone="info" />
       </ProductHero>
       {query.saved ? <div className="alert ok-bg mb-4">Conciliação executada.</div> : null}
-      {query.error ? <div className="alert bad-bg mb-4">Não foi possível concluir a conciliação agora. Detalhe técnico: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-4">Não foi possível concluir a conciliação agora. Revise a data, os itens pendentes e tente novamente.</div> : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">
@@ -111,7 +111,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <section className="card">
           <div className="section-head"><h2 className="title">Histórico de execuções</h2><span className="kpi-chip">trilha do motor</span></div>
           <div className="mt-3 space-y-3 text-sm">
-            {runs.length === 0 ? <div className="alert muted-bg">Sem execuções.</div> : null}
+            {runs.length === 0 ? <div className="alert muted-bg">Sem execuções ainda. Rode a primeira conciliação para abrir a leitura de consistência do dia.</div> : null}
             {runs.map((r) => {
               const d = r.details as Record<string, unknown>;
               return (

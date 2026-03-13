@@ -125,7 +125,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         ) : null}
 
         {query.saved ? <div className="alert ok-bg mt-3">{query.saved === 'import' ? 'Base de cadastro importada com sucesso.' : 'Cadastro salvo com sucesso.'}</div> : null}
-        {query.error ? <div className="alert bad-bg mt-3">{query.error === "onboarding_incomplete" ? "Onboarding incompleto. Preencha todo o checklist antes de avançar para as próximas etapas." : `Falha ao salvar (${query.error}).`}</div> : null}
+        {query.error ? <div className="alert bad-bg mt-3">{query.error === "onboarding_incomplete" ? "Onboarding incompleto. Preencha todo o checklist antes de avançar para as próximas etapas." : "Não foi possível salvar o cadastro agora. Revise os campos obrigatórios e tente novamente."}</div> : null}
       </section>
     </AppShell>
   );

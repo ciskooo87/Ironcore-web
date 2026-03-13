@@ -37,7 +37,7 @@ export default async function MovimentoDiarioPage({
   if (!project) return <AppShell user={user} title="Projeto · Movimento Diário"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · Movimento Diário"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
-  if (!isProjectOnboardingComplete(project)) return <AppShell user={user} title="Projeto · Movimento Diário"><div className="alert bad-bg">Onboarding incompleto.</div></AppShell>;
+  if (!isProjectOnboardingComplete(project)) return <AppShell user={user} title="Projeto · Movimento Diário"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro do projeto antes de operar o movimento diário.</div></AppShell>;
 
   const runs = await listRoutineRuns(project.id, 20);
   const latest = runs[0];

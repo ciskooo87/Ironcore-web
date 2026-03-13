@@ -39,7 +39,7 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
   return (
     <AppShell user={user} title="Projeto · Delivery" subtitle="Centro de controle de envio para saber o que saiu, o que falhou e onde agir rápido">
       {query.saved ? <div className="alert ok-bg mb-3">Retry executado.</div> : null}
-      {query.error ? <div className="alert bad-bg mb-3">Não foi possível processar a entrega agora. Detalhe técnico: {query.error}</div> : null}
+      {query.error ? <div className="alert bad-bg mb-3">Não foi possível processar a entrega agora. Tente novamente em instantes ou revise o canal/filtro usado.</div> : null}
 
       <ProductHero
         eyebrow="monitor de entrega"
@@ -99,7 +99,7 @@ export default async function DeliveryPage({ params, searchParams }: { params: P
       <section className="card">
         <div className="section-head"><h2 className="title">Histórico de entregas</h2><span className="kpi-chip">{runs.length} registros</span></div>
         <div className="mt-3 space-y-3 text-sm">
-          {runs.length === 0 ? <EmptyState title="Nenhuma entrega registrada ainda" description="Assim que o projeto começar a enviar atualizações, a trilha de delivery vai aparecer aqui com status, canal e retry." /> : null}
+          {runs.length === 0 ? <EmptyState title="Nenhuma entrega registrada ainda" description="Quando o projeto começar a enviar atualizações, esta tela vira a trilha de comunicação com status, canal e retry. Por enquanto, vale revisar se a rotina e os envios automáticos já estão ativos." /> : null}
           {runs.map((r) => (
             <div key={r.id} className="rounded-[22px] border border-slate-800 bg-slate-950/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">

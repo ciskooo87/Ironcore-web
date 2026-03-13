@@ -32,7 +32,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!project) return <AppShell user={user} title="Projeto · DRE / DFC"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) return <AppShell user={user} title="Projeto · DRE / DFC"><div className="alert bad-bg">Sem permissão.</div></AppShell>;
-  if (!isProjectOnboardingComplete(project)) return <AppShell user={user} title="Projeto · DRE / DFC"><div className="alert bad-bg">Onboarding incompleto.</div></AppShell>;
+  if (!isProjectOnboardingComplete(project)) return <AppShell user={user} title="Projeto · DRE / DFC"><div className="alert bad-bg">Onboarding incompleto. Conclua o Cadastro antes de gerar a camada contábil executiva.</div></AppShell>;
 
   const feeds = await listAccountingFeeds(project.id, 12);
   const latest = feeds[0]?.payload as Record<string, any> | undefined;
