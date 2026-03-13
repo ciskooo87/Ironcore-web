@@ -150,7 +150,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </section>
 
       <section className="card">
-        <div className="section-head"><h2 className="title">Alertas cadastrados</h2><span className="kpi-chip">visão ativa</span></div>
+        <div className="section-head"><h2 className="title">Alertas cadastrados</h2><span className="kpi-chip">risco ativo</span></div>
         <div className="mt-3 space-y-2 text-sm">
           {alerts.length ? alerts.map((a) => (
             <div key={a.id} className="rounded-xl border border-slate-800 px-3 py-3">

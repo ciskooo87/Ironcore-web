@@ -212,7 +212,7 @@ export default async function Page({
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">SOP operacional</h2><span className="kpi-chip">governança do fluxo</span></div>
+        <div className="section-head"><h2 className="title">SOP operacional</h2><span className="kpi-chip">governança da rotina</span></div>
         <div className="mt-3 space-y-2 text-sm">
           {sopSteps.map((step) => (
             <form key={step.key} action={`/api/projects/${id}/sop/update`} method="post" className="rounded-[22px] border border-slate-800 bg-slate-950/20 p-4">

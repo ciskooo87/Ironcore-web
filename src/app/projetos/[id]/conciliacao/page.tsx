@@ -109,7 +109,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         </section>
 
         <section className="card">
-          <div className="section-head"><h2 className="title">Histórico de execuções</h2><span className="kpi-chip">motor</span></div>
+          <div className="section-head"><h2 className="title">Histórico de execuções</h2><span className="kpi-chip">trilha do motor</span></div>
           <div className="mt-3 space-y-3 text-sm">
             {runs.length === 0 ? <div className="alert muted-bg">Sem execuções.</div> : null}
             {runs.map((r) => {

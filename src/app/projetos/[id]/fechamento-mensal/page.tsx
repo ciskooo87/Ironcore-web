@@ -107,7 +107,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Narrativa executiva</h2><span className="kpi-chip">board ready</span></div>
+        <div className="section-head"><h2 className="title">Narrativa executiva</h2><span className="kpi-chip">pronto para diretoria</span></div>
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/20 p-4 text-sm text-slate-300 whitespace-pre-wrap">
           {narrativaExecutiva || "Sem narrativa executiva ainda."}
         </div>
@@ -122,7 +122,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr] mb-4">
         <section className="card">
-          <div className="section-head"><h2 className="title">Validar fechamento</h2><span className="kpi-chip">workflow</span></div>
+          <div className="section-head"><h2 className="title">Validar fechamento</h2><span className="kpi-chip">decisão humana</span></div>
           <form action={`/api/projects/${id}/closure/validate`} method="post" className="grid md:grid-cols-4 gap-2 text-sm mt-3">
             <input type="hidden" name="csrf_token" value={csrf} />
             <select name="closure_id" className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2">

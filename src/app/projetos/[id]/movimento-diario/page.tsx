@@ -140,7 +140,7 @@ export default async function MovimentoDiarioPage({
         </section>
 
         <section className="card">
-          <div className="section-head"><h2 className="title">Validar decisão</h2><span className="kpi-chip">workflow humano</span></div>
+          <div className="section-head"><h2 className="title">Validar decisão</h2><span className="kpi-chip">decisão humana</span></div>
           <form action={`/api/projects/${id}/movement/validate`} method="post" className="space-y-3 mt-3 text-sm">
             <input type="hidden" name="csrf_token" value={csrf} />
             <input type="hidden" name="routine_run_id" value={latest?.id || ""} />

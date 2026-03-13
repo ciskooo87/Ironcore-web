@@ -54,7 +54,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </section>
 
       <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Leitura executiva</h2><span className="kpi-chip">board ready</span></div>
+        <div className="section-head"><h2 className="title">Leitura executiva</h2><span className="kpi-chip">pronto para diretoria</span></div>
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/20 p-4 text-sm text-slate-300 whitespace-pre-wrap">
           {snap.narrative || 'Sem narrativa executiva consolidada ainda.'}
         </div>
