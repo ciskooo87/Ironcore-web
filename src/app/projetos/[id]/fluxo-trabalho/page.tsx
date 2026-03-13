@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -111,6 +112,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
     const blocked = items.filter((item) => item.status === "bloqueado").length;
     const waiting = items.filter((item) => item.status === "aguardando_validacao").length;
     const inProgress = items.filter((item) => item.status === "em_execucao").length;
+    const href = phase === "IMPLEMENTACAO" ? `/projetos/${id}/cadastro` : phase === "OPERACAO_DIARIA" ? `/projetos/${id}/movimento-diario` : `/projetos/${id}/fechamento-mensal`;
 
     return {
       phase,
@@ -122,6 +124,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       inProgress,
       total: items.length,
       narrative: phaseNarrative(phase, done, items.length, blocked, waiting),
+      href,
     };
   });
 
@@ -143,6 +146,22 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
         <div className="metric"><div className="text-xs text-slate-400">Concluídas</div><div className="text-lg font-semibold mt-1 text-emerald-200">{totalDone}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Aguardando validação</div><div className="text-lg font-semibold mt-1 text-amber-200">{totalWaiting}</div></div>
         <div className="metric"><div className="text-xs text-slate-400">Bloqueadas</div><div className="text-lg font-semibold mt-1 text-rose-200">{totalBlocked}</div></div>
+      </section>
+
+      <section className="card mb-4">
+        <div className="section-head"><h2 className="title">Mapa-mestre do projeto</h2><span className="kpi-chip">entrada por frente</span></div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {phaseCards.map((phase) => (
+            <Link key={phase.phase} href={phase.href} className="rounded-[24px] border border-slate-800 bg-slate-950/20 p-4 hover:border-cyan-400 hover:bg-slate-950/30">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold text-white">{phase.title}</h3>
+                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${phase.blocked > 0 ? toneClasses("bloqueado") : phase.waiting > 0 || phase.inProgress > 0 ? toneClasses("aguardando_validacao") : toneClasses("concluido")}`}>{phase.done}/{phase.total}</span>
+              </div>
+              <p className="mt-2 text-sm text-slate-300">{phase.narrative}</p>
+              <div className="mt-3 text-xs text-cyan-300">Abrir frente →</div>
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="card mb-4">
@@ -229,7 +248,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
 
       {phaseCards.map((phase) => (
         <section key={phase.phase} className="card mb-4">
-          <div className="section-head"><h2 className="title">{phase.title}</h2><span className="kpi-chip">{phase.total} etapas</span></div>
+          <div className="section-head"><h2 className="title">{phase.title}</h2><div className="flex items-center gap-2"><span className="kpi-chip">{phase.total} etapas</span><Link href={phase.href} className="pill">Abrir frente</Link></div></div>
           <div className="mt-4 space-y-3">
             {phase.items.map((item) => (
               <article key={item.key} className="rounded-[24px] border border-slate-800 bg-slate-950/20 p-4">

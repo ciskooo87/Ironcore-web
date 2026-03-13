@@ -42,6 +42,7 @@ const SECTION_META: Record<NavSection, { label: string; helper: string }> = {
 export function SidebarNav({ user }: { user: SessionUser }) {
   const pathname = usePathname();
   const projectCode = extractProjectCode(pathname || "");
+  const inProjectContext = Boolean(pathname && pathname.startsWith("/projetos/"));
 
   const visible = NAV_ITEMS
     .filter((item) => !item.action || can(user.role, item.action))
@@ -61,6 +62,13 @@ export function SidebarNav({ user }: { user: SessionUser }) {
         </div>
         <div className="text-[11px] uppercase tracking-[0.16em] text-cyan-300 mt-4">navegação do produto</div>
         <div className="mt-1 text-sm text-slate-300">Organizada por missão, não por ordem histórica de módulo.</div>
+        {inProjectContext ? (
+          <div className="mt-4 rounded-xl border border-cyan-400/15 bg-slate-950/40 px-3 py-3">
+            <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">contexto atual</div>
+            <div className="mt-1 text-sm font-medium text-white">Projeto {projectCode}</div>
+            <div className="mt-1 text-xs text-slate-400">A sidebar agora prioriza entradas do projeto em vez de navegação solta.</div>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-5">
