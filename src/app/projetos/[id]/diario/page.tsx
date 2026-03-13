@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -12,26 +13,56 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const query = await searchParams;
 
   if (!project) {
-    return (
-      <AppShell user={user} title="Projeto · Painel Diário">
-        <div className="alert bad-bg">Projeto não encontrado.</div>
-      </AppShell>
-    );
+    return <AppShell user={user} title="Projeto · Painel Diário"><div className="alert bad-bg">Projeto não encontrado.</div></AppShell>;
   }
 
   const allowed = await canAccessProject(user, project.id);
   if (!allowed) {
-    return (
-      <AppShell user={user} title="Projeto · Painel Diário">
-        <div className="alert bad-bg">Sem permissão para este projeto.</div>
-      </AppShell>
-    );
+    return <AppShell user={user} title="Projeto · Painel Diário"><div className="alert bad-bg">Sem permissão para este projeto.</div></AppShell>;
   }
 
   const entries = await listDailyEntries(project.id, 30);
+  const uploads = entries.filter((e) => e.source_type === "upload").length;
+  const manuals = entries.filter((e) => e.source_type === "manual").length;
+  const latest = entries[0];
+  const latestPayload = (latest?.payload || {}) as Record<string, unknown>;
+  const mainAction = latest ? 'Revisar os lançamentos mais recentes e completar qualquer base pendente do dia.' : 'Registrar ou subir a primeira base diária para abrir a trilha operacional.';
+  const mainRisk = entries.length === 0 ? 'Sem base diária registrada ainda; o resto da operação fica cego.' : `Última base em ${latest?.business_date} via ${latest?.source_type}.`;
 
   return (
-    <AppShell user={user} title="Projeto · Painel Diário" subtitle="Entrada manual/upload com limite de edição retroativa de 5 dias">
+    <AppShell user={user} title="Projeto · Painel Diário" subtitle="Entrada operacional do dia para alimentar rotina, risco, caixa e fechamento sem perder rastreabilidade">
+      <ProductHero
+        eyebrow="base operacional"
+        title="Painel diário precisa ser porta de entrada limpa para o dado, não só formulário solto."
+        description="A tela agora organiza lançamento manual, uploads do dia, bases históricas e trilha recente numa leitura mais útil para operação."
+      >
+        <StatusPill label={`Entradas: ${entries.length}`} tone={entries.length > 0 ? "good" : "warn"} />
+        <StatusPill label={`Uploads / manuais: ${uploads} / ${manuals}`} tone="info" />
+      </ProductHero>
+
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Comando do diário</h2><span className="kpi-chip">prioridade operacional</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
+            </div>
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Última data</div><div className="mt-1 font-medium text-white">{latest?.business_date || '-'}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Origem</div><div className="mt-1 font-medium text-white">{latest?.source_type || '-'}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Faturamento</div><div className="mt-1 font-medium text-white">{Number(latestPayload.faturamento || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Contas a pagar</div><div className="mt-1 font-medium text-white">{Number(latestPayload.contas_pagar || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
       <section className="card mb-4">
         <h2 className="title">Lançar movimento diário (manual)</h2>
         <form action={`/api/projects/${id}/daily/create`} method="post" encType="multipart/form-data" className="mt-3 grid md:grid-cols-3 gap-2 text-sm">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -57,26 +57,67 @@ export default async function OperationDetailPage({
     recompra: titles.filter((t) => t.carteira_status === "recomprado").reduce((s, t) => s + Number(t.face_value || 0), 0),
   };
 
+  const mainAction = operation.status === "pendente_aprovacao"
+    ? "Concluir aprovação para liberar a esteira da operação."
+    : operation.status === "pendente_formalizacao"
+      ? "Fechar formalização e documentação desta operação."
+      : operation.status === "em_correcao" || operation.status === "em_correcao_formalizacao"
+        ? "Corrigir a operação e limpar os pontos pendentes antes de avançar."
+        : operation.status === "cancelada"
+          ? "Registrar claramente a razão do cancelamento e encerrar a trilha."
+          : "Acompanhar carteira, títulos e documentação para manter a operação saudável.";
+
+  const mainRisk = carteiraResumo.vencido > 0
+    ? `Carteira vencida em ${brl(carteiraResumo.vencido)} dentro desta operação.`
+    : operation.risk_level === "alto"
+      ? "Operação marcada com risco alto e exige atenção mais cuidadosa."
+      : documents.length === 0 && operation.status !== "em_elaboracao"
+        ? "Sem base documental registrada para uma operação já avançada na esteira."
+        : "Sem risco dominante explícito além do acompanhamento da esteira.";
+
   return (
-    <AppShell user={user} title="Projeto · Operação" subtitle="Sala de controle da operação: esteira, valores, carteira, comentários, documentos e histórico concentrados em uma visão só.">
+    <AppShell user={user} title="Projeto · Operação" subtitle="Sala de controle da operação com esteira, carteira, documentação e trilha completa">
       <ProductHero
         eyebrow={`operação ${operation.id.slice(0, 8)}`}
         title={operation.modality || operation.op_type}
-        description="A tela de detalhe precisa contar a história completa da operação: status, números, carteira, timeline e documentação."
+        description="A tela de detalhe precisa contar a história completa da operação: status, números, carteira, timeline e documentação sem espalhar contexto."
       >
         <StatusPill label={OPERATION_STATUS_FLOW.find((s) => s.value === operation.status)?.label || operation.status} tone={operation.status === 'cancelada' ? 'bad' : operation.status === 'aprovada' || operation.status === 'formalizada' ? 'good' : 'warn'} />
         <Link href={`/projetos/${id}/operacoes`} className="pill">Voltar para operações</Link>
       </ProductHero>
 
-      <section className="card mb-4">
-        <div className="section-head"><h2 className="title">Esteira da operação</h2><span className="kpi-chip">status</span></div>
-        <div className="grid md:grid-cols-4 gap-2 text-xs mt-3">
-          {OPERATION_STATUS_FLOW.map((step, idx) => (
-            <div key={step.value} className={`rounded-lg border px-3 py-2 ${idx <= currentIdx ? "border-cyan-500/60 bg-cyan-500/10" : "border-slate-800 bg-slate-950/30"}`}>
-              {step.label}
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
+        <section className="card">
+          <div className="section-head"><h2 className="title">Comando da operação</h2><span className="kpi-chip">prioridade operacional</span></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
+              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
+              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
             </div>
-          ))}
-        </div>
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Risco</div><div className="mt-1 font-medium text-white">{operation.risk_level}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Comentários</div><div className="mt-1 font-medium text-white">{comments.length}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Documentos</div><div className="mt-1 font-medium text-white">{documents.length}</div></div>
+                <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Títulos</div><div className="mt-1 font-medium text-white">{titles.length}</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-head"><h2 className="title">Esteira da operação</h2><span className="kpi-chip">status</span></div>
+          <div className="grid md:grid-cols-4 gap-2 text-xs mt-3">
+            {OPERATION_STATUS_FLOW.map((step, idx) => (
+              <div key={step.value} className={`rounded-lg border px-3 py-2 ${idx <= currentIdx ? "border-cyan-500/60 bg-cyan-500/10" : "border-slate-800 bg-slate-950/30"}`}>
+                {step.label}
+              </div>
+            ))}
+          </div>
+        </section>
       </section>
 
       <section className="grid md:grid-cols-3 gap-4 mb-4">
@@ -111,11 +152,11 @@ export default async function OperationDetailPage({
       </section>
 
       <section className="grid md:grid-cols-5 gap-3 mb-4">
-        <MetricCard label="Carteira total" value={brl(carteiraResumo.total)} />
-        <MetricCard label="A vencer" value={brl(carteiraResumo.aVencer)} tone="good" />
-        <MetricCard label="Vencido" value={brl(carteiraResumo.vencido)} tone="bad" />
-        <MetricCard label="Liquidado" value={brl(carteiraResumo.liquidado)} tone="info" />
-        <MetricCard label="Recomprado" value={brl(carteiraResumo.recompra)} tone="warn" />
+        <div className="metric"><div className="text-xs text-slate-400">Carteira total</div><div className="text-lg font-semibold mt-1">{brl(carteiraResumo.total)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">A vencer</div><div className="text-lg font-semibold mt-1 text-emerald-200">{brl(carteiraResumo.aVencer)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Vencido</div><div className="text-lg font-semibold mt-1 text-rose-200">{brl(carteiraResumo.vencido)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Liquidado</div><div className="text-lg font-semibold mt-1 text-cyan-200">{brl(carteiraResumo.liquidado)}</div></div>
+        <div className="metric"><div className="text-xs text-slate-400">Recomprado</div><div className="text-lg font-semibold mt-1 text-amber-200">{brl(carteiraResumo.recompra)}</div></div>
       </section>
 
       <section className="card mb-4">
@@ -150,7 +191,7 @@ export default async function OperationDetailPage({
       </section>
 
       <section className="grid md:grid-cols-2 gap-4 mb-4">
-        <section className="card"><div className="section-head"><h2 className="title">Histórico / timeline de eventos</h2><span className="kpi-chip">timeline</span></div><div className="text-sm text-slate-300 whitespace-pre-wrap mt-2">{operation.notes || 'Sem observações gerais.'}</div><div className="text-xs text-slate-500 mt-3">Última atualização: {operation.updated_at || operation.created_at}</div>{operation.approval_note ? <div className="alert muted-bg mt-3">Nota de aprovação/status: {operation.approval_note}</div> : null}<div className="space-y-2 mt-3 text-sm">{events.length === 0 ? <EmptyState title="Sem eventos ainda" description="A timeline da operação vai aparecer aqui conforme mudanças de status, comentários e documentos forem registrados." /> : null}{events.map((event) => (<div key={event.id} className="rounded-lg border border-slate-800 p-3"><div className="text-xs text-slate-500">{event.created_at} · {event.actor_name || 'sistema'}</div><div className="font-medium mt-1">{event.event_label}</div><div className="text-xs text-slate-400 mt-1 whitespace-pre-wrap">{JSON.stringify(event.payload, null, 2)}</div></div>))}</div></section>
+        <section className="card"><div className="section-head"><h2 className="title">Timeline da operação</h2><span className="kpi-chip">trilha</span></div><div className="text-sm text-slate-300 whitespace-pre-wrap mt-2">{operation.notes || 'Sem observações gerais.'}</div><div className="text-xs text-slate-500 mt-3">Última atualização: {operation.updated_at || operation.created_at}</div>{operation.approval_note ? <div className="alert muted-bg mt-3">Nota de aprovação/status: {operation.approval_note}</div> : null}<div className="space-y-2 mt-3 text-sm">{events.length === 0 ? <EmptyState title="Sem eventos ainda" description="A timeline da operação vai aparecer aqui conforme mudanças de status, comentários e documentos forem registrados." /> : null}{events.map((event) => (<div key={event.id} className="rounded-lg border border-slate-800 p-3"><div className="text-xs text-slate-500">{event.created_at} · {event.actor_name || 'sistema'}</div><div className="font-medium mt-1">{event.event_label}</div><div className="text-xs text-slate-400 mt-1 whitespace-pre-wrap">{JSON.stringify(event.payload, null, 2)}</div></div>))}</div></section>
         <section className="card"><div className="section-head"><h2 className="title">Comentários</h2><span className="kpi-chip">colaboração</span></div><form action={`/api/projects/${id}/operacoes/${opId}/comment`} method="post" className="space-y-2 mb-3 mt-3"><input type="hidden" name="csrf_token" value={csrf} /><textarea name="body" required placeholder="Adicionar comentário operacional" className="w-full min-h-24 bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2" /><button type="submit" className="badge py-2 px-3 cursor-pointer">Salvar comentário</button></form>{comments.length === 0 ? <EmptyState title="Sem comentários ainda" description="Use comentários para registrar contexto, decisão e repasses internos da operação." /> : null}<div className="space-y-2 text-sm">{comments.map((comment) => (<div key={comment.id} className="rounded-lg border border-slate-800 p-3"><div className="text-xs text-slate-500">{comment.author_name || '-'} · {comment.created_at}</div><div className="mt-1 text-slate-300 whitespace-pre-wrap">{comment.body}</div></div>))}</div></section>
       </section>
 
