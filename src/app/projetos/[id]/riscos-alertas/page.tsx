@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { EmptyState, MetricCard, ProductHero, StatusPill } from "@/components/product-ui";
+import { CheckpointPanel, CommandGrid, CommandPanel } from "@/components/product-blocks";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -57,23 +58,17 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">
           <div className="section-head"><h2 className="title">Comando de risco</h2><span className="kpi-chip">prioridade executiva</span></div>
-          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
-              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
-              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
-              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
-            </div>
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Checkpoint</div>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+          <CommandGrid>
+            <CommandPanel action={<>{mainAction}</>} risk={<>{mainRisk}</>} />
+            <CheckpointPanel>
+              <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Alertas abertos</div><div className="mt-1 font-medium text-white">{alerts.length}</div></div>
                 <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Críticos</div><div className="mt-1 font-medium text-rose-300">{criticalAlerts}</div></div>
                 <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Ruptura 90d</div><div className="mt-1 font-medium text-white">{projection.scenarios.base.ruptureDate || 'não'}</div></div>
                 <div className="rounded-2xl border border-slate-800 p-3"><div className="text-xs text-slate-400">Recompras FIDC</div><div className="mt-1 font-medium text-amber-300">{fidcPanel.recompras.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></div>
               </div>
-            </div>
-          </div>
+            </CheckpointPanel>
+          </CommandGrid>
         </section>
 
         <section className="card">

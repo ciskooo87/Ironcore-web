@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
+import { CheckpointPanel, CommandGrid, CommandPanel } from "@/components/product-blocks";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -78,21 +79,15 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">
           <div className="section-head"><h2 className="title">Comando do fechamento</h2><span className="kpi-chip">prioridade do mês</span></div>
-          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
-              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
-              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
-              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
-            </div>
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Fechar mês</div>
-              <form action={`/api/projects/${id}/fechamento/close`} method="post" className="mt-3 flex gap-2 items-center flex-wrap">
+          <CommandGrid>
+            <CommandPanel action={<>{mainAction}</>} risk={<>{mainRisk}</>} />
+            <CheckpointPanel title="Fechar mês">
+              <form action={`/api/projects/${id}/fechamento/close`} method="post" className="flex gap-2 items-center flex-wrap">
                 <input name="period_ym" placeholder="YYYY-MM" pattern="\d{4}-\d{2}" defaultValue={currentYm()} className="bg-slate-950/40 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
                 <button className="badge py-2 px-4 cursor-pointer" type="submit">Fechar mês</button>
               </form>
-            </div>
-          </div>
+            </CheckpointPanel>
+          </CommandGrid>
         </section>
 
         <section className="card">

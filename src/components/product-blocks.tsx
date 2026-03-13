@@ -33,3 +33,7 @@ export function CheckpointPanel({
     </div>
   );
 }
+
+export function CommandGrid({ children }: { children: ReactNode }) {
+  return <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">{children}</div>;
+}

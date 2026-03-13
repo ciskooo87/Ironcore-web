@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState, ProductHero, StatusPill } from "@/components/product-ui";
+import { CheckpointPanel, CommandGrid, CommandPanel } from "@/components/product-blocks";
 import { requireUser } from "@/lib/guards";
 import { getProjectByCode, isProjectOnboardingComplete } from "@/lib/projects";
 import { canAccessProject } from "@/lib/permissions";
@@ -90,23 +91,17 @@ export default async function MovimentoDiarioPage({
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] mb-4">
         <section className="card">
           <div className="section-head"><h2 className="title">Comando do dia</h2><span className="kpi-chip">prioridade executiva</span></div>
-          <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Próxima ação</div>
-              <div className="mt-2 text-lg font-semibold text-white">{mainAction}</div>
-              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">Risco principal</div>
-              <div className="mt-2 text-sm text-slate-300">{mainRisk}</div>
-            </div>
-            <div className="rounded-[24px] border border-slate-800 bg-slate-950/30 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leitura do motor</div>
-              <div className="mt-2 text-base font-semibold text-white">{recommendation}</div>
+          <CommandGrid>
+            <CommandPanel action={<>{mainAction}</>} risk={<>{mainRisk}</>} />
+            <CheckpointPanel title="Leitura do motor">
+              <div className="text-base font-semibold text-white">{recommendation}</div>
               <div className="mt-4 space-y-2 text-xs text-slate-400">
                 <div>Última rotina: <span className="text-slate-200">{formatWhen(latest?.created_at)}</span></div>
                 <div>Pend. aprovação: <span className="text-slate-200">{String(op.opPendingApproval ?? "-")}</span></div>
                 <div>Validações registradas: <span className="text-slate-200">{validations.length}</span></div>
               </div>
-            </div>
-          </div>
+            </CheckpointPanel>
+          </CommandGrid>
         </section>
 
         <section className="card">
