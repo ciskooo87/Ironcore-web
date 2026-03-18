@@ -9,8 +9,12 @@ TIMEOUT_SECONDS=45
 cd "$APP_DIR"
 
 echo "[deploy] git rev: $(git rev-parse --short HEAD)"
+echo "[deploy] running preflight..."
+npm run preflight
+
 echo "[deploy] building production bundle..."
 npm run build
+[[ -d .next ]] || { echo "[deploy] missing .next after build" >&2; exit 1; }
 
 echo "[deploy] reloading systemd units..."
 sudo systemctl daemon-reload

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
 const AUTH_COOKIE = "ironcore_session";
 const CSRF_COOKIE = "ironcore_csrf";
 
@@ -7,7 +8,7 @@ function makeCsrf() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const withCsrf = (res: NextResponse) => {

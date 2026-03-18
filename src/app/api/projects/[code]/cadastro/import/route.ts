@@ -27,6 +27,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ code: string }
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=file`));
+  const lowerName = file.name.toLowerCase();
+  if (!(lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls") || lowerName.endsWith(".xlsm"))) {
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=file_type`));
+  }
+  if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
+    return NextResponse.redirect(publicUrl(req, `/projetos/${code}/cadastro/?error=file_size`));
+  }
 
   const wb = XLSX.read(Buffer.from(await file.arrayBuffer()), { type: "buffer" });
   const suppliersSheet = wb.Sheets[wb.SheetNames.find((s) => s.toLowerCase().includes("fornecedor")) || ""];

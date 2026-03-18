@@ -1,5 +1,8 @@
 import * as XLSX from "xlsx";
 
+const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_UPLOAD_EXTENSIONS = [".csv", ".pdf", ".xlsx", ".xls", ".xlsm"] as const;
+
 type ParsedUpload = {
   faturamento: number;
   contas_receber: number;
