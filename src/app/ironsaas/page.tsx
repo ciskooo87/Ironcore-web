@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ensureCsrfCookie } from "@/lib/csrf";
 
 const painPoints = [
   "controles espalhados",
@@ -17,27 +18,17 @@ const features = [
   "organiza histórico e rastreabilidade",
 ];
 
+const proofItems = [
+  "Rotinas financeiras antes dispersas passaram a operar em fluxo único, com validação e histórico centralizado.",
+  "Processos comerciais deixaram de depender de versões paralelas e ganharam leitura única de metas e execução.",
+  "Consultorias conseguiram padronizar entrega e operar com mais escala sem aumentar retrabalho manual.",
+];
+
 const steps = [
-  {
-    step: "01",
-    title: "Entendimento do processo",
-    description: "Mapeamento do fluxo atual (planilha, rotina, regra).",
-  },
-  {
-    step: "02",
-    title: "Estruturação lógica",
-    description: "Transformação em regras, validações e estrutura de sistema.",
-  },
-  {
-    step: "03",
-    title: "Construção do SaaS",
-    description: "Aplicação online pronta para uso.",
-  },
-  {
-    step: "04",
-    title: "Operação contínua",
-    description: "Evolução, ajustes e suporte.",
-  },
+  { step: "01", title: "Entendimento do processo", description: "Mapeamento do fluxo atual, da planilha, da rotina e das regras que hoje travam a execução." },
+  { step: "02", title: "Estruturação lógica", description: "Transformação em regras, validações, estrutura de dados e lógica operacional de sistema." },
+  { step: "03", title: "Construção do SaaS", description: "Aplicação online pronta para uso, com acesso centralizado, histórico e controle real da operação." },
+  { step: "04", title: "Operação contínua", description: "Evolução, ajustes e suporte para o sistema crescer junto com a complexidade do processo." },
 ];
 
 const useCases = [
@@ -54,28 +45,27 @@ const audiences = [
 ];
 
 const differentiators = [
-  { title: "Sob medida sem ser caro", description: "Você não entra em um sistema. O sistema é construído para você." },
-  { title: "Rápido de implementar", description: "Sem projetos longos ou burocráticos." },
-  { title: "Foco operacional", description: "Resolve o dia a dia — não só a análise." },
-  { title: "Escalável", description: "Cresce junto com sua operação." },
+  { title: "Sob medida sem ser caro", description: "Você não entra em um sistema. O sistema é construído para o seu processo." },
+  { title: "Rápido de implementar", description: "Sem projetos longos, sem ERP pesado e sem meses de espera para capturar valor." },
+  { title: "Foco operacional", description: "Resolve o dia a dia da execução — não só a camada de análise." },
+  { title: "Escalável", description: "Começa em um processo e cresce junto com a operação." },
 ];
 
 function SectionTag({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
-    <div
-      className={[
-        "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
-        dark
-          ? "border border-white/12 bg-white/8 text-white/72"
-          : "border border-[rgba(16,24,40,0.08)] bg-white text-[#667085] shadow-[0_8px_24px_rgba(15,23,42,0.04)]",
-      ].join(" ")}
-    >
+    <div className={[
+      "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
+      dark ? "border border-white/12 bg-white/8 text-white/72" : "border border-[rgba(16,24,40,0.08)] bg-white text-[#667085] shadow-[0_8px_24px_rgba(15,23,42,0.04)]",
+    ].join(" ")}>
       {children}
     </div>
   );
 }
 
-export default function IronSaaSPage() {
+export default async function IronSaaSPage({ searchParams }: { searchParams: Promise<{ lead?: string }> }) {
+  const query = await searchParams;
+  const csrf = await ensureCsrfCookie();
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#F7F8FA] text-[#0F172A]">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[680px] bg-[radial-gradient(circle_at_top_left,rgba(15,23,42,0.08),transparent_38%),radial-gradient(circle_at_top_right,rgba(148,163,184,0.18),transparent_28%),linear-gradient(180deg,#FFFFFF_0%,#F7F8FA_58%,#F7F8FA_100%)]" />
@@ -88,26 +78,26 @@ export default function IronSaaSPage() {
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold tracking-[0.08em] text-[#111827]">IRONSAAS</div>
-              <div className="truncate text-xs text-[#667085]">Transformador de operação em sistema escalável</div>
+              <div className="truncate text-xs text-[#667085]">Powered by IronCore · software para operação real</div>
             </div>
           </div>
 
           <div className="hidden items-center gap-7 text-sm text-[#475467] lg:flex">
             <a href="#como-funciona" className="transition hover:text-[#111827]">Como funciona</a>
             <a href="#casos" className="transition hover:text-[#111827]">Casos de uso</a>
-            <a href="#para-quem" className="transition hover:text-[#111827]">Para quem é</a>
+            <a href="#demo" className="transition hover:text-[#111827]">Demonstração</a>
           </div>
 
-          <Link href="/login" className="inline-flex flex-none items-center justify-center rounded-xl bg-[#0F172A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#111827] md:px-5">
+          <a href="#demo" className="inline-flex flex-none items-center justify-center rounded-xl bg-[#0F172A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#111827] md:px-5">
             Solicitar demonstração
-          </Link>
+          </a>
         </div>
       </nav>
 
       <section className="px-4 pb-14 pt-8 md:px-8 md:pb-24 md:pt-12 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div>
-            <SectionTag>Operação em sistema, não em planilha</SectionTag>
+            <SectionTag>IronCore → IronSaaS → ironcore.lat</SectionTag>
             <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.05em] text-[#101828] sm:text-5xl md:text-6xl lg:text-7xl">
               Saia da planilha. Leve sua operação para o nível SaaS.
             </h1>
@@ -119,9 +109,9 @@ export default function IronSaaSPage() {
               <a href="#como-funciona" className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-7 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#111827]">
                 Ver como funciona
               </a>
-              <Link href="/login" className="inline-flex items-center justify-center rounded-xl border border-black/10 bg-white px-7 py-4 text-sm font-semibold text-[#344054] transition hover:border-black/15 hover:text-[#111827]">
+              <a href="#demo" className="inline-flex items-center justify-center rounded-xl border border-black/10 bg-white px-7 py-4 text-sm font-semibold text-[#344054] transition hover:border-black/15 hover:text-[#111827]">
                 Solicitar demonstração
-              </Link>
+              </a>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -210,9 +200,7 @@ export default function IronSaaSPage() {
               ))}
               <div className="rounded-2xl border border-black/5 bg-white p-6 md:col-span-2 xl:col-span-3">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {["você perde tempo", "perde controle", "perde escala"].map((item) => (
-                    <div key={item} className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-sm font-medium text-[#101828]">👉 {item}</div>
-                  ))}
+                  {['você perde tempo','perde controle','perde escala'].map((item)=> <div key={item} className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-sm font-medium text-[#101828]">👉 {item}</div>)}
                 </div>
               </div>
             </div>
@@ -230,15 +218,25 @@ export default function IronSaaSPage() {
               <p className="mt-4 max-w-xl text-lg leading-8 text-[#475467]">Você traz o processo. Nós transformamos em sistema.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {features.map((item) => (
-                <div key={item} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-                  <div className="text-sm font-semibold uppercase tracking-[0.14em] text-[#98A2B3]">IronSaaS faz</div>
-                  <p className="mt-4 text-base font-medium leading-7 text-[#101828]">✔ {item}</p>
-                </div>
-              ))}
+              {features.map((item)=><div key={item} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]"><div className="text-sm font-semibold uppercase tracking-[0.14em] text-[#98A2B3]">IronSaaS faz</div><p className="mt-4 text-base font-medium leading-7 text-[#101828]">✔ {item}</p></div>)}
             </div>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">{["menos operação manual", "mais controle", "mais velocidade"].map((item) => <div key={item} className="rounded-2xl bg-[#F8FAFC] p-5 text-base font-medium text-[#101828]">👉 {item}</div>)}</div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">{['menos operação manual','mais controle','mais velocidade'].map((item)=><div key={item} className="rounded-2xl bg-[#F8FAFC] p-5 text-base font-medium text-[#101828]">👉 {item}</div>)}</div>
+        </div>
+      </section>
+
+      <section className="border-y border-black/5 bg-white px-4 py-16 md:px-8 md:py-24 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <SectionTag>Prova visual</SectionTag>
+          <div className="mt-6 grid gap-4 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <div>
+              <h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">O ganho aparece quando a operação deixa de depender de versão, pessoa e improviso.</h2>
+              <p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">Ainda sem expor clientes, já ancoramos a prova na transformação operacional que o IronSaaS gera no dia a dia.</p>
+            </div>
+            <div className="grid gap-4">
+              {proofItems.map((item, index)=> <div key={item} className="rounded-2xl border border-black/5 bg-[#F8FAFC] p-6"><div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#98A2B3]">Caso de uso {index+1}</div><p className="mt-3 text-base leading-7 text-[#101828]">{item}</p></div>)}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -249,14 +247,14 @@ export default function IronSaaSPage() {
             <h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Um processo simples para transformar rotina em sistema.</h2>
             <p className="text-lg leading-8 text-[#475467]">O objetivo é sair da planilha e colocar a operação num ambiente online, controlado e escalável.</p>
           </div>
-          <div className="mt-12 grid gap-6 lg:grid-cols-4">{steps.map((item) => <div key={item.step} className="rounded-[24px] border border-black/5 bg-white p-7 shadow-[0_18px_50px_rgba(15,23,42,0.04)]"><div className="text-sm font-semibold tracking-[0.18em] text-[#98A2B3]">{item.step}</div><h3 className="mt-6 text-2xl font-semibold tracking-[-0.03em] text-[#101828]">{item.title}</h3><p className="mt-4 text-base leading-7 text-[#475467]">{item.description}</p></div>)}</div>
+          <div className="mt-12 grid gap-6 lg:grid-cols-4">{steps.map((item)=><div key={item.step} className="rounded-[24px] border border-black/5 bg-white p-7 shadow-[0_18px_50px_rgba(15,23,42,0.04)]"><div className="text-sm font-semibold tracking-[0.18em] text-[#98A2B3]">{item.step}</div><h3 className="mt-6 text-2xl font-semibold tracking-[-0.03em] text-[#101828]">{item.title}</h3><p className="mt-4 text-base leading-7 text-[#475467]">{item.description}</p></div>)}</div>
         </div>
       </section>
 
       <section id="casos" className="px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <SectionTag>Casos de uso</SectionTag>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{useCases.map((item) => <div key={item.title} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)]"><p className="text-base font-semibold leading-7 text-[#101828]">{item.title}</p><ul className="mt-4 space-y-2 text-sm leading-7 text-[#667085]">{item.items.map((sub) => <li key={sub}>• {sub}</li>)}</ul></div>)}</div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{useCases.map((item)=><div key={item.title} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)]"><p className="text-base font-semibold leading-7 text-[#101828]">{item.title}</p><ul className="mt-4 space-y-2 text-sm leading-7 text-[#667085]">{item.items.map((sub)=><li key={sub}>• {sub}</li>)}</ul></div>)}</div>
         </div>
       </section>
 
@@ -264,11 +262,8 @@ export default function IronSaaSPage() {
         <div className="mx-auto max-w-7xl">
           <SectionTag>Impacto</SectionTag>
           <div className="mt-6 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div>
-              <h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Menos planilha. Mais resultado.</h2>
-              <p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">Você não precisa trabalhar mais. Precisa de um sistema melhor.</p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">{["reduzir tempo operacional", "eliminar erros manuais", "ganhar visibilidade real", "escalar processos sem aumentar equipe"].map((item) => <div key={item} className="rounded-2xl bg-[#F8FAFC] p-6"><p className="text-base font-medium leading-7 text-[#101828]">✔ {item}</p></div>)}</div>
+            <div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Menos planilha. Mais resultado.</h2><p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">Você não precisa trabalhar mais. Precisa de um sistema melhor.</p></div>
+            <div className="grid gap-4 sm:grid-cols-2">{['reduzir tempo operacional','eliminar erros manuais','ganhar visibilidade real','escalar processos sem aumentar equipe'].map((item)=><div key={item} className="rounded-2xl bg-[#F8FAFC] p-6"><p className="text-base font-medium leading-7 text-[#101828]">✔ {item}</p></div>)}</div>
           </div>
         </div>
       </section>
@@ -276,20 +271,14 @@ export default function IronSaaSPage() {
       <section id="para-quem" className="px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <SectionTag>Para quem é</SectionTag>
-          <div className="mt-6 grid gap-10 lg:grid-cols-[0.88fr_1.12fr]">
-            <div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Para quem sabe o processo, mas não quer mais operar no improviso.</h2></div>
-            <div className="grid gap-4">{audiences.map((item) => <div key={item} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)]"><p className="text-base font-medium leading-7 text-[#101828]">{item}</p></div>)}</div>
-          </div>
+          <div className="mt-6 grid gap-10 lg:grid-cols-[0.88fr_1.12fr]"><div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Para quem sabe o processo, mas não quer mais operar no improviso.</h2></div><div className="grid gap-4">{audiences.map((item)=><div key={item} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)]"><p className="text-base font-medium leading-7 text-[#101828]">{item}</p></div>)}</div></div>
         </div>
       </section>
 
       <section className="border-y border-black/5 bg-white px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <SectionTag>Diferencial</SectionTag>
-          <div className="mt-6 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Não é software genérico. É software do seu processo.</h2></div>
-            <div className="grid gap-4 sm:grid-cols-2">{differentiators.map((item) => <div key={item.title} className="rounded-2xl bg-[#F8FAFC] p-6"><p className="text-base font-semibold leading-7 text-[#101828]">{item.title}</p><p className="mt-3 text-sm leading-7 text-[#667085]">{item.description}</p></div>)}</div>
-          </div>
+          <div className="mt-6 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start"><div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Não é software genérico. É software do seu processo.</h2></div><div className="grid gap-4 sm:grid-cols-2">{differentiators.map((item)=><div key={item.title} className="rounded-2xl bg-[#F8FAFC] p-6"><p className="text-base font-semibold leading-7 text-[#101828]">{item.title}</p><p className="mt-3 text-sm leading-7 text-[#667085]">{item.description}</p></div>)}</div></div>
         </div>
       </section>
 
@@ -297,8 +286,8 @@ export default function IronSaaSPage() {
         <div className="mx-auto max-w-7xl rounded-[32px] border border-black/5 bg-[#0F172A] px-6 py-8 text-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] md:px-10 md:py-12">
           <SectionTag dark>Conexão com IronCore</SectionTag>
           <div className="mt-6 grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-            <div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-white md:text-5xl">Construído por quem entende operação de verdade</h2><p className="mt-6 max-w-lg text-lg leading-8 text-white/72">O IronSaaS nasce dentro da IronCore. Ou seja: não é só tecnologia, é gestão aplicada e experiência real de operação. Software que resolve problema de verdade.</p></div>
-            <div className="grid gap-4">{["não é só tecnologia", "é gestão aplicada", "é experiência real de operação"].map((item) => <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"><p className="text-base font-medium leading-7 text-white">👉 {item}</p></div>)}</div>
+            <div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-white md:text-5xl">Construído por quem entende operação de verdade</h2><p className="mt-6 max-w-lg text-lg leading-8 text-white/72">O IronSaaS nasce dentro da IronCore. Ou seja: não é só tecnologia. É gestão aplicada. É experiência real de operação. E vive dentro do ecossistema principal da IronCore em ironcore.lat.</p></div>
+            <div className="grid gap-4">{['não é só tecnologia','é gestão aplicada','é experiência real de operação'].map((item)=><div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"><p className="text-base font-medium leading-7 text-white">👉 {item}</p></div>)}</div>
           </div>
         </div>
       </section>
@@ -306,19 +295,40 @@ export default function IronSaaSPage() {
       <section className="border-y border-black/5 bg-[#FCFCFD] px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <SectionTag>Objeção</SectionTag>
-          <div className="mt-6 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Isso substitui meu ERP?</h2></div>
-            <div className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]"><p className="text-lg leading-8 text-[#475467]">Não. O IronSaaS complementa o que você já tem. Ele resolve exatamente aquilo que o ERP não resolve: a operação real, o controle fino e o fluxo do dia a dia.</p></div>
-          </div>
+          <div className="mt-6 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start"><div><h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Isso substitui meu ERP?</h2></div><div className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]"><p className="text-lg leading-8 text-[#475467]">Não. O IronSaaS complementa o que você já tem. Ele resolve exatamente aquilo que o ERP não resolve: a operação real, o controle fino e o fluxo do dia a dia.</p></div></div>
         </div>
       </section>
 
-      <section className="px-4 py-16 md:px-8 md:py-24 lg:px-10">
-        <div className="mx-auto max-w-5xl rounded-[32px] border border-black/5 bg-white px-6 py-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:px-10 md:py-14">
-          <SectionTag>CTA final</SectionTag>
-          <h2 className="mx-auto mt-6 max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Se sua operação ainda roda em Excel, você já sabe o problema.</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#475467] md:text-lg">Comece com um processo. Escale o resto depois.</p>
-          <div className="mt-10"><Link href="/login" className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-8 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#111827]">Transformar minha operação em sistema</Link></div>
+      <section id="demo" className="px-4 py-16 md:px-8 md:py-24 lg:px-10">
+        <div className="mx-auto max-w-7xl grid gap-8 lg:grid-cols-[0.88fr_1.12fr]">
+          <div>
+            <SectionTag>Solicitar demonstração</SectionTag>
+            <h2 className="mt-6 text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Veja um processo seu funcionando como sistema.</h2>
+            <p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">Preencha o formulário e a IronCore agenda uma conversa para entender o processo, avaliar aderência e mostrar como a transformação funciona na prática.</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-[#F8FAFC] p-5 text-sm leading-7 text-[#101828]">✔ conversa objetiva sobre o processo</div>
+              <div className="rounded-2xl bg-[#F8FAFC] p-5 text-sm leading-7 text-[#101828]">✔ avaliação rápida de aderência</div>
+              <div className="rounded-2xl bg-[#F8FAFC] p-5 text-sm leading-7 text-[#101828]">✔ sem compromisso técnico prévio</div>
+              <div className="rounded-2xl bg-[#F8FAFC] p-5 text-sm leading-7 text-[#101828]">✔ próximo passo claro para demo</div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
+            {query.lead === 'ok' ? <div className="rounded-2xl border border-[#ABEFC6] bg-[#ECFDF3] px-4 py-3 text-sm text-[#027A48]">Demonstração solicitada com sucesso.</div> : null}
+            {query.lead && query.lead !== 'ok' ? <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] px-4 py-3 text-sm text-[#B42318]">Não foi possível enviar agora. Tente novamente.</div> : null}
+            <form action="/api/lead" method="post" className="mt-4 grid gap-3 text-sm">
+              <input type="hidden" name="csrf_token" value={csrf} />
+              <input type="hidden" name="segment" value="ironsaas" />
+              <div className="grid gap-3 md:grid-cols-2">
+                <input name="name" required placeholder="Seu nome" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3 text-[#101828] placeholder:text-[#98A2B3]" />
+                <input name="email" type="email" required placeholder="Seu email" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3 text-[#101828] placeholder:text-[#98A2B3]" />
+                <input name="company" placeholder="Empresa" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3 text-[#101828] placeholder:text-[#98A2B3]" />
+                <input name="phone" placeholder="WhatsApp" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3 text-[#101828] placeholder:text-[#98A2B3]" />
+              </div>
+              <textarea name="message" placeholder="Qual processo você quer transformar em sistema?" className="min-h-28 rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3 text-[#101828] placeholder:text-[#98A2B3]" />
+              <button type="submit" className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-7 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#111827]">Solicitar demonstração</button>
+            </form>
+          </div>
         </div>
       </section>
 
