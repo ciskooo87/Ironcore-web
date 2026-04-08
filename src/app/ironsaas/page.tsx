@@ -249,19 +249,53 @@ export default async function IronSaaSPage({ searchParams }: { searchParams: Pro
 
       <section id="como-funciona" className="border-y border-black/5 bg-[#FCFCFD] px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
-          <SectionTag>Método</SectionTag>
-          <div className="mt-6 flex max-w-3xl flex-col gap-4">
-            <h2 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Um processo simples para transformar rotina em sistema.</h2>
-            <p className="text-lg leading-8 text-[#475467]">O objetivo é sair da planilha e colocar a operação num ambiente online, controlado e escalável.</p>
+          <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+            <div>
+              <SectionTag>Método</SectionTag>
+              <h2 className="mt-6 max-w-2xl text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Um processo claro para transformar rotina em sistema.</h2>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-[#475467]">A lógica é simples: entender o processo, traduzir em regra, construir a aplicação e evoluir com a operação. Sem projeto pesado, sem camada desnecessária e sem depender de Excel para manter o negócio de pé.</p>
+              <div className="mt-8 rounded-[24px] border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Leitura executiva</div>
+                <p className="mt-3 text-base leading-8 text-[#344054]">Você não compra horas de desenvolvimento. Você encurta a distância entre o processo atual e um sistema que organiza, valida e escala a execução.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {steps.map((item) => (
+                <div key={item.step} className="rounded-[26px] border border-black/5 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] md:p-7">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Etapa {item.step}</div>
+                    <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(148,163,184,0.35),rgba(148,163,184,0))]" />
+                  </div>
+                  <h3 className="mt-5 text-[1.65rem] font-semibold leading-tight tracking-[-0.03em] text-[#101828]">{item.title}</h3>
+                  <p className="mt-4 text-base leading-7 text-[#475467]">{item.description}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-12 grid gap-6 lg:grid-cols-4">{steps.map((item)=><div key={item.step} className="rounded-[24px] border border-black/5 bg-white p-7 shadow-[0_18px_50px_rgba(15,23,42,0.04)]"><div className="text-sm font-semibold tracking-[0.18em] text-[#98A2B3]">{item.step}</div><h3 className="mt-6 text-2xl font-semibold tracking-[-0.03em] text-[#101828]">{item.title}</h3><p className="mt-4 text-base leading-7 text-[#475467]">{item.description}</p></div>)}</div>
         </div>
       </section>
 
       <section id="casos" className="px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
-          <SectionTag>Onde aplica</SectionTag>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{useCases.map((item)=><div key={item.title} className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)]"><p className="text-base font-semibold leading-7 text-[#101828]">{item.title}</p><ul className="mt-4 space-y-2 text-sm leading-7 text-[#667085]">{item.items.map((sub)=><li key={sub}>{sub}</li>)}</ul></div>)}</div>
+          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
+            <div>
+              <SectionTag>Onde aplica</SectionTag>
+              <h2 className="mt-6 max-w-xl text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Processos diferentes. Mesma lógica de ganho.</h2>
+              <p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">O IronSaaS faz sentido quando existe rotina crítica, dependência de planilha e necessidade de controle mais fino. A aplicação muda. A lógica de ganho permanece.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+              {useCases.map((item) => (
+                <div key={item.title} className="rounded-[26px] border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Aplicação</div>
+                  <p className="mt-3 text-xl font-semibold leading-7 text-[#101828]">{item.title}</p>
+                  <ul className="mt-5 space-y-3 text-sm leading-7 text-[#475467]">
+                    {item.items.map((sub) => <li key={sub}>{sub}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
