@@ -1,58 +1,19 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-const AUTH_COOKIE = "ironcore_session";
-const CSRF_COOKIE = "ironcore_csrf";
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-function makeCsrf() {
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
-}
+  const publicPrefixes = ['/', '/ironsaas', '/diag', '/api', '/_next', '/favicon.ico'];
+  const isPublic = publicPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
-export function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  const withCsrf = (res: NextResponse) => {
-    if (!req.cookies.get(CSRF_COOKIE)?.value) {
-      res.cookies.set(CSRF_COOKIE, makeCsrf(), {
-        httpOnly: false,
-        sameSite: "lax",
-        secure: true,
-        path: "/",
-        maxAge: 60 * 60 * 12,
-      });
-    }
-    return res;
-  };
-
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/lead") ||
-    pathname.startsWith("/brand") ||
-    pathname === "/" ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/lp") ||
-    pathname.startsWith("/ironsaas") ||
-    pathname.startsWith("/cashflow") ||
-    pathname.startsWith("/diagnotico") ||
-    pathname.startsWith("/dre") ||
-    pathname.startsWith("/treino") ||
-    pathname.startsWith("/Leo") ||
-    pathname === "/favicon.ico"
-  ) {
-    return withCsrf(NextResponse.next());
+  if (isPublic) {
+    return NextResponse.next();
   }
 
-  const session = req.cookies.get(AUTH_COOKIE)?.value;
-  if (!session) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    return withCsrf(NextResponse.redirect(url));
-  }
-
-  return withCsrf(NextResponse.next());
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/:path*"],
+  matcher: ['/((?!.*\\.).*)'],
 };
