@@ -186,21 +186,28 @@ export default async function IronSaaSPage({ searchParams }: { searchParams: Pro
       <section className="border-y border-black/5 bg-white px-4 py-16 md:px-8 md:py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <SectionTag>Contexto</SectionTag>
-          <div className="mt-6 grid gap-10 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
+          <div className="mt-6 grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
             <div>
               <h2 className="max-w-xl text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#101828] md:text-5xl">Sua operação roda em planilha. E isso está te travando.</h2>
-              <p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">Excel resolve no começo. Depois, vira gargalo.</p>
+              <p className="mt-6 max-w-lg text-lg leading-8 text-[#475467]">Quando o processo cresce, a planilha deixa de organizar e passa a limitar. O problema não é só produtividade — é perda de controle, dependência operacional e dificuldade de escalar com segurança.</p>
+              <div className="mt-8 rounded-[24px] border border-black/5 bg-[#0F172A] p-6 text-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Leitura prática</div>
+                <p className="mt-3 text-base leading-8 text-white/82">Excel resolve no começo. Depois, vira gargalo operacional.</p>
+              </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {painPoints.map((item) => (
-                <div key={item} className="rounded-2xl border border-black/5 bg-[#F8FAFC] p-6">
-                  <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-white text-base font-semibold text-[#0F172A] shadow-[0_8px_20px_rgba(15,23,42,0.06)]">•</div>
-                  <p className="mt-5 text-base font-semibold leading-7 text-[#101828]">{item}</p>
-                </div>
-              ))}
-              <div className="rounded-2xl border border-black/5 bg-white p-6 md:col-span-2 xl:col-span-3">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {['você perde tempo','perde controle','perde escala'].map((item)=> <div key={item} className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-sm font-medium text-[#101828]">{item}</div>)}
+            <div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {painPoints.map((item, index) => (
+                  <div key={item} className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Ponto crítico {String(index + 1).padStart(2, '0')}</div>
+                    <p className="mt-4 text-lg font-semibold leading-7 text-[#101828]">{item}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-[24px] border border-black/5 bg-[#F8FAFC] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Consequência</div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  {['você perde tempo','perde controle','perde escala'].map((item)=> <div key={item} className="rounded-xl border border-black/5 bg-white px-4 py-3 text-sm font-medium text-[#101828]">{item}</div>)}
                 </div>
               </div>
             </div>
