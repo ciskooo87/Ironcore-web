@@ -28,9 +28,11 @@ export function proxy(req: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/lead") ||
+    pathname.startsWith("/brand") ||
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/lp") ||
+    pathname.startsWith("/ironsaas") ||
     pathname.startsWith("/diagnotico") ||
     pathname.startsWith("/dre") ||
     pathname.startsWith("/treino") ||
