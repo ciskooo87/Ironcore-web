@@ -33,6 +33,7 @@ export function proxy(req: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/lp") ||
     pathname.startsWith("/ironsaas") ||
+    pathname.startsWith("/cashflow") ||
     pathname.startsWith("/diagnotico") ||
     pathname.startsWith("/dre") ||
     pathname.startsWith("/treino") ||
