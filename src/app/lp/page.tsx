@@ -1,177 +1,292 @@
 import Link from "next/link";
 
+const contextBullets = [
+  "Sua empresa fatura, mas não converte resultado em caixa",
+  "Sua margem oscila sem explicação objetiva",
+  "Seu financeiro fecha números, mas não explica desvios",
+  "Seu time opera, mas sem padrão e sem previsibilidade",
+  "Suas decisões são reativas, não estruturadas",
+] as const;
+
 const products = [
   {
-    eyebrow: "Core platform",
-    title: "Ironcore",
+    title: "IronCore Diag",
+    subtitle: "Descubra exatamente onde sua empresa está perdendo dinheiro",
     description:
-      "Camada principal da operação: centraliza a navegação, organiza os fluxos e conecta os produtos do ecossistema em uma experiência única.",
-    highlights: ["Portal central do ecossistema", "Acesso unificado aos módulos", "Base para operação e expansão"],
-    primaryHref: "/login",
-    primaryLabel: "Acessar Ironcore",
-    secondaryHref: "#acessos",
-    secondaryLabel: "Ver acessos",
-  },
-  {
-    eyebrow: "Diagnóstico financeiro",
-    title: "Ironcore Diag",
-    description:
-      "Fluxo guiado para transformar bases históricas, contexto do cliente e leitura financeira em um diagnóstico executivo pronto para validação e entrega.",
-    highlights: ["Upload e normatização", "Workflow com checkpoints", "Entrega executiva com método"],
-    primaryHref: "/diagnotico",
-    primaryLabel: "Conhecer Diag",
-    secondaryHref: "/diag/",
-    secondaryLabel: "Abrir plataforma",
-  },
-  {
-    eyebrow: "Financial ops SaaS",
-    title: "IronSaaS",
-    description:
-      "Produto operacional para caixa, lançamentos, DFC, recorrências e projeção, com leitura executiva inspirada no que já foi consolidado no Cashflow.",
-    highlights: ["Leitura de caixa", "Operação diária", "Projeção e DFC"],
-    primaryHref: "/ironsaas",
-    primaryLabel: "Conhecer IronSaaS",
-    secondaryHref: "/cashflow",
-    secondaryLabel: "Abrir plataforma",
-  },
-] as const;
-
-const accessTabs = [
-  {
-    label: "Ironcore",
-    href: "/login",
-    description: "Entrada principal do ecossistema e camada central de navegação.",
-  },
-  {
-    label: "Ironcore Diag",
+      "O IronCore Diag analisa seus dados financeiros e operacionais e entrega uma leitura direta sobre risco, perda e ineficiência. Não é relatório. É diagnóstico acionável.",
+    deliveries: [
+      "Mapeamento de perdas financeiras ocultas",
+      "Identificação de gargalos operacionais críticos",
+      "Análise de variações de margem e caixa",
+      "Priorização de riscos por impacto financeiro",
+      "Leitura executiva pronta para decisão",
+    ],
+    changes: [
+      "Você sai de percepção para evidência",
+      "Você entende o problema antes que ele escale",
+      "Você passa a agir com base em impacto real",
+    ],
+    when: "Quando existe dúvida sobre desempenho, queda de resultado ou falta de clareza operacional",
     href: "/diag/",
-    description: "Acesso direto ao módulo de diagnóstico financeiro.",
+    cta: "Gerar diagnóstico",
   },
   {
-    label: "IronSaaS",
+    title: "IronCore",
+    subtitle: "Transforme diagnóstico em decisão estruturada",
+    description:
+      "O IronCore organiza dados, estrutura análises e direciona decisões. Consolida informações críticas, interpreta cenários e define exatamente o que deve ser feito, em que ordem e com qual impacto.",
+    deliveries: [
+      "Consolidação de dados financeiros e operacionais",
+      "Análise estruturada de risco e impacto",
+      "Priorização estratégica baseada em fatos",
+      "Plano de ação completo (5W2H)",
+      "Visão executiva para diretoria e comitê",
+    ],
+    changes: [
+      "Você elimina decisões baseadas em feeling",
+      "Você ganha clareza sobre prioridade real",
+      "Você reduz erro estratégico",
+    ],
+    when: "Quando você precisa tomar decisões com segurança, velocidade e clareza",
+    href: "/login",
+    cta: "Ver plataforma",
+  },
+  {
+    title: "IronSaaS",
+    subtitle: "Execute com controle. Escale sem perder eficiência.",
+    description:
+      "O IronSaaS transforma processos críticos em sistemas. Elimina planilhas, automatiza rotinas e cria um ambiente operacional estruturado, rastreável e escalável.",
+    deliveries: [
+      "Automação de processos financeiros e operacionais",
+      "Padronização de rotinas e fluxos",
+      "Centralização de dados e controles",
+      "Monitoramento em tempo real",
+      "Base tecnológica para crescimento sustentável",
+    ],
+    changes: [
+      "Você reduz erro operacional",
+      "Você elimina retrabalho",
+      "Você ganha escala com controle",
+    ],
+    when: "Quando a operação depende de planilhas, pessoas-chave ou controles manuais",
     href: "/cashflow",
-    description: "Acesso ao produto operacional de caixa e gestão financeira.",
+    cta: "Conhecer solução",
   },
 ] as const;
 
-export default function LpChooserPage() {
+const comparison = [
+  {
+    title: "IronCore Diag",
+    focus: "Diagnóstico",
+    resolve: "Falta de clareza",
+    delivery: "O que está errado e onde está o impacto",
+  },
+  {
+    title: "IronCore",
+    focus: "Decisão",
+    resolve: "Falta de direcionamento",
+    delivery: "O que fazer, em que ordem e por quê",
+  },
+  {
+    title: "IronSaaS",
+    focus: "Execução",
+    resolve: "Falta de controle",
+    delivery: "Como executar com consistência e escala",
+  },
+] as const;
+
+const results = [
+  "Redução de perdas financeiras não identificadas",
+  "Aumento de previsibilidade de caixa",
+  "Melhoria consistente de margem",
+  "Decisões mais rápidas e assertivas",
+  "Operação mais eficiente e controlada",
+] as const;
+
+const demoItems = [
+  "Riscos priorizados por impacto financeiro",
+  "Análise clara de desvios e ineficiências",
+  "Plano de ação estruturado e executável",
+  "Controle operacional centralizado",
+] as const;
+
+export default function LpPage() {
   return (
     <main className="min-h-screen bg-[#F7F8FA] text-[#101828]">
       <section className="mx-auto max-w-7xl px-4 py-10 md:px-8 lg:px-10">
-        <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-12">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Ironcore ecosystem</div>
-          <div className="mt-4 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div>
-              <h1 className="max-w-4xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-[#101828] md:text-6xl">
-                Um ecossistema limpo para operar, diagnosticar e escalar finanças com a cara da Ironcore.
-              </h1>
-              <p className="mt-6 max-w-3xl text-base leading-8 text-[#475467] md:text-lg">
-                A nova LP organiza o portfólio em três frentes complementares: <strong>Ironcore</strong> como camada central,
-                <strong> Ironcore Diag</strong> para diagnóstico financeiro estruturado e <strong>IronSaaS</strong> para operação contínua de caixa.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="#acessos"
-                  className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(17,24,39,0.18)]"
-                >
-                  Acessar plataformas
-                </Link>
-                <Link
-                  href="/ironsaas"
-                  className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]"
-                >
-                  Ver visão do produto
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-3">
-              <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-5">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Estrutura</div>
-                <div className="mt-3 text-lg font-semibold text-[#101828]">Clareza comercial + acesso operacional</div>
-                <p className="mt-2 text-sm leading-7 text-[#475467]">
-                  A página apresenta o portfólio sem ruído e já conduz o usuário para a plataforma certa.
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-5">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Referência visual</div>
-                <div className="mt-3 text-lg font-semibold text-[#101828]">Layout clean, inspirado no Cashflow</div>
-                <p className="mt-2 text-sm leading-7 text-[#475467]">
-                  Mais branco, mais respiro, cards claros e CTAs objetivos para reforçar posicionamento premium.
-                </p>
-              </div>
-            </div>
+        <section className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-12">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">IronCore ecosystem</div>
+          <h1 className="mt-4 max-w-5xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-[#101828] md:text-6xl">
+            Diagnostique. Decida. Execute. Sem achismo.
+          </h1>
+          <p className="mt-6 max-w-3xl text-base leading-8 text-[#475467] md:text-lg">
+            Três soluções independentes para resolver problemas reais de caixa, margem e eficiência operacional.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="#produtos"
+              className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(17,24,39,0.18)]"
+            >
+              Ver os produtos
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]"
+            >
+              Falar com especialista
+            </Link>
           </div>
-        </div>
+        </section>
 
-        <section className="mt-8 grid gap-4 md:grid-cols-3">
+        <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Contexto</div>
+          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+            O problema não é falta de dado. É falta de controle.
+          </h2>
+          <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {contextBullets.map((item) => (
+              <div key={item} className="rounded-[20px] border border-black/5 bg-[#F8FAFC] px-5 py-4 text-sm leading-7 text-[#344054]">
+                {item}
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 max-w-4xl text-base leading-8 text-[#475467]">
+            Sem diagnóstico, você não enxerga. Sem decisão estruturada, você erra. Sem execução controlada, você perde eficiência.
+            Cada etapa exige uma solução específica.
+          </p>
+        </section>
+
+        <section id="produtos" className="mt-8 grid gap-6">
           {products.map((product) => (
             <article
               key={product.title}
-              className="rounded-[24px] border border-black/5 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.05)]"
+              className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10"
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">{product.eyebrow}</div>
-              <h2 className="mt-3 text-2xl font-semibold text-[#101828]">{product.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-[#475467]">{product.description}</p>
+              <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Produto</div>
+                  <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">{product.title}</h2>
+                  <p className="mt-3 text-lg font-medium leading-8 text-[#101828]">{product.subtitle}</p>
+                  <p className="mt-5 text-sm leading-8 text-[#475467] md:text-base">{product.description}</p>
 
-              <div className="mt-5 grid gap-2">
-                {product.highlights.map((item) => (
-                  <div key={item} className="rounded-xl border border-black/5 bg-[#F8FAFC] px-4 py-3 text-sm text-[#344054]">
-                    {item}
+                  <div className="mt-6 rounded-[24px] border border-black/5 bg-[#F8FAFC] p-5">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Quando usar</div>
+                    <p className="mt-3 text-sm leading-7 text-[#344054]">{product.when}</p>
                   </div>
-                ))}
-              </div>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href={product.primaryHref}
-                  className="rounded-xl bg-[#0F172A] px-4 py-3 text-sm font-semibold text-white"
-                >
-                  {product.primaryLabel}
-                </Link>
-                <Link
-                  href={product.secondaryHref}
-                  className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-[#101828]"
-                >
-                  {product.secondaryLabel}
-                </Link>
+                  <div className="mt-6">
+                    <Link
+                      href={product.href}
+                      className="inline-flex rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white"
+                    >
+                      {product.cta}
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid gap-4">
+                  <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-5">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Entregas</div>
+                    <div className="mt-4 grid gap-3">
+                      {product.deliveries.map((item) => (
+                        <div key={item} className="rounded-xl border border-black/5 bg-white px-4 py-3 text-sm text-[#344054]">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-5">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">O que muda</div>
+                    <div className="mt-4 grid gap-3">
+                      {product.changes.map((item) => (
+                        <div key={item} className="rounded-xl border border-black/5 bg-white px-4 py-3 text-sm text-[#344054]">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </article>
           ))}
         </section>
 
-        <section id="acessos" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
-          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Acessos</div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
-                Entrada direta para cada plataforma.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-[#475467] md:text-base">
-                Esse bloco funciona como uma aba de acesso rápida: cada botão leva o usuário direto para a experiência certa,
-                sem precisar navegar por menus intermediários.
-              </p>
-            </div>
+        <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Comparativo</div>
+          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+            Cada produto resolve um problema específico
+          </h2>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {comparison.map((item) => (
+              <div key={item.title} className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-6">
+                <div className="text-xl font-semibold text-[#101828]">{item.title}</div>
+                <div className="mt-5 grid gap-3 text-sm leading-7 text-[#344054]">
+                  <div><strong>Foco:</strong> {item.focus}</div>
+                  <div><strong>Resolve:</strong> {item.resolve}</div>
+                  <div><strong>Entrega:</strong> {item.delivery}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-            <div className="grid gap-4">
-              {accessTabs.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex flex-col gap-4 rounded-[24px] border border-black/5 bg-[#F8FAFC] p-5 md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <div className="text-lg font-semibold text-[#101828]">{item.label}</div>
-                    <p className="mt-1 text-sm leading-7 text-[#475467]">{item.description}</p>
-                  </div>
-                  <Link
-                    href={item.href}
-                    className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-4 py-3 text-sm font-semibold text-white"
-                  >
-                    Acessar
-                  </Link>
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Resultado</div>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+              Impacto direto no resultado
+            </h2>
+            <div className="mt-8 grid gap-3">
+              {results.map((item) => (
+                <div key={item} className="rounded-[20px] border border-black/5 bg-[#F8FAFC] px-5 py-4 text-sm leading-7 text-[#344054]">
+                  {item}
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+              O que você passa a enxergar
+            </h2>
+            <div className="mt-8 grid gap-3">
+              {demoItems.map((item) => (
+                <div key={item} className="rounded-[20px] border border-black/5 bg-[#F8FAFC] px-5 py-4 text-sm leading-7 text-[#344054]">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div className="mt-8">
+              <Link
+                href="/diag/"
+                className="inline-flex rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white"
+              >
+                Quero ver na prática
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Escolha sua entrada</div>
+          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+            Escolha o problema que você precisa resolver
+          </h2>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-[#475467]">
+            Diagnosticar, decidir ou executar. Cada solução ataca um ponto crítico da operação.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/diag/" className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white">
+              Gerar diagnóstico
+            </Link>
+            <Link href="/login" className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]">
+              Ver plataforma
+            </Link>
+            <Link href="/cashflow" className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]">
+              Conhecer solução
+            </Link>
           </div>
         </section>
       </section>
