@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const message = safe(form.get("message"), 2000);
   const segment = safe(form.get("segment"), 40) || "geral";
 
-  if (!name || !email) return NextResponse.redirect(publicUrl(req, `/lp/${segment}/?lead=required`));
+  if (!name || !email) return NextResponse.redirect(publicUrl(req, `/lp/?lead=required&segment=${encodeURIComponent(segment)}`));
 
   try {
     await dbQuery(
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
       dispatchLeadEmail(text),
     ]);
 
-    return NextResponse.redirect(publicUrl(req, `/lp/${segment}/?lead=ok`));
+    return NextResponse.redirect(publicUrl(req, `/lp/?lead=ok&segment=${encodeURIComponent(segment)}`));
   } catch {
-    return NextResponse.redirect(publicUrl(req, `/lp/${segment}/?lead=error`));
+    return NextResponse.redirect(publicUrl(req, `/lp/?lead=error&segment=${encodeURIComponent(segment)}`));
   }
 }
