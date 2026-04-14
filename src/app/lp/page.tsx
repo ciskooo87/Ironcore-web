@@ -140,12 +140,33 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
   const csrf = await ensureCsrfCookie();
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-[#101828]">
-      <section className="mx-auto max-w-7xl px-4 py-10 md:px-8 lg:px-10">
-        <section className="overflow-hidden rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-12">
-          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.06),_transparent_32%),linear-gradient(180deg,#F7F8FA_0%,#EEF2F6_100%)] text-[#101828]">
+      <section className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8 lg:px-10">
+        <header className="sticky top-4 z-30 mb-6 rounded-[24px] border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur md:px-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <Link href="/lp/" className="flex items-center gap-3">
+              <div className="overflow-hidden rounded-2xl border border-black/5 bg-[#0F172A] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
+                <Image src="/brand/ironcore-symbol.png" alt="IronCore" width={44} height={44} className="h-11 w-11 rounded-xl object-cover" priority />
+              </div>
+              <div>
+                <div className="text-lg font-semibold tracking-[-0.04em] text-[#101828]">IronCore</div>
+                <div className="text-xs font-medium uppercase tracking-[0.18em] text-[#98A2B3]">Diagnóstico · Decisão · Execução</div>
+              </div>
+            </Link>
+            <nav className="flex flex-wrap gap-2 text-sm font-semibold text-[#344054]">
+              <a href="#produtos" className="rounded-xl px-4 py-2 transition hover:bg-[#F4F7FA]">Produtos</a>
+              <a href="#comparativo" className="rounded-xl px-4 py-2 transition hover:bg-[#F4F7FA]">Comparativo</a>
+              <a href="#demo" className="rounded-xl px-4 py-2 transition hover:bg-[#F4F7FA]">Demonstração</a>
+              <a href="#lead" className="rounded-xl bg-[#0F172A] px-4 py-2 text-white shadow-[0_10px_22px_rgba(15,23,42,0.18)]">Falar com especialista</a>
+            </nav>
+          </div>
+        </header>
+
+        <section className="relative overflow-hidden rounded-[36px] border border-white/70 bg-white p-8 shadow-[0_30px_80px_rgba(15,23,42,0.10)] md:p-12">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_60%)]" />
+          <div className="relative grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">IronCore ecosystem</div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#D8E2EC] bg-[#F8FAFC] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#667085]">IronCore ecosystem</div>
               <h1 className="mt-4 max-w-5xl text-4xl font-semibold leading-[0.92] tracking-[-0.06em] text-[#101828] md:text-7xl">
                 Diagnostique. Decida. Execute. Sem achismo.
               </h1>
@@ -165,6 +186,11 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
                 >
                   Falar com especialista
                 </a>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#667085]">
+                <div className="rounded-full border border-[#D8E2EC] bg-white px-3 py-2">Foco em caixa</div>
+                <div className="rounded-full border border-[#D8E2EC] bg-white px-3 py-2">Leitura executiva</div>
+                <div className="rounded-full border border-[#D8E2EC] bg-white px-3 py-2">Execução com controle</div>
               </div>
             </div>
 
@@ -192,7 +218,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section className="mt-6 rounded-[24px] border border-black/5 bg-white/90 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] backdrop-blur md:p-5">
+        <section className="sticky top-[108px] z-20 mt-6 rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] backdrop-blur md:p-5">
           <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#344054]">
             <a href="#contexto" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Entender o problema</a>
             <a href="#produtos" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Ver os produtos</a>

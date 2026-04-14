@@ -14,17 +14,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ironcore.lat"),
-  title: "IronCore",
-  description: "Plataforma operacional financeira do IronCore",
+  title: {
+    default: "IronCore",
+    template: "%s | IronCore",
+  },
+  description: "Diagnóstico, decisão e execução para caixa, margem e eficiência operacional.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "IronCore",
-    description: "Plataforma operacional financeira do IronCore",
-    images: ["/brand/ironcore-logo.jpg"],
+    description: "Diagnóstico, decisão e execução para caixa, margem e eficiência operacional.",
+    images: ["/brand/ironcore-logo-v2.jpg"],
   },
 };
 
