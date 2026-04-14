@@ -331,10 +331,10 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
             <div className="max-w-3xl">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
-                Mockups das 3 telas principais
+                Visual executivo das três camadas do produto
               </h2>
               <p className="mt-4 text-base leading-8 text-[#475467]">
-                Em vez de prints ruins, a LP agora mostra uma visão limpa das três camadas do produto: diagnóstico, decisão e execução.
+                Uma prévia clara de como o IronCore organiza diagnóstico, decisão e execução em uma experiência visual objetiva, executiva e orientada a impacto.
               </p>
             </div>
 
