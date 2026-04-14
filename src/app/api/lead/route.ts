@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { validateCsrf } from "@/lib/csrf";
 import { dispatchLeadEmail, dispatchLeadTelegram } from "@/lib/notify";
+import { publicUrl } from "@/lib/request-url";
 
 function safe(v: FormDataEntryValue | null, max = 255) {
   return String(v || "").trim().slice(0, max);
@@ -10,7 +11,7 @@ function safe(v: FormDataEntryValue | null, max = 255) {
 export async function POST(req: Request) {
   const form = await req.formData();
   const csrfOk = await validateCsrf(form);
-  if (!csrfOk) return NextResponse.redirect(new URL("/lp/?lead=csrf", req.url));
+  if (!csrfOk) return NextResponse.redirect(publicUrl(req, "/lp/?lead=csrf"));
 
   const name = safe(form.get("name"), 120);
   const email = safe(form.get("email"), 180).toLowerCase();
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
   const message = safe(form.get("message"), 2000);
   const segment = safe(form.get("segment"), 40) || "geral";
 
-  if (!name || !email) return NextResponse.redirect(new URL(`/lp/${segment}/?lead=required`, req.url));
+  if (!name || !email) return NextResponse.redirect(publicUrl(req, `/lp/${segment}/?lead=required`));
 
   try {
     await dbQuery(
@@ -42,8 +43,8 @@ export async function POST(req: Request) {
       dispatchLeadEmail(text),
     ]);
 
-    return NextResponse.redirect(new URL(`/lp/${segment}/?lead=ok`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/lp/${segment}/?lead=ok`));
   } catch {
-    return NextResponse.redirect(new URL(`/lp/${segment}/?lead=error`, req.url));
+    return NextResponse.redirect(publicUrl(req, `/lp/${segment}/?lead=error`));
   }
 }
