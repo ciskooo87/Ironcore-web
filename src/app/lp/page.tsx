@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ensureCsrfCookie } from "@/lib/csrf";
 
 const contextBullets = [
   "Sua empresa fatura, mas não converte resultado em caixa",
@@ -103,38 +104,83 @@ const results = [
   "Operação mais eficiente e controlada",
 ] as const;
 
-const demoItems = [
-  "Riscos priorizados por impacto financeiro",
-  "Análise clara de desvios e ineficiências",
-  "Plano de ação estruturado e executável",
-  "Controle operacional centralizado",
+const demoCards = [
+  {
+    eyebrow: "Tela do diagnóstico",
+    title: "Risco priorizado por impacto financeiro",
+    bullets: ["Perdas ocultas destacadas", "Margem pressionada por origem", "Top riscos em ordem de prioridade"],
+  },
+  {
+    eyebrow: "Leitura executiva",
+    title: "Desvios e ineficiências sem ruído",
+    bullets: ["Causa provável do desvio", "Impacto em caixa e margem", "Leitura pronta para diretoria"],
+  },
+  {
+    eyebrow: "Plano de ação",
+    title: "O que fazer agora, em que ordem",
+    bullets: ["Ação priorizada", "Responsável definido", "Janela de execução e impacto"],
+  },
+  {
+    eyebrow: "Interface do SaaS",
+    title: "Controle operacional centralizado",
+    bullets: ["Rotina padronizada", "Acompanhamento em tempo real", "Execução com menos retrabalho"],
+  },
 ] as const;
 
-export default function LpPage() {
+export default async function LpPage({ searchParams }: { searchParams: Promise<{ lead?: string }> }) {
+  const query = await searchParams;
+  const csrf = await ensureCsrfCookie();
+
   return (
     <main className="min-h-screen bg-[#F7F8FA] text-[#101828]">
       <section className="mx-auto max-w-7xl px-4 py-10 md:px-8 lg:px-10">
-        <section className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-12">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">IronCore ecosystem</div>
-          <h1 className="mt-4 max-w-5xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-[#101828] md:text-6xl">
-            Diagnostique. Decida. Execute. Sem achismo.
-          </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-[#475467] md:text-lg">
-            Três soluções independentes para resolver problemas reais de caixa, margem e eficiência operacional.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="#produtos"
-              className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(17,24,39,0.18)]"
-            >
-              Ver os produtos
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]"
-            >
-              Falar com especialista
-            </Link>
+        <section className="overflow-hidden rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-12">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">IronCore ecosystem</div>
+              <h1 className="mt-4 max-w-5xl text-4xl font-semibold leading-[0.92] tracking-[-0.06em] text-[#101828] md:text-7xl">
+                Diagnostique. Decida. Execute. Sem achismo.
+              </h1>
+              <p className="mt-6 max-w-3xl text-base leading-8 text-[#475467] md:text-lg">
+                Três soluções independentes para resolver problemas reais de caixa, margem e eficiência operacional.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="#produtos"
+                  className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(17,24,39,0.18)]"
+                >
+                  Ver os produtos
+                </Link>
+                <a
+                  href="#lead"
+                  className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]"
+                >
+                  Falar com especialista
+                </a>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="rounded-[24px] border border-black/5 bg-[#0F172A] p-6 text-white shadow-[0_20px_40px_rgba(15,23,42,0.18)]">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Leitura CFO mode</div>
+                <div className="mt-4 text-2xl font-semibold leading-tight">
+                  O problema não é volume de dado. É não saber onde está o impacto.
+                </div>
+                <div className="mt-5 grid gap-3 text-sm text-white/80">
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">Caixa pressionado sem causa objetiva.</div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">Margem oscilando sem leitura executiva.</div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">Operação crescendo com perda de controle.</div>
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-6">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Jornada</div>
+                <div className="mt-4 grid gap-3 text-sm text-[#344054]">
+                  <div className="rounded-xl border border-black/5 bg-white px-4 py-3"><strong>Diagnóstico:</strong> enxergar o problema</div>
+                  <div className="rounded-xl border border-black/5 bg-white px-4 py-3"><strong>Decisão:</strong> definir prioridade e ação</div>
+                  <div className="rounded-xl border border-black/5 bg-white px-4 py-3"><strong>Execução:</strong> operar com consistência e escala</div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -246,15 +292,42 @@ export default function LpPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <section className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
               O que você passa a enxergar
             </h2>
-            <div className="mt-8 grid gap-3">
-              {demoItems.map((item) => (
-                <div key={item} className="rounded-[20px] border border-black/5 bg-[#F8FAFC] px-5 py-4 text-sm leading-7 text-[#344054]">
-                  {item}
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {demoCards.map((card) => (
+                <div key={card.title} className="overflow-hidden rounded-[24px] border border-black/5 bg-[#F8FAFC]">
+                  <div className="border-b border-black/5 bg-white px-5 py-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">{card.eyebrow}</div>
+                    <div className="mt-2 text-lg font-semibold text-[#101828]">{card.title}</div>
+                  </div>
+                  <div className="grid gap-3 p-5">
+                    <div className="rounded-2xl border border-black/5 bg-[#0F172A] p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/50">
+                        <span>Preview</span>
+                        <span>Executive View</span>
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        <div className="h-3 w-3/4 rounded-full bg-white/12" />
+                        <div className="h-3 w-1/2 rounded-full bg-cyan-400/50" />
+                        <div className="grid grid-cols-3 gap-2 pt-2">
+                          <div className="h-16 rounded-xl bg-white/8" />
+                          <div className="h-16 rounded-xl bg-white/8" />
+                          <div className="h-16 rounded-xl bg-cyan-400/20" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      {card.bullets.map((item) => (
+                        <div key={item} className="rounded-xl border border-black/5 bg-white px-4 py-3 text-sm text-[#344054]">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -266,27 +339,42 @@ export default function LpPage() {
                 Quero ver na prática
               </Link>
             </div>
-          </div>
+          </section>
         </section>
 
-        <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Escolha sua entrada</div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
-            Escolha o problema que você precisa resolver
-          </h2>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#475467]">
-            Diagnosticar, decidir ou executar. Cada solução ataca um ponto crítico da operação.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/diag/" className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white">
-              Gerar diagnóstico
-            </Link>
-            <Link href="/login" className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]">
-              Ver plataforma
-            </Link>
-            <Link href="/cashflow" className="rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-[#101828]">
-              Conhecer solução
-            </Link>
+        <section id="lead" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Falar com especialista</div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+                Escolha o problema que você precisa resolver
+              </h2>
+              <p className="mt-4 max-w-3xl text-base leading-8 text-[#475467]">
+                Diagnosticar, decidir ou executar. Cada solução ataca um ponto crítico da operação.
+              </p>
+              <div className="mt-6 grid gap-3 text-sm text-[#344054]">
+                <div className="rounded-xl border border-black/5 bg-[#F8FAFC] px-4 py-3">Se você precisa enxergar a perda, comece pelo diagnóstico.</div>
+                <div className="rounded-xl border border-black/5 bg-[#F8FAFC] px-4 py-3">Se você já enxerga o problema, entre pela decisão.</div>
+                <div className="rounded-xl border border-black/5 bg-[#F8FAFC] px-4 py-3">Se sua operação trava na execução, entre pela camada de controle.</div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-6">
+              {query.lead === "ok" ? <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Lead recebido com sucesso.</div> : null}
+              {query.lead && query.lead !== "ok" ? <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">Não foi possível enviar. Revise os campos e tente novamente.</div> : null}
+              <form action="/api/lead" method="post" className="grid gap-3 text-sm md:grid-cols-2">
+                <input type="hidden" name="csrf_token" value={csrf} />
+                <input type="hidden" name="segment" value="geral" />
+                <input name="name" required placeholder="Seu nome" className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none" />
+                <input name="email" type="email" required placeholder="Seu email" className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none" />
+                <input name="company" placeholder="Empresa" className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none" />
+                <input name="phone" placeholder="WhatsApp" className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none" />
+                <textarea name="message" placeholder="Qual problema hoje mais pressiona caixa, margem ou operação?" className="min-h-28 rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none md:col-span-2" />
+                <button type="submit" className="rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white md:col-span-2">
+                  Falar com especialista
+                </button>
+              </form>
+            </div>
           </div>
         </section>
       </section>
