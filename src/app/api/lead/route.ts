@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { validateCsrf } from "@/lib/csrf";
-import { dispatchLeadTelegram } from "@/lib/notify";
+import { dispatchLeadEmail, dispatchLeadTelegram } from "@/lib/notify";
 
 function safe(v: FormDataEntryValue | null, max = 255) {
   return String(v || "").trim().slice(0, max);
@@ -37,7 +37,10 @@ export async function POST(req: Request) {
       `Mensagem: ${message || "-"}`,
     ].join("\n");
 
-    await dispatchLeadTelegram(text);
+    await Promise.allSettled([
+      dispatchLeadTelegram(text),
+      dispatchLeadEmail(text),
+    ]);
 
     return NextResponse.redirect(new URL(`/lp/${segment}/?lead=ok`, req.url));
   } catch {

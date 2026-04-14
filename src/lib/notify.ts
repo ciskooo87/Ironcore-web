@@ -32,18 +32,18 @@ async function sendWebhook(channel: "whatsapp", text: string): Promise<DispatchR
   }
 }
 
-async function sendEmail(text: string): Promise<DispatchResult> {
+async function sendEmail(text: string, subject = "IronCore · Rotina diária", toOverride?: string): Promise<DispatchResult> {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  const to = process.env.SMTP_TO;
+  const to = toOverride || process.env.SMTP_TO;
   const from = process.env.SMTP_FROM || user;
   if (!host || !user || !pass || !to || !from) return { channel: "email", status: "skipped", message: "SMTP env ausente" };
 
   try {
     const transport = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
-    const info = await transport.sendMail({ from, to, subject: "IronCore · Rotina diária", text });
+    const info = await transport.sendMail({ from, to, subject, text });
     return { channel: "email", status: "sent", target: to, message: info.messageId };
   } catch (e) {
     return { channel: "email", status: "failed", target: to, message: String(e) };
@@ -57,4 +57,8 @@ export async function dispatchRoutineSummary(text: string) {
 
 export async function dispatchLeadTelegram(text: string) {
   return sendTelegram(text);
+}
+
+export async function dispatchLeadEmail(text: string) {
+  return sendEmail(text, "IronCore · Novo lead LP", "comite@ironcore.lat, pauloabib123@gmail.com");
 }
