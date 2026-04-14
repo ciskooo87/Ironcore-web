@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   },
   description: "Diagnóstico, decisão e execução para caixa, margem e eficiência operacional.",
   icons: {
-    icon: "/icon.jpg",
-    shortcut: "/icon.jpg",
+    icon: [{ url: "/favicon.ico" }, { url: "/icon.jpg" }],
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.jpg",
   },
   openGraph: {
