@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ensureCsrfCookie } from "@/lib/csrf";
 
@@ -127,6 +128,13 @@ const demoCards = [
   },
 ] as const;
 
+const demoScreens = [
+  "/lp-images/diagnotico-screen.gif",
+  "/lp-images/processo-screen.gif",
+  "/lp-images/processo-screen.gif",
+  "/lp-images/cashflow-dashboard.gif",
+] as const;
+
 export default async function LpPage({ searchParams }: { searchParams: Promise<{ lead?: string }> }) {
   const query = await searchParams;
   const csrf = await ensureCsrfCookie();
@@ -184,7 +192,17 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+        <section className="mt-6 rounded-[24px] border border-black/5 bg-white/90 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] backdrop-blur md:p-5">
+          <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#344054]">
+            <a href="#contexto" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Entender o problema</a>
+            <a href="#produtos" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Ver os produtos</a>
+            <a href="#comparativo" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Comparar soluções</a>
+            <a href="#demo" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Ver na prática</a>
+            <a href="#lead" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Falar com especialista</a>
+          </div>
+        </section>
+
+        <section id="contexto" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Contexto</div>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
             O problema não é falta de dado. É falta de controle.
@@ -258,7 +276,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           ))}
         </section>
 
-        <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+        <section id="comparativo" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Comparativo</div>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
             Cada produto resolve um problema específico
@@ -292,33 +310,28 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
             </div>
           </div>
 
-          <section className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <section id="demo" className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
               O que você passa a enxergar
             </h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {demoCards.map((card) => (
+              {demoCards.map((card, index) => (
                 <div key={card.title} className="overflow-hidden rounded-[24px] border border-black/5 bg-[#F8FAFC]">
                   <div className="border-b border-black/5 bg-white px-5 py-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">{card.eyebrow}</div>
                     <div className="mt-2 text-lg font-semibold text-[#101828]">{card.title}</div>
                   </div>
                   <div className="grid gap-3 p-5">
-                    <div className="rounded-2xl border border-black/5 bg-[#0F172A] p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/50">
-                        <span>Preview</span>
-                        <span>Executive View</span>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        <div className="h-3 w-3/4 rounded-full bg-white/12" />
-                        <div className="h-3 w-1/2 rounded-full bg-cyan-400/50" />
-                        <div className="grid grid-cols-3 gap-2 pt-2">
-                          <div className="h-16 rounded-xl bg-white/8" />
-                          <div className="h-16 rounded-xl bg-white/8" />
-                          <div className="h-16 rounded-xl bg-cyan-400/20" />
-                        </div>
-                      </div>
+                    <div className="overflow-hidden rounded-2xl border border-black/5 bg-white">
+                      <Image
+                        src={demoScreens[index]}
+                        alt={card.title}
+                        width={1400}
+                        height={1400}
+                        className="h-64 w-full object-cover object-top"
+                        unoptimized
+                      />
                     </div>
                     <div className="grid gap-2">
                       {card.bullets.map((item) => (
