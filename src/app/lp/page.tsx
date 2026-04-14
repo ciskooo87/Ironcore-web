@@ -110,29 +110,20 @@ const demoCards = [
     eyebrow: "Tela do diagnóstico",
     title: "Risco priorizado por impacto financeiro",
     bullets: ["Perdas ocultas destacadas", "Margem pressionada por origem", "Top riscos em ordem de prioridade"],
+    tone: "cyan",
   },
   {
-    eyebrow: "Leitura executiva",
-    title: "Desvios e ineficiências sem ruído",
-    bullets: ["Causa provável do desvio", "Impacto em caixa e margem", "Leitura pronta para diretoria"],
+    eyebrow: "Tela de decisão",
+    title: "Plano executivo com prioridade clara",
+    bullets: ["Causa provável do desvio", "Impacto em caixa e margem", "Plano 5W2H pronto para diretoria"],
+    tone: "violet",
   },
   {
-    eyebrow: "Plano de ação",
-    title: "O que fazer agora, em que ordem",
-    bullets: ["Ação priorizada", "Responsável definido", "Janela de execução e impacto"],
-  },
-  {
-    eyebrow: "Interface do SaaS",
-    title: "Controle operacional centralizado",
+    eyebrow: "Tela de execução",
+    title: "Operação centralizada e rastreável",
     bullets: ["Rotina padronizada", "Acompanhamento em tempo real", "Execução com menos retrabalho"],
+    tone: "emerald",
   },
-] as const;
-
-const demoScreens = [
-  "/lp-images/diagnotico-screen.gif",
-  "/lp-images/processo-screen.gif",
-  "/lp-images/processo-screen.gif",
-  "/lp-images/cashflow-dashboard.gif",
 ] as const;
 
 export default async function LpPage({ searchParams }: { searchParams: Promise<{ lead?: string }> }) {
@@ -321,13 +312,13 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section className="mt-8 grid gap-6">
           <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Resultado</div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
               Impacto direto no resultado
             </h2>
-            <div className="mt-8 grid gap-3">
+            <div className="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               {results.map((item) => (
                 <div key={item} className="rounded-[20px] border border-black/5 bg-[#F8FAFC] px-5 py-4 text-sm leading-7 text-[#344054]">
                   {item}
@@ -337,44 +328,127 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
 
           <section id="demo" className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
-              O que você passa a enxergar
-            </h2>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {demoCards.map((card, index) => (
-                <div key={card.title} className="overflow-hidden rounded-[24px] border border-black/5 bg-[#F8FAFC]">
-                  <div className="border-b border-black/5 bg-white px-5 py-4">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">{card.eyebrow}</div>
-                    <div className="mt-2 text-lg font-semibold text-[#101828]">{card.title}</div>
+            <div className="max-w-3xl">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
+                Mockups das 3 telas principais
+              </h2>
+              <p className="mt-4 text-base leading-8 text-[#475467]">
+                Em vez de prints ruins, a LP agora mostra uma visão limpa das três camadas do produto: diagnóstico, decisão e execução.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-5 xl:grid-cols-3">
+              {demoCards.map((card) => (
+                <div key={card.title} className="overflow-hidden rounded-[28px] border border-black/5 bg-[#F8FAFC] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">{card.eyebrow}</div>
+                      <div className="mt-2 text-lg font-semibold text-[#101828]">{card.title}</div>
+                    </div>
+                    <div className={`h-3 w-3 rounded-full ${card.tone === "cyan" ? "bg-cyan-400" : card.tone === "violet" ? "bg-violet-400" : "bg-emerald-400"}`} />
                   </div>
-                  <div className="grid gap-3 p-5">
-                    <div className="overflow-hidden rounded-2xl border border-black/5 bg-white">
-                      <Image
-                        src={demoScreens[index]}
-                        alt={card.title}
-                        width={1400}
-                        height={1400}
-                        className="h-64 w-full object-cover object-top"
-                        unoptimized
-                      />
+
+                  <div className="mt-5 rounded-[24px] border border-black/5 bg-[#0F172A] p-4 text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
+                      </div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">IronCore</div>
                     </div>
-                    <div className="grid gap-2">
-                      {card.bullets.map((item) => (
-                        <div key={item} className="rounded-xl border border-black/5 bg-white px-4 py-3 text-sm text-[#344054]">
-                          {item}
+
+                    {card.tone === "cyan" ? (
+                      <div className="mt-4 space-y-4">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Risco total priorizado</div>
+                          <div className="mt-2 text-3xl font-semibold">R$ 482 mil</div>
+                          <div className="mt-3 h-2 rounded-full bg-white/10">
+                            <div className="h-2 w-2/3 rounded-full bg-cyan-400" />
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="rounded-xl bg-white/6 p-3"><div className="text-[10px] text-white/45">Margem</div><div className="mt-1 text-sm font-semibold">-2.8 p.p.</div></div>
+                          <div className="rounded-xl bg-white/6 p-3"><div className="text-[10px] text-white/45">Caixa</div><div className="mt-1 text-sm font-semibold">Pressão alta</div></div>
+                          <div className="rounded-xl bg-cyan-400/15 p-3"><div className="text-[10px] text-cyan-100/70">Prioridade</div><div className="mt-1 text-sm font-semibold text-cyan-100">Crítica</div></div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-3 w-full rounded-full bg-white/8" />
+                          <div className="h-3 w-4/5 rounded-full bg-white/8" />
+                          <div className="h-3 w-3/5 rounded-full bg-cyan-400/35" />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {card.tone === "violet" ? (
+                      <div className="mt-4 space-y-4">
+                        <div className="grid grid-cols-[1fr_auto] gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <div>
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Plano executivo</div>
+                            <div className="mt-2 text-xl font-semibold">5 ações, 2 semanas, 3 alavancas</div>
+                          </div>
+                          <div className="rounded-xl bg-violet-400/15 px-3 py-2 text-sm font-semibold text-violet-100">5W2H</div>
+                        </div>
+                        <div className="space-y-2">
+                          {["Renegociar contratos críticos", "Ajustar mix com menor erosão", "Repriorizar cobrança CAR"].map((line) => (
+                            <div key={line} className="flex items-center justify-between rounded-xl bg-white/6 px-3 py-3 text-sm">
+                              <span>{line}</span>
+                              <span className="rounded-full bg-white/8 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-white/60">alto impacto</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded-xl bg-white/6 p-3"><div className="text-[10px] text-white/45">Responsável</div><div className="mt-1 text-sm font-semibold">Financeiro</div></div>
+                          <div className="rounded-xl bg-violet-400/15 p-3"><div className="text-[10px] text-violet-100/70">Janela</div><div className="mt-1 text-sm font-semibold text-violet-100">14 dias</div></div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {card.tone === "emerald" ? (
+                      <div className="mt-4 space-y-4">
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="rounded-xl bg-white/6 p-3"><div className="text-[10px] text-white/45">Rotinas</div><div className="mt-1 text-sm font-semibold">18 ativas</div></div>
+                          <div className="rounded-xl bg-white/6 p-3"><div className="text-[10px] text-white/45">Pendências</div><div className="mt-1 text-sm font-semibold">4</div></div>
+                          <div className="rounded-xl bg-emerald-400/15 p-3"><div className="text-[10px] text-emerald-100/70">SLA</div><div className="mt-1 text-sm font-semibold text-emerald-100">92%</div></div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Conciliação</span><span className="text-emerald-200">OK</span>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between text-sm">
+                            <span>Fechamento mensal</span><span className="text-amber-200">Em andamento</span>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between text-sm">
+                            <span>Fluxo de caixa</span><span className="text-emerald-200">Atualizado</span>
+                          </div>
+                        </div>
+                        <div className="h-24 rounded-2xl bg-[linear-gradient(180deg,rgba(16,185,129,0.25),rgba(255,255,255,0.04))] p-4">
+                          <div className="flex h-full items-end gap-2">
+                            <div className="h-6 w-full rounded-t-lg bg-white/15" />
+                            <div className="h-12 w-full rounded-t-lg bg-white/20" />
+                            <div className="h-16 w-full rounded-t-lg bg-emerald-400/45" />
+                            <div className="h-10 w-full rounded-t-lg bg-white/18" />
+                            <div className="h-20 w-full rounded-t-lg bg-emerald-300/55" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 grid gap-2">
+                    {card.bullets.map((item) => (
+                      <div key={item} className="rounded-xl border border-black/5 bg-white px-4 py-3 text-sm text-[#344054]">
+                        {item}
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
+
             <div className="mt-8">
-              <Link
-                href="/diag/"
-                className="inline-flex rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white"
-              >
+              <Link href="/diag/" className="inline-flex rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white">
                 Quero ver na prática
               </Link>
             </div>
