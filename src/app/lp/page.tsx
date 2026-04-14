@@ -146,7 +146,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <Link href="/lp/" className="flex items-center gap-3">
               <div className="overflow-hidden rounded-2xl border border-black/5 bg-[#0F172A] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
-                <Image src="/brand/ironcore-symbol.png" alt="IronCore" width={44} height={44} className="h-11 w-11 rounded-xl object-cover" priority />
+                <Image src="/brand/ironcore-mark-official.jpg" alt="IronCore" width={44} height={44} className="h-11 w-11 rounded-xl object-cover" priority />
               </div>
               <div>
                 <div className="text-lg font-semibold tracking-[-0.04em] text-[#101828]">IronCore</div>

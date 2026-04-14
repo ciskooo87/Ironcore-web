@@ -20,14 +20,14 @@ export const metadata: Metadata = {
   },
   description: "Diagnóstico, decisão e execução para caixa, margem e eficiência operacional.",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/icon.jpg",
+    shortcut: "/icon.jpg",
+    apple: "/apple-touch-icon.jpg",
   },
   openGraph: {
     title: "IronCore",
     description: "Diagnóstico, decisão e execução para caixa, margem e eficiência operacional.",
-    images: ["/brand/ironcore-logo-v2.jpg"],
+    images: ["/brand/ironcore-mark-official.jpg"],
   },
 };
 
