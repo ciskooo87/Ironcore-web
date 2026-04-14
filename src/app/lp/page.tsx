@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ensureCsrfCookie } from "@/lib/csrf";
+import LeadCsrfField from "@/components/LeadCsrfField";
 
 const contextBullets = [
   "Sua empresa fatura, mas não converte resultado em caixa",
@@ -128,7 +128,6 @@ const demoCards = [
 
 export default async function LpPage({ searchParams }: { searchParams: Promise<{ lead?: string }> }) {
   const query = await searchParams;
-  const csrf = await ensureCsrfCookie();
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.06),_transparent_32%),linear-gradient(180deg,#F7F8FA_0%,#EEF2F6_100%)] text-[#101828]">
@@ -476,7 +475,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
               {query.lead === "ok" ? <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Lead recebido com sucesso.</div> : null}
               {query.lead && query.lead !== "ok" ? <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">Não foi possível enviar. Revise os campos e tente novamente.</div> : null}
               <form action="/api/lead" method="post" className="grid gap-3 text-sm md:grid-cols-2">
-                <input type="hidden" name="csrf_token" value={csrf} />
+                <LeadCsrfField />
                 <input type="hidden" name="segment" value="geral" />
                 <input name="name" required placeholder="Seu nome" className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none" />
                 <input name="email" type="email" required placeholder="Seu email" className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[#101828] outline-none" />
