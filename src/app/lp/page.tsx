@@ -132,8 +132,8 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.06),_transparent_32%),linear-gradient(180deg,#F7F8FA_0%,#EEF2F6_100%)] text-[#101828]">
-      <section className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8 lg:px-10">
-        <header className="sticky top-4 z-30 mb-6 rounded-[24px] border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur md:px-6">
+      <section className="mx-auto max-w-[1280px] px-4 py-6 md:px-8 md:py-8 lg:px-10 xl:px-12">
+        <header className="sticky top-4 z-30 mb-8 rounded-[24px] border border-white/80 bg-white/88 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur md:px-6 md:py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <Link href="/lp/" className="flex items-center gap-3">
               <div className="overflow-hidden rounded-2xl border border-black/5 bg-[#0F172A] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
@@ -153,15 +153,15 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </header>
 
-        <section className="relative overflow-hidden rounded-[36px] border border-white/70 bg-white p-8 shadow-[0_30px_80px_rgba(15,23,42,0.10)] md:p-12">
+        <section className="relative overflow-hidden rounded-[40px] border border-white/80 bg-white px-8 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.10)] md:px-12 md:py-14 xl:px-14 xl:py-16">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_60%)]" />
-          <div className="relative grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+          <div className="relative grid gap-10 xl:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-[#D8E2EC] bg-[#F8FAFC] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#667085]">IronCore ecosystem</div>
-              <h1 className="mt-4 max-w-5xl text-4xl font-semibold leading-[0.92] tracking-[-0.06em] text-[#101828] md:text-7xl">
+              <h1 className="mt-5 max-w-5xl text-4xl font-semibold leading-[0.92] tracking-[-0.065em] text-[#101828] md:text-6xl xl:text-7xl">
                 Diagnostique. Decida. Execute. Sem achismo.
               </h1>
-              <p className="mt-6 max-w-3xl text-base leading-8 text-[#475467] md:text-lg">
+              <p className="mt-7 max-w-3xl text-base leading-8 text-[#475467] md:text-lg xl:max-w-2xl">
                 Três soluções independentes para resolver problemas reais de caixa, margem e eficiência operacional.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -185,8 +185,8 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
 
-            <div className="grid gap-4">
-              <div className="rounded-[24px] border border-black/5 bg-[#0F172A] p-6 text-white shadow-[0_20px_40px_rgba(15,23,42,0.18)]">
+            <div className="grid gap-5">
+              <div className="rounded-[28px] border border-black/5 bg-[#0F172A] p-6 text-white shadow-[0_22px_44px_rgba(15,23,42,0.20)] md:p-7">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Leitura CFO mode</div>
                 <div className="mt-4 text-2xl font-semibold leading-tight">
                   O problema não é volume de dado. É não saber onde está o impacto.
@@ -197,7 +197,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
                   <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">Operação crescendo com perda de controle.</div>
                 </div>
               </div>
-              <div className="rounded-[24px] border border-black/5 bg-[#F8FAFC] p-6">
+              <div className="rounded-[28px] border border-black/5 bg-[#F8FAFC] p-6 md:p-7">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">Jornada</div>
                 <div className="mt-4 grid gap-3 text-sm text-[#344054]">
                   <div className="rounded-xl border border-black/5 bg-white px-4 py-3"><strong>Diagnóstico:</strong> enxergar o problema</div>
@@ -209,7 +209,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section className="sticky top-[108px] z-20 mt-6 rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] backdrop-blur md:p-5">
+        <section className="sticky top-[108px] z-20 mt-6 rounded-[24px] border border-white/80 bg-white/92 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] backdrop-blur md:p-5">
           <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#344054]">
             <a href="#contexto" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Entender o problema</a>
             <a href="#produtos" className="rounded-xl border border-black/10 bg-[#F8FAFC] px-4 py-3">Ver os produtos</a>
@@ -219,7 +219,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section id="contexto" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+        <section id="contexto" className="mt-10 rounded-[36px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10 xl:p-12">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Contexto</div>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
             O problema não é falta de dado. É falta de controle.
@@ -237,11 +237,11 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </p>
         </section>
 
-        <section id="produtos" className="mt-8 grid gap-6">
+        <section id="produtos" className="mt-10 grid gap-6 xl:gap-7">
           {products.map((product) => (
             <article
               key={product.title}
-              className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10"
+              className="rounded-[36px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_70px_rgba(15,23,42,0.10)] md:p-10 xl:p-12"
             >
               <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
                 <div>
@@ -293,7 +293,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           ))}
         </section>
 
-        <section id="comparativo" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+        <section id="comparativo" className="mt-10 rounded-[36px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10 xl:p-12">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Comparativo</div>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
             Cada produto resolve um problema específico
@@ -312,8 +312,8 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section className="mt-8 grid gap-6">
-          <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+        <section className="mt-10 grid gap-6 xl:gap-7">
+          <div className="rounded-[36px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10 xl:p-12">
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Resultado</div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
               Impacto direto no resultado
@@ -327,7 +327,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
             </div>
           </div>
 
-          <section id="demo" className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+          <section id="demo" className="rounded-[36px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10 xl:p-12">
             <div className="max-w-3xl">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Demonstração</div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#101828] md:text-4xl">
@@ -338,9 +338,9 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
               </p>
             </div>
 
-            <div className="mt-8 grid gap-5 xl:grid-cols-3">
+            <div className="mt-10 grid gap-5 xl:grid-cols-3">
               {demoCards.map((card) => (
-                <div key={card.title} className="overflow-hidden rounded-[28px] border border-black/5 bg-[#F8FAFC] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                <div key={card.title} className="overflow-hidden rounded-[30px] border border-black/5 bg-[#F8FAFC] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] md:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#98A2B3]">{card.eyebrow}</div>
@@ -455,7 +455,7 @@ export default async function LpPage({ searchParams }: { searchParams: Promise<{
           </section>
         </section>
 
-        <section id="lead" className="mt-8 rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10">
+        <section id="lead" className="mt-10 rounded-[36px] border border-black/5 bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-10 xl:p-12">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#98A2B3]">Falar com especialista</div>
