@@ -1,11 +1,10 @@
 type Exercise = {
   name: string;
-  equipment: string;
   sets: string;
   reps: string;
-  estimatedWeight: string;
-  rest: string;
-  query: string;
+  technique: string;
+  cadence: string;
+  strategy: string;
 };
 
 type WorkoutSection = {
@@ -13,6 +12,7 @@ type WorkoutSection = {
   subtitle: string;
   theme: ThemeKey;
   exercises: Exercise[];
+  cardio: string;
 };
 
 type ThemeKey = "red" | "blue" | "amber";
@@ -26,8 +26,6 @@ type Theme = {
   cardBorder: string;
   cardTop: string;
   accentLabel: string;
-  button: string;
-  buttonText: string;
   chipBorder: string;
   chipBg: string;
   chipLabel: string;
@@ -43,8 +41,6 @@ const THEMES: Record<ThemeKey, Theme> = {
     cardBorder: "border-rose-300/10",
     cardTop: "from-rose-400/18 to-transparent",
     accentLabel: "text-rose-300/90",
-    button: "border-rose-400/30 bg-rose-400/10 hover:bg-rose-400/15",
-    buttonText: "text-rose-100",
     chipBorder: "border-rose-200/10",
     chipBg: "bg-rose-200/[0.05]",
     chipLabel: "text-rose-200/70",
@@ -58,8 +54,6 @@ const THEMES: Record<ThemeKey, Theme> = {
     cardBorder: "border-cyan-300/10",
     cardTop: "from-cyan-400/18 to-transparent",
     accentLabel: "text-cyan-300/90",
-    button: "border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/15",
-    buttonText: "text-cyan-100",
     chipBorder: "border-cyan-200/10",
     chipBg: "bg-cyan-200/[0.05]",
     chipLabel: "text-cyan-200/70",
@@ -73,8 +67,6 @@ const THEMES: Record<ThemeKey, Theme> = {
     cardBorder: "border-amber-300/10",
     cardTop: "from-amber-400/18 to-transparent",
     accentLabel: "text-amber-300/90",
-    button: "border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/15",
-    buttonText: "text-amber-100",
     chipBorder: "border-amber-200/10",
     chipBg: "bg-amber-200/[0.05]",
     chipLabel: "text-amber-200/70",
@@ -83,53 +75,68 @@ const THEMES: Record<ThemeKey, Theme> = {
 
 const WORKOUTS: WorkoutSection[] = [
   {
-    title: "📅 TREINO A — Segunda",
+    title: "📅 TREINO A",
     subtitle: "Peito + Tríceps + Abdômen",
     theme: "red",
+    cardio: "10–12 min HIIT (30s forte / 60s leve)",
     exercises: [
-      { name: "Supino reto com barra", equipment: "Rack multifuncional", sets: "4", reps: "8–10", estimatedWeight: "52,5kg", rest: "90s", query: "supino reto com barra execução correta" },
-      { name: "Supino inclinado com barra", equipment: "Rack multifuncional", sets: "3", reps: "10", estimatedWeight: "40kg", rest: "75s", query: "supino inclinado com barra execução correta" },
-      { name: "Crucifixo na polia (cabo cruzado)", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "15kg cada lado", rest: "60s", query: "crucifixo na polia cabo cruzado execução correta" },
-      { name: "Tríceps polia alta (corda)", equipment: "Rack multifuncional", sets: "4", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "tríceps polia alta corda execução correta" },
-      { name: "Tríceps francês na polia", equipment: "Rack multifuncional", sets: "3", reps: "10", estimatedWeight: "20kg", rest: "60s", query: "tríceps francês na polia execução correta" },
-      { name: "Abdominal supra no chão", equipment: "Chão", sets: "4", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal supra no chão execução correta" },
-      { name: "Abdominal bicicleta", equipment: "Chão", sets: "3", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal bicicleta execução correta" },
+      { name: "Supino reto barra", sets: "4", reps: "8–10", technique: "Escápula travada, pé firme, barra no meio do peito", cadence: "1s sobe / 3s desce", strategy: "Última série rest-pause (10s + reps)" },
+      { name: "Supino inclinado barra", sets: "3", reps: "10", technique: "Banco 30°, foco peitoral superior", cadence: "1s / 3s", strategy: "Última série rest-pause" },
+      { name: "Crucifixo polia", sets: "3", reps: "12", technique: "Cotovelo fixo, contrai no centro", cadence: "2s fecha / 3s abre", strategy: "Superset com flexão" },
+      { name: "Flexão no chão", sets: "3", reps: "Falha", technique: "Corpo reto, core ativo", cadence: "Controlado", strategy: "Superset com crucifixo" },
+      { name: "Tríceps corda", sets: "4", reps: "12", technique: "Cotovelo fixo, abre no final", cadence: "1s / 3s", strategy: "Contração máxima" },
+      { name: "Tríceps francês polia", sets: "3", reps: "10", technique: "Alonga bem atrás, cotovelo fixo", cadence: "2s / 2s", strategy: "Foco cabeça longa" },
+      { name: "Abdominal supra", sets: "4", reps: "20", technique: "Lombar colada, sobe escápula", cadence: "2s / 2s", strategy: "Última com isometria 20s" },
+      { name: "Ab bicicleta", sets: "3", reps: "20", technique: "Rotação real, perna estendida", cadence: "Controlado", strategy: "Última com isometria" },
     ],
   },
   {
-    title: "📅 TREINO B — Quarta",
+    title: "📅 TREINO B",
     subtitle: "Costas + Bíceps + Abdômen",
     theme: "blue",
+    cardio: "10–12 min moderado (zona 2/3)",
     exercises: [
-      { name: "Puxada frontal (lat pulldown)", equipment: "Rack multifuncional", sets: "4", reps: "10–12", estimatedWeight: "55kg", rest: "75s", query: "puxada frontal lat pulldown execução correta" },
-      { name: "Remada baixa na polia", equipment: "Rack multifuncional", sets: "4", reps: "10–12", estimatedWeight: "85kg", rest: "75s", query: "remada baixa na polia execução correta" },
-      { name: "Pullover na polia alta", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "30kg", rest: "60s", query: "pullover na polia alta execução correta" },
-      { name: "Rosca bíceps com barra", equipment: "Rack multifuncional", sets: "4", reps: "10", estimatedWeight: "30kg", rest: "60s", query: "rosca bíceps com barra execução correta" },
-      { name: "Rosca Scott na polia baixa", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "20kg", rest: "60s", query: "rosca scott na polia baixa execução correta" },
-      { name: "Abdominal infra (elevação pernas)", equipment: "Chão", sets: "4", reps: "15", estimatedWeight: "Corporal", rest: "45s", query: "abdominal infra elevação pernas execução correta" },
-      { name: "Prancha", equipment: "Chão", sets: "3", reps: "40s", estimatedWeight: "Corporal", rest: "45s", query: "prancha execução correta" },
+      { name: "Puxada frontal", sets: "4", reps: "10–12", technique: "Escápula desce primeiro, peito aberto", cadence: "1s / 3s", strategy: "Foco dorsal (V shape)" },
+      { name: "Remada baixa", sets: "4", reps: "10–12", technique: "Tronco firme, segura 1s atrás", cadence: "2s / 3s", strategy: "Densidade" },
+      { name: "Pullover polia", sets: "3", reps: "12", technique: "Braço semi-estendido, dorsal ativa", cadence: "2s / 3s", strategy: "Segura 2s embaixo" },
+      { name: "Rosca barra", sets: "4", reps: "10", technique: "Cotovelo fixo, sem roubo", cadence: "2s / 3s", strategy: "Controle total" },
+      { name: "Rosca Scott", sets: "3", reps: "12", technique: "Amplitude completa", cadence: "2s / 3s", strategy: "Última com drop set" },
+      { name: "Elevação pernas", sets: "4", reps: "15", technique: "Movimento do quadril, sem balanço", cadence: "2s / 3s", strategy: "Abdômen inferior" },
+      { name: "Prancha", sets: "3", reps: "40s", technique: "Core travado, glúteo ativo", cadence: "Isométrico", strategy: "Alterna elevação de perna" },
     ],
   },
   {
-    title: "📅 TREINO C — Sexta",
-    subtitle: "Pernas + Ombro + Braço completo",
+    title: "📅 TREINO C",
+    subtitle: "Pernas + Ombro + Braço",
     theme: "amber",
+    cardio: "10 min leve (recuperação ativa)",
     exercises: [
-      { name: "Extensão de pernas", equipment: "Cadeira extensora", sets: "4", reps: "12", estimatedWeight: "53kg", rest: "60s", query: "cadeira extensora execução correta" },
-      { name: "Flexão de pernas", equipment: "Cadeira flexora", sets: "4", reps: "12", estimatedWeight: "43kg", rest: "60s", query: "cadeira flexora execução correta" },
-      { name: "Desenvolvimento com barra", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "30kg", rest: "60s", query: "desenvolvimento com barra execução correta" },
-      { name: "Elevação lateral na polia", equipment: "Rack multifuncional", sets: "3", reps: "15", estimatedWeight: "10kg cada lado", rest: "60s", query: "elevação lateral na polia execução correta" },
-      { name: "Rosca martelo na polia", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "rosca martelo na polia execução correta" },
-      { name: "Tríceps polia (barra reta)", equipment: "Rack multifuncional", sets: "3", reps: "12", estimatedWeight: "25kg", rest: "60s", query: "tríceps polia barra reta execução correta" },
-      { name: "Abdominal bicicleta", equipment: "Chão", sets: "3", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal bicicleta execução correta" },
-      { name: "Abdominal supra", equipment: "Chão", sets: "3", reps: "20", estimatedWeight: "Corporal", rest: "45s", query: "abdominal supra execução correta" },
+      { name: "Afundo halter", sets: "3", reps: "10/cada", technique: "Passo longo, tronco levemente inclinado", cadence: "2–3s / 1s", strategy: "Glúteo dominante" },
+      { name: "Extensora", sets: "3", reps: "12", technique: "Segura 1s no topo", cadence: "2s / 3s", strategy: "Reduz volume" },
+      { name: "Flexora", sets: "4", reps: "12", technique: "Quadril fixo, contrai forte", cadence: "2s / 3s", strategy: "Última com pausa 2s" },
+      { name: "Desenvolvimento barra", sets: "3", reps: "12", technique: "Core travado, não arquear lombar", cadence: "1s / 2–3s", strategy: "Estabilidade" },
+      { name: "Elevação lateral", sets: "3", reps: "15", technique: "Movimento curto, sem roubo", cadence: "1s / 4s", strategy: "Drop set final" },
+      { name: "Rosca martelo", sets: "3", reps: "12", technique: "Pegada neutra firme", cadence: "2s / 3s", strategy: "Espessura" },
+      { name: "Tríceps barra", sets: "3", reps: "12", technique: "Cotovelo fixo", cadence: "1s / 3s", strategy: "Definição" },
+      { name: "Ab bicicleta", sets: "3", reps: "20", technique: "Controle total", cadence: "Controlado", strategy: "Core" },
+      { name: "Ab supra", sets: "3", reps: "20", technique: "Contração limpa", cadence: "2s / 2s", strategy: "Core" },
     ],
   },
 ];
 
-function videoSearchUrl(query: string) {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-}
+const PROGRESSION = [
+  { situation: "Bateu topo das reps com execução limpa", action: "+2,5kg próxima sessão" },
+  { situation: "Não bateu reps", action: "Mantém carga" },
+  { situation: "Perdeu cadência", action: "Peso alto demais" },
+  { situation: "Muito fácil", action: "Peso baixo" },
+];
+
+const FATLOSS_PROTOCOL = [
+  { pillar: "Déficit calórico", guideline: "-300 a -400 kcal" },
+  { pillar: "Proteína", guideline: "~2g/kg" },
+  { pillar: "Cardio", guideline: "3x HIIT curto + 1 zona 2 opcional" },
+  { pillar: "Treino", guideline: "Manter carga (NUNCA sacrificar força)" },
+];
 
 function MetricChip({ label, value, theme }: { label: string; value: string; theme: Theme }) {
   return (
@@ -148,27 +155,15 @@ function ExerciseCard({ exercise, index, theme }: { exercise: Exercise; index: n
         <div className="flex items-start gap-3">
           <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 rounded accent-cyan-400" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className={`text-[0.72rem] font-semibold uppercase tracking-[0.16em] ${theme.accentLabel}`}>Exercício {index + 1}</div>
-                <h3 className="mt-1 text-lg font-semibold leading-tight text-white">{exercise.name}</h3>
-                <p className="mt-1 text-sm text-slate-400">{exercise.equipment}</p>
-              </div>
-              <a
-                className={`shrink-0 rounded-full border px-3 py-2 text-xs font-medium no-underline transition ${theme.button} ${theme.buttonText}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                href={videoSearchUrl(exercise.query)}
-              >
-                ▶ Ver vídeo
-              </a>
-            </div>
+            <div className={`text-[0.72rem] font-semibold uppercase tracking-[0.16em] ${theme.accentLabel}`}>Exercício {index + 1}</div>
+            <h3 className="mt-1 text-lg font-semibold leading-tight text-white">{exercise.name}</h3>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               <MetricChip label="Séries" value={exercise.sets} theme={theme} />
               <MetricChip label="Reps" value={exercise.reps} theme={theme} />
-              <MetricChip label="Peso" value={exercise.estimatedWeight} theme={theme} />
-              <MetricChip label="Descanso" value={exercise.rest} theme={theme} />
+              <MetricChip label="Técnica" value={exercise.technique} theme={theme} />
+              <MetricChip label="Cadência" value={exercise.cadence} theme={theme} />
+              <MetricChip label="Estratégia" value={exercise.strategy} theme={theme} />
             </div>
           </div>
         </div>
@@ -180,14 +175,14 @@ function ExerciseCard({ exercise, index, theme }: { exercise: Exercise; index: n
 export default function TreinoPage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#13203a_0%,_#0b1220_45%,_#08101d_100%)] px-4 py-5 text-[#eaf2ff] sm:px-5">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <section className="rounded-[28px] border border-cyan-400/15 bg-[#0f1728]/95 p-5 shadow-[0_16px_50px_rgba(0,0,0,0.28)] sm:p-6">
           <div className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-cyan-200">
             Ironcore · treino de bolso
           </div>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Curto, direto e pronto pra executar</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            Organizei do jeito mais limpo pra abrir no celular, bater o olho e começar. Cada exercício virou card com vídeo, carga, reps e descanso sem poluição.
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Plano de treino atualizado para secar sem perder força</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
+            Estrutura objetiva pra abrir no celular e executar: cadência, técnica, estratégia e cardio já embutidos. O foco é secar flanco sem sacrificar carga.
           </p>
         </section>
 
@@ -211,16 +206,39 @@ export default function TreinoPage() {
                     <ExerciseCard key={`${workout.title}-${exercise.name}`} exercise={exercise} index={index} theme={theme} />
                   ))}
                 </div>
+
+                <div className="mt-4 rounded-3xl border border-white/10 bg-[#0d1422] px-4 py-4 text-sm leading-7 text-slate-200">
+                  <strong className="text-white">🔥 Cardio:</strong> {workout.cardio}
+                </div>
               </section>
             );
           })}
 
-          <section className="rounded-[28px] border border-amber-300/15 bg-[#151d2d]/95 p-5">
-            <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-amber-200/90">Regra de progressão</div>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Subiu fácil? Sobe carga.</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Quando conseguir fazer todas as reps com boa forma, aumenta <strong className="text-white">2,5kg</strong> no próximo treino. Simples, objetivo e sem inventar moda.
-            </p>
+          <section className="grid gap-5 xl:grid-cols-2">
+            <article className="rounded-[28px] border border-amber-300/15 bg-[#151d2d]/95 p-5">
+              <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-amber-200/90">⚙️ Regra de progressão</div>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Simples, objetiva e sem achismo</h2>
+              <div className="mt-4 grid gap-3">
+                {PROGRESSION.map((item) => (
+                  <div key={item.situation} className="rounded-2xl border border-white/10 bg-[#0d1422] px-4 py-4 text-sm leading-7 text-slate-200">
+                    <div><strong className="text-white">Situação:</strong> {item.situation}</div>
+                    <div className="mt-1"><strong className="text-white">Ação:</strong> {item.action}</div>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="rounded-[28px] border border-cyan-300/15 bg-[#151d2d]/95 p-5">
+              <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-cyan-200/90">🧠 Protocolo pra secar flanco</div>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Sem perder força</h2>
+              <div className="mt-4 grid gap-3">
+                {FATLOSS_PROTOCOL.map((item) => (
+                  <div key={item.pillar} className="rounded-2xl border border-white/10 bg-[#0d1422] px-4 py-4 text-sm leading-7 text-slate-200">
+                    <div><strong className="text-white">{item.pillar}:</strong> {item.guideline}</div>
+                  </div>
+                ))}
+              </div>
+            </article>
           </section>
         </div>
       </div>
