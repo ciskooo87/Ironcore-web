@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
 type Exercise = {
   name: string;
   sets: string;
@@ -29,7 +33,11 @@ type Theme = {
   chipBorder: string;
   chipBg: string;
   chipLabel: string;
+  weightBorder: string;
+  weightFocus: string;
 };
+
+const STORAGE_KEY = "ironcore-treino-pesos-v1";
 
 const THEMES: Record<ThemeKey, Theme> = {
   red: {
@@ -44,6 +52,8 @@ const THEMES: Record<ThemeKey, Theme> = {
     chipBorder: "border-rose-200/10",
     chipBg: "bg-rose-200/[0.05]",
     chipLabel: "text-rose-200/70",
+    weightBorder: "border-rose-300/20",
+    weightFocus: "focus:border-rose-300/50",
   },
   blue: {
     sectionBorder: "border-cyan-400/15",
@@ -57,6 +67,8 @@ const THEMES: Record<ThemeKey, Theme> = {
     chipBorder: "border-cyan-200/10",
     chipBg: "bg-cyan-200/[0.05]",
     chipLabel: "text-cyan-200/70",
+    weightBorder: "border-cyan-300/20",
+    weightFocus: "focus:border-cyan-300/50",
   },
   amber: {
     sectionBorder: "border-amber-400/15",
@@ -70,6 +82,8 @@ const THEMES: Record<ThemeKey, Theme> = {
     chipBorder: "border-amber-200/10",
     chipBg: "bg-amber-200/[0.05]",
     chipLabel: "text-amber-200/70",
+    weightBorder: "border-amber-300/20",
+    weightFocus: "focus:border-amber-300/50",
   },
 };
 
@@ -147,7 +161,25 @@ function MetricChip({ label, value, theme }: { label: string; value: string; the
   );
 }
 
-function ExerciseCard({ exercise, index, theme }: { exercise: Exercise; index: number; theme: Theme }) {
+function exerciseKey(workoutTitle: string, exerciseName: string) {
+  return `${workoutTitle}__${exerciseName}`;
+}
+
+function ExerciseCard({
+  exercise,
+  workoutTitle,
+  index,
+  theme,
+  weight,
+  onWeightChange,
+}: {
+  exercise: Exercise;
+  workoutTitle: string;
+  index: number;
+  theme: Theme;
+  weight: string;
+  onWeightChange: (value: string) => void;
+}) {
   return (
     <article className={`overflow-hidden rounded-3xl border bg-[#10192c] shadow-[0_8px_30px_rgba(0,0,0,0.18)] ${theme.cardBorder}`}>
       <div className={`h-1.5 w-full bg-gradient-to-r ${theme.cardTop}`} />
@@ -165,6 +197,20 @@ function ExerciseCard({ exercise, index, theme }: { exercise: Exercise; index: n
               <MetricChip label="Cadência" value={exercise.cadence} theme={theme} />
               <MetricChip label="Estratégia" value={exercise.strategy} theme={theme} />
             </div>
+
+            <div className="mt-4 rounded-2xl border border-white/10 bg-[#0d1422] p-3">
+              <label className={`block text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${theme.chipLabel}`}>Peso atual</label>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  value={weight}
+                  onChange={(e) => onWeightChange(e.target.value)}
+                  placeholder="Ex.: 40kg"
+                  className={`w-full rounded-xl border bg-[#111a2a] px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 ${theme.weightBorder} ${theme.weightFocus}`}
+                />
+                <span className="text-xs text-slate-400">salvo</span>
+              </div>
+              <div className="mt-2 text-xs text-slate-400">Você pode atualizar esse campo a cada treino e ele fica salvo no seu navegador.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -173,6 +219,29 @@ function ExerciseCard({ exercise, index, theme }: { exercise: Exercise; index: n
 }
 
 export default function TreinoPage() {
+  const allExerciseKeys = useMemo(
+    () => WORKOUTS.flatMap((workout) => workout.exercises.map((exercise) => exerciseKey(workout.title, exercise.name))),
+    []
+  );
+
+  const [weights, setWeights] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      setWeights(parsed || {});
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!Object.keys(weights).length) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(weights));
+  }, [weights]);
+
+  const filledCount = allExerciseKeys.filter((key) => (weights[key] || "").trim()).length;
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#13203a_0%,_#0b1220_45%,_#08101d_100%)] px-4 py-5 text-[#eaf2ff] sm:px-5">
       <div className="mx-auto max-w-6xl">
@@ -182,8 +251,11 @@ export default function TreinoPage() {
           </div>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Plano de treino atualizado para secar sem perder força</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
-            Estrutura objetiva pra abrir no celular e executar: cadência, técnica, estratégia e cardio já embutidos. O foco é secar flanco sem sacrificar carga.
+            Estrutura objetiva pra abrir no celular e executar: cadência, técnica, estratégia, cardio e agora também o peso atual de cada exercício salvo no navegador.
           </p>
+          <div className="mt-4 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-medium text-cyan-100">
+            Pesos preenchidos: {filledCount}/{allExerciseKeys.length}
+          </div>
         </section>
 
         <div className="mt-5 space-y-5">
@@ -202,9 +274,20 @@ export default function TreinoPage() {
                 </div>
 
                 <div className="mt-4 grid gap-3">
-                  {workout.exercises.map((exercise, index) => (
-                    <ExerciseCard key={`${workout.title}-${exercise.name}`} exercise={exercise} index={index} theme={theme} />
-                  ))}
+                  {workout.exercises.map((exercise, index) => {
+                    const key = exerciseKey(workout.title, exercise.name);
+                    return (
+                      <ExerciseCard
+                        key={`${workout.title}-${exercise.name}`}
+                        exercise={exercise}
+                        workoutTitle={workout.title}
+                        index={index}
+                        theme={theme}
+                        weight={weights[key] || ""}
+                        onWeightChange={(value) => setWeights((prev) => ({ ...prev, [key]: value }))}
+                      />
+                    );
+                  })}
                 </div>
 
                 <div className="mt-4 rounded-3xl border border-white/10 bg-[#0d1422] px-4 py-4 text-sm leading-7 text-slate-200">
