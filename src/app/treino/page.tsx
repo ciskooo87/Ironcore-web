@@ -192,6 +192,7 @@ function ExerciseCard({ exercise, workoutTitle, index, theme }: { exercise: Exer
                 <span className="text-xs text-slate-400">salvo</span>
               </div>
               <div className="mt-2 text-xs text-slate-400">Você pode atualizar esse campo a cada treino e ele fica salvo no seu navegador.</div>
+              <div className="mt-1 text-[11px] text-slate-500" data-updated-at={key}>Última atualização: —</div>
             </div>
           </div>
         </div>
