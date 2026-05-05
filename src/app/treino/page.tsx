@@ -1,7 +1,3 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
-
 type Exercise = {
   name: string;
   sets: string;
@@ -165,21 +161,8 @@ function exerciseKey(workoutTitle: string, exerciseName: string) {
   return `${workoutTitle}__${exerciseName}`;
 }
 
-function ExerciseCard({
-  exercise,
-  workoutTitle,
-  index,
-  theme,
-  weight,
-  onWeightChange,
-}: {
-  exercise: Exercise;
-  workoutTitle: string;
-  index: number;
-  theme: Theme;
-  weight: string;
-  onWeightChange: (value: string) => void;
-}) {
+function ExerciseCard({ exercise, workoutTitle, index, theme }: { exercise: Exercise; workoutTitle: string; index: number; theme: Theme }) {
+  const key = exerciseKey(workoutTitle, exercise.name);
   return (
     <article className={`overflow-hidden rounded-3xl border bg-[#10192c] shadow-[0_8px_30px_rgba(0,0,0,0.18)] ${theme.cardBorder}`}>
       <div className={`h-1.5 w-full bg-gradient-to-r ${theme.cardTop}`} />
@@ -202,8 +185,7 @@ function ExerciseCard({
               <label className={`block text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${theme.chipLabel}`}>Peso atual</label>
               <div className="mt-2 flex items-center gap-2">
                 <input
-                  value={weight}
-                  onChange={(e) => onWeightChange(e.target.value)}
+                  data-weight-key={key}
                   placeholder="Ex.: 40kg"
                   className={`w-full rounded-xl border bg-[#111a2a] px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 ${theme.weightBorder} ${theme.weightFocus}`}
                 />
@@ -219,35 +201,44 @@ function ExerciseCard({
 }
 
 export default function TreinoPage() {
-  const allExerciseKeys = useMemo(
-    () => WORKOUTS.flatMap((workout) => workout.exercises.map((exercise) => exerciseKey(workout.title, exercise.name))),
-    []
-  );
+  const totalExercises = WORKOUTS.reduce((sum, workout) => sum + workout.exercises.length, 0);
 
-  const [weights, setWeights] = useState<Record<string, string>>({});
+  const script = `(() => {
+    const STORAGE_KEY = ${JSON.stringify(STORAGE_KEY)};
+    const inputs = Array.from(document.querySelectorAll('[data-weight-key]'));
+    const counter = document.getElementById('weights-filled-count');
+    let state = {};
 
-  useEffect(() => {
     try {
-      if (typeof window === "undefined" || !("localStorage" in window)) return;
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, string>;
-      setWeights(parsed || {});
-    } catch {
-      setWeights({});
-    }
-  }, []);
+      if (typeof window !== 'undefined' && 'localStorage' in window) {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) state = JSON.parse(raw) || {};
+      }
+    } catch {}
 
-  useEffect(() => {
-    try {
-      if (typeof window === "undefined" || !("localStorage" in window)) return;
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(weights));
-    } catch {
-      // ignora falha de storage para a página continuar funcionando
+    function updateCounter() {
+      if (!counter) return;
+      const filled = inputs.filter((input) => input.value.trim()).length;
+      counter.textContent = String(filled);
     }
-  }, [weights]);
 
-  const filledCount = allExerciseKeys.filter((key) => (weights[key] || "").trim()).length;
+    for (const input of inputs) {
+      const key = input.getAttribute('data-weight-key');
+      if (!key) continue;
+      if (state[key]) input.value = state[key];
+      input.addEventListener('input', () => {
+        try {
+          state[key] = input.value;
+          if (typeof window !== 'undefined' && 'localStorage' in window) {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          }
+        } catch {}
+        updateCounter();
+      });
+    }
+
+    updateCounter();
+  })();`;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#13203a_0%,_#0b1220_45%,_#08101d_100%)] px-4 py-5 text-[#eaf2ff] sm:px-5">
@@ -258,10 +249,10 @@ export default function TreinoPage() {
           </div>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Plano de treino atualizado para secar sem perder força</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
-            Estrutura objetiva pra abrir no celular e executar: cadência, técnica, estratégia, cardio e agora também o peso atual de cada exercício salvo no navegador.
+            Estrutura objetiva pra abrir no celular e executar: cadência, técnica, estratégia, cardio e peso atual por exercício sem depender de hidratação React.
           </p>
           <div className="mt-4 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-medium text-cyan-100">
-            Pesos preenchidos: {filledCount}/{allExerciseKeys.length}
+            Pesos preenchidos: <span id="weights-filled-count" className="mx-1">0</span>/{totalExercises}
           </div>
         </section>
 
@@ -281,20 +272,9 @@ export default function TreinoPage() {
                 </div>
 
                 <div className="mt-4 grid gap-3">
-                  {workout.exercises.map((exercise, index) => {
-                    const key = exerciseKey(workout.title, exercise.name);
-                    return (
-                      <ExerciseCard
-                        key={`${workout.title}-${exercise.name}`}
-                        exercise={exercise}
-                        workoutTitle={workout.title}
-                        index={index}
-                        theme={theme}
-                        weight={weights[key] || ""}
-                        onWeightChange={(value) => setWeights((prev) => ({ ...prev, [key]: value }))}
-                      />
-                    );
-                  })}
+                  {workout.exercises.map((exercise, index) => (
+                    <ExerciseCard key={`${workout.title}-${exercise.name}`} exercise={exercise} workoutTitle={workout.title} index={index} theme={theme} />
+                  ))}
                 </div>
 
                 <div className="mt-4 rounded-3xl border border-white/10 bg-[#0d1422] px-4 py-4 text-sm leading-7 text-slate-200">
@@ -332,6 +312,7 @@ export default function TreinoPage() {
           </section>
         </div>
       </div>
+      <script dangerouslySetInnerHTML={{ __html: script }} />
     </main>
   );
 }
