@@ -161,6 +161,10 @@ function exerciseKey(workoutTitle: string, exerciseName: string) {
   return `${workoutTitle}__${exerciseName}`;
 }
 
+function exerciseVideoUrl(exerciseName: string) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${exerciseName} execução correta musculação`)}`;
+}
+
 function ExerciseCard({ exercise, workoutTitle, index, theme }: { exercise: Exercise; workoutTitle: string; index: number; theme: Theme }) {
   const key = exerciseKey(workoutTitle, exercise.name);
   return (
@@ -172,6 +176,16 @@ function ExerciseCard({ exercise, workoutTitle, index, theme }: { exercise: Exer
           <div className="min-w-0 flex-1">
             <div className={`text-[0.72rem] font-semibold uppercase tracking-[0.16em] ${theme.accentLabel}`}>Exercício {index + 1}</div>
             <h3 className="mt-1 text-lg font-semibold leading-tight text-white">{exercise.name}</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a
+                href={exerciseVideoUrl(exercise.name)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-400/20"
+              >
+                Ver execução em vídeo
+              </a>
+            </div>
 
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               <MetricChip label="Séries" value={exercise.sets} theme={theme} />
