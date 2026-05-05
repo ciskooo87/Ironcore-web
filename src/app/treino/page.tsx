@@ -228,16 +228,23 @@ export default function TreinoPage() {
 
   useEffect(() => {
     try {
+      if (typeof window === "undefined" || !("localStorage" in window)) return;
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw) as Record<string, string>;
       setWeights(parsed || {});
-    } catch {}
+    } catch {
+      setWeights({});
+    }
   }, []);
 
   useEffect(() => {
-    if (!Object.keys(weights).length) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(weights));
+    try {
+      if (typeof window === "undefined" || !("localStorage" in window)) return;
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(weights));
+    } catch {
+      // ignora falha de storage para a página continuar funcionando
+    }
   }, [weights]);
 
   const filledCount = allExerciseKeys.filter((key) => (weights[key] || "").trim()).length;
