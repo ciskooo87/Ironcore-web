@@ -309,7 +309,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap gap-2">
                               <Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Abrir</Link>
-                              <form action={`/api/leadfinder/generate/${item.company_id}`} method="post">
+                              <form action={`/api/leadfinder/generate/${item.company_id}/`} method="post">
                                 <button className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20">Gerar</button>
                               </form>
                               <a href={`/api/leadfinder/export/${item.company_id}?format=json`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Exportar</a>
@@ -396,8 +396,8 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                         <form action={`/api/leadfinder/generate/${executive.company_id}/`} method="post">
                           <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
                         </form>
-                        <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
-                        <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a>
+                        <a href={`/api/leadfinder/export/${executive.company_id}/?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
+                        <a href={`/api/leadfinder/export/${executive.company_id}/?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a>
                       </div>
                     </div>
 
