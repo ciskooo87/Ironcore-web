@@ -312,7 +312,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                               <form action={`/api/leadfinder/generate/${item.company_id}`} method="post">
                                 <button className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20">Gerar</button>
                               </form>
-                              <a href={`${API_BASE}/leads/${item.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Exportar</a>
+                              <a href={`/api/leadfinder/export/${item.company_id}?format=json`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Exportar</a>
                             </div>
                           </td>
                         </tr>
