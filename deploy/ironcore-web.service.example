@@ -9,9 +9,7 @@ WorkingDirectory=/home/openclaw/.openclaw/workspace/Ironcore-web
 Environment=NODE_ENV=production
 Environment=PORT=3001
 EnvironmentFile=/etc/ironcore-web.env
-ExecStartPre=/usr/bin/test -f /home/openclaw/.openclaw/workspace/Ironcore-web/.next/BUILD_ID
-ExecStartPre=/usr/bin/test -f /home/openclaw/.openclaw/workspace/Ironcore-web/.next/server/middleware-manifest.json
-ExecStartPre=/usr/bin/test -f /home/openclaw/.openclaw/workspace/Ironcore-web/.next/prerender-manifest.json
+ExecStartPre=/home/openclaw/.openclaw/workspace/Ironcore-web/scripts/ensure-next-artifacts.sh
 ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3001
 Restart=always
 RestartSec=3

@@ -48,7 +48,8 @@ Para reduzir erro transitório de artefato `.next` no restart, use:
 
 Esse script:
 - builda com webpack
-- verifica `BUILD_ID`, `middleware-manifest.json` e `prerender-manifest.json`
+- garante `BUILD_ID` e `prerender-manifest.json`
+- cria `middleware-manifest.json` vazio quando o Next não o gera
 - só então reinicia o `ironcore-web.service`
 
 Exemplo endurecido de unit file:
