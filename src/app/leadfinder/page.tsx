@@ -12,6 +12,8 @@ type SearchParams = Promise<{
   generated?: string;
   watchlist_run?: string;
   watchlist_id?: string;
+  watchlist_create?: string;
+  reason?: string;
 }>;
 
 type RankingItem = {
@@ -154,7 +156,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
   const selectedCompanyId = params.company_id || ranking?.items?.[0]?.company_id?.toString() || "";
   const executive = selectedCompanyId ? await apiFetch<ExecutiveLead>(`/leads/${selectedCompanyId}/executive`) : null;
   const health = await apiFetch<{ status: string; service: string }>("/health");
-  const watchlists = (await apiFetch<Watchlist[]>("/watchlists")) || [];
+  const watchlists = (await apiFetch<Watchlist[]>('/watchlists')) || [];
   const watchlistsWithRuns = await Promise.all(
     watchlists.slice(0, 6).map(async (watchlist) => ({
       watchlist,
@@ -163,10 +165,10 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
   );
 
   const metrics = [
-    { label: "API", value: health?.status === "ok" ? "online" : "offline" },
-    { label: "Leads ranqueados", value: String(ranking?.total ?? 0) },
-    { label: "Watchlists", value: String(watchlists.length) },
-    { label: "Empresa em foco", value: executive?.empresa || "nenhuma" },
+    { label: 'API', value: health?.status === 'ok' ? 'online' : 'offline' },
+    { label: 'Leads ranqueados', value: String(ranking?.total ?? 0) },
+    { label: 'Watchlists', value: String(watchlists.length) },
+    { label: 'Empresa em foco', value: executive?.empresa || 'nenhuma' },
   ];
 
   return (
@@ -190,10 +192,14 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
           </div>
         </header>
 
-        {params.watchlist_run === "ok" ? (
-          <div className="mb-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-            Watchlist executada com sucesso.
-          </div>
+        {params.watchlist_run === 'ok' ? (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Watchlist executada com sucesso.</div>
+        ) : null}
+        {params.watchlist_create === 'ok' ? (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Watchlist criada com sucesso.</div>
+        ) : null}
+        {params.watchlist_create === 'error' ? (
+          <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Erro ao criar watchlist: {params.reason || 'falha não detalhada'}.</div>
         ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
@@ -201,217 +207,46 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
             <div className="rounded-[24px] border border-slate-800 bg-slate-950/65 p-5 shadow-[0_16px_50px_rgba(2,8,23,0.35)]">
               <div className="mb-4 text-sm font-semibold text-white">Filtros</div>
               <form action="/leadfinder/" className="grid gap-3 text-sm">
-                <label className="grid gap-2">
-                  <span className="text-slate-400">Buscar empresa</span>
-                  <input name="company_query" defaultValue={companyQuery} placeholder="nome, setor ou cidade" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-slate-400">Score mínimo</span>
-                  <input name="min_score" defaultValue={minScore} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-slate-400">Tier</span>
-                  <select name="tier" defaultValue={tier} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white">
-                    <option value="">Todos</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                  </select>
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-slate-400">Setor</span>
-                  <input name="sector" defaultValue={sector} placeholder="transportadora, distribuidora..." className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-slate-400">Qualidade do match</span>
-                  <select name="match_quality" defaultValue={matchQuality} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white">
-                    <option value="">Todas</option>
-                    <option value="alta">Alta</option>
-                    <option value="média">Média</option>
-                    <option value="baixa">Baixa</option>
-                    <option value="desconhecida">Desconhecida</option>
-                  </select>
-                </label>
+                <label className="grid gap-2"><span className="text-slate-400">Buscar empresa</span><input name="company_query" defaultValue={companyQuery} placeholder="nome, setor ou cidade" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" /></label>
+                <label className="grid gap-2"><span className="text-slate-400">Score mínimo</span><input name="min_score" defaultValue={minScore} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" /></label>
+                <label className="grid gap-2"><span className="text-slate-400">Tier</span><select name="tier" defaultValue={tier} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"><option value="">Todos</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></label>
+                <label className="grid gap-2"><span className="text-slate-400">Setor</span><input name="sector" defaultValue={sector} placeholder="transportadora, distribuidora..." className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" /></label>
+                <label className="grid gap-2"><span className="text-slate-400">Qualidade do match</span><select name="match_quality" defaultValue={matchQuality} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"><option value="">Todas</option><option value="alta">Alta</option><option value="média">Média</option><option value="baixa">Baixa</option><option value="desconhecida">Desconhecida</option></select></label>
                 <button className="rounded-xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950">Aplicar filtros</button>
               </form>
             </div>
 
             <div className="rounded-[24px] border border-slate-800 bg-slate-950/65 p-5 shadow-[0_16px_50px_rgba(2,8,23,0.35)]">
-              <div className="mb-4 flex items-center justify-between text-sm font-semibold text-white">
-                <span>Ranking operacional</span>
-                <span className="text-xs font-normal text-slate-400">{ranking?.total ?? 0} resultados</span>
-              </div>
-              <div className="space-y-3">
-                {ranking?.items?.length ? ranking.items.slice(0, 5).map((item, index) => (
-                  <Link key={item.company_id} href={queryFor(currentQuery, { company_id: String(item.company_id) })} className={`block rounded-2xl border p-4 transition ${String(item.company_id) === selectedCompanyId ? "border-cyan-400/40 bg-cyan-400/10" : "border-slate-800 bg-slate-900/70 hover:border-slate-700"}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">#{index + 1}</div>
-                        <div className="mt-1 font-semibold text-white">{item.empresa}</div>
-                        <div className="mt-1 text-xs text-slate-400">{item.setor || "setor não informado"} · {item.localizacao || "local não informado"}</div>
-                      </div>
-                      <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeTone(item.lead_tier)}`}>{item.lead_tier}</div>
-                    </div>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</div>
-                        <div className="text-2xl font-semibold text-white">{item.score}</div>
-                      </div>
-                      <div className="text-right text-xs">
-                        <div className="text-slate-500">Match</div>
-                        <div className={qualityTone(item.qualidade_match)}>{item.qualidade_match || "desconhecida"}</div>
-                      </div>
-                    </div>
-                  </Link>
-                )) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">Nenhum lead encontrado com os filtros atuais.</div>}
-              </div>
+              <div className="mb-4 text-sm font-semibold text-white">Nova watchlist</div>
+              <form action="/api/leadfinder/watchlists/create/" method="post" className="grid gap-3 text-sm">
+                <label className="grid gap-2"><span className="text-slate-400">Nome</span><input name="name" placeholder="Ex.: Expansão transportadoras SP" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" required /></label>
+                <label className="grid gap-2"><span className="text-slate-400">Tipo</span><select name="source_kind" defaultValue="generic_html_news" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"><option value="generic_html_news">HTML Notícias</option><option value="generic_html_legal">HTML Jurídico</option><option value="generic_html_jobs">HTML Jobs</option><option value="json_jobs">JSON Jobs</option><option value="jsonld_jobs">JSON-LD Jobs</option></select></label>
+                <label className="grid gap-2"><span className="text-slate-400">Fonte</span><input name="source_name" defaultValue="Notícias Regionais" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" required /></label>
+                <label className="grid gap-2"><span className="text-slate-400">URL</span><input name="url" placeholder="https://..." className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" required /></label>
+                <label className="grid gap-2"><span className="text-slate-400">Agenda (min)</span><input name="schedule_minutes" defaultValue="60" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" /></label>
+                <label className="grid gap-2"><span className="text-slate-400">Confiança</span><input name="confidence" defaultValue="0.82" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" /></label>
+                <button className="rounded-xl bg-white px-4 py-3 font-semibold text-slate-950">Criar watchlist</button>
+              </form>
             </div>
           </aside>
 
           <div className="space-y-6">
             <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
               <div className="mb-5 flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Visão operacional</div>
-                  <h2 className="mt-1 text-2xl font-semibold text-white">Tabela de priorização</h2>
-                </div>
+                <div><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Visão operacional</div><h2 className="mt-1 text-2xl font-semibold text-white">Tabela de priorização</h2></div>
                 <div className="text-xs text-slate-400">Use a tabela para triagem rápida, geração de snapshot e exportação do executivo.</div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-slate-800">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-800 text-sm">
-                    <thead className="bg-slate-950/80 text-left text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3">Empresa</th>
-                        <th className="px-4 py-3">Setor</th>
-                        <th className="px-4 py-3">Score</th>
-                        <th className="px-4 py-3">Tier</th>
-                        <th className="px-4 py-3">Match</th>
-                        <th className="px-4 py-3">Produto</th>
-                        <th className="px-4 py-3">Atualizado</th>
-                        <th className="px-4 py-3">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800 bg-slate-900/60">
-                      {ranking?.items?.map((item) => (
-                        <tr key={item.company_id} className={String(item.company_id) === selectedCompanyId ? "bg-cyan-400/5" : "hover:bg-slate-900/80"}>
-                          <td className="px-4 py-4">
-                            <Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="font-semibold text-white hover:text-cyan-300">{item.empresa}</Link>
-                            <div className="mt-1 text-xs text-slate-400">{item.localizacao || "local não informado"}</div>
-                          </td>
-                          <td className="px-4 py-4 text-slate-300">{item.setor || "-"}</td>
-                          <td className="px-4 py-4 font-semibold text-white">{item.score}</td>
-                          <td className="px-4 py-4"><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeTone(item.lead_tier)}`}>{item.lead_tier}</span></td>
-                          <td className={`px-4 py-4 font-medium ${qualityTone(item.qualidade_match)}`}>{item.qualidade_match || "desconhecida"}</td>
-                          <td className="px-4 py-4 text-slate-300">{item.produto_mais_indicado}</td>
-                          <td className="px-4 py-4 text-slate-400">{fmtDate(item.atualizado_em)}</td>
-                          <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-2">
-                              <Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Abrir</Link>
-                              <form action={`/api/leadfinder/generate/${item.company_id}/`} method="post">
-                                <button className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20">Gerar</button>
-                              </form>
-                              <a href={`/api/leadfinder/export/${item.company_id}?format=json`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Exportar</a>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <div className="overflow-hidden rounded-2xl border border-slate-800"><div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-800 text-sm"><thead className="bg-slate-950/80 text-left text-[11px] uppercase tracking-[0.18em] text-slate-500"><tr><th className="px-4 py-3">Empresa</th><th className="px-4 py-3">Setor</th><th className="px-4 py-3">Score</th><th className="px-4 py-3">Tier</th><th className="px-4 py-3">Match</th><th className="px-4 py-3">Produto</th><th className="px-4 py-3">Atualizado</th><th className="px-4 py-3">Ações</th></tr></thead><tbody className="divide-y divide-slate-800 bg-slate-900/60">{ranking?.items?.map((item) => (<tr key={item.company_id} className={String(item.company_id) === selectedCompanyId ? 'bg-cyan-400/5' : 'hover:bg-slate-900/80'}><td className="px-4 py-4"><Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="font-semibold text-white hover:text-cyan-300">{item.empresa}</Link><div className="mt-1 text-xs text-slate-400">{item.localizacao || 'local não informado'}</div></td><td className="px-4 py-4 text-slate-300">{item.setor || '-'}</td><td className="px-4 py-4 font-semibold text-white">{item.score}</td><td className="px-4 py-4"><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeTone(item.lead_tier)}`}>{item.lead_tier}</span></td><td className={`px-4 py-4 font-medium ${qualityTone(item.qualidade_match)}`}>{item.qualidade_match || 'desconhecida'}</td><td className="px-4 py-4 text-slate-300">{item.produto_mais_indicado}</td><td className="px-4 py-4 text-slate-400">{fmtDate(item.atualizado_em)}</td><td className="px-4 py-4"><div className="flex flex-wrap gap-2"><Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Abrir</Link><form action={`/api/leadfinder/generate/${item.company_id}/`} method="post"><button className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20">Gerar</button></form><a href={`/api/leadfinder/export/${item.company_id}/?format=json`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Exportar</a></div></td></tr>))}</tbody></table></div></div>
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
               <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Watchlists</div>
-                    <h2 className="mt-1 text-2xl font-semibold text-white">Monitoramento e execução</h2>
-                  </div>
-                  <div className="text-xs text-slate-400">Rode manualmente, acompanhe agenda e veja o último histórico.</div>
-                </div>
-                <div className="space-y-4">
-                  {watchlistsWithRuns.length ? watchlistsWithRuns.map(({ watchlist, runs }) => {
-                    const lastRun = runs[0];
-                    return (
-                      <div key={watchlist.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-lg font-semibold text-white">{watchlist.name}</div>
-                              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${watchlist.active ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 text-slate-400'}`}>{watchlist.active ? 'ativa' : 'pausada'}</span>
-                            </div>
-                            <div className="mt-2 text-sm text-slate-400">{watchlist.source_name} · {watchlist.source_kind} · agenda {watchlist.schedule_minutes ? `${watchlist.schedule_minutes} min` : 'manual'}</div>
-                            <div className="mt-3 text-xs text-slate-500">Última execução: {fmtDate(watchlist.last_run_at)}</div>
-                          </div>
-                          <form action={`/api/leadfinder/watchlists/${watchlist.id}/run/`} method="post">
-                            <button className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950">Rodar agora</button>
-                          </form>
-                        </div>
-                        <div className="mt-4 grid gap-3 md:grid-cols-3">
-                          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm">
-                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Status último run</div>
-                            <div className="mt-2 font-semibold text-white">{lastRun?.status || 'sem histórico'}</div>
-                          </div>
-                          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm">
-                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Eventos criados</div>
-                            <div className="mt-2 font-semibold text-white">{lastRun?.created_events ?? 0}</div>
-                          </div>
-                          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm">
-                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leads gerados</div>
-                            <div className="mt-2 font-semibold text-white">{lastRun?.generated_leads ?? 0}</div>
-                          </div>
-                        </div>
-                        {lastRun ? (
-                          <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm text-slate-300">
-                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Detalhe do último run</div>
-                            <div className="mt-2">{lastRun.detail || 'Sem detalhe adicional.'}</div>
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  }) : (
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">Nenhuma watchlist cadastrada.</div>
-                  )}
-                </div>
+                <div className="mb-5 flex items-center justify-between gap-4"><div><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Watchlists</div><h2 className="mt-1 text-2xl font-semibold text-white">Monitoramento e execução</h2></div><div className="text-xs text-slate-400">Rode manualmente, acompanhe agenda e veja o último histórico.</div></div>
+                <div className="space-y-4">{watchlistsWithRuns.length ? watchlistsWithRuns.map(({ watchlist, runs }) => { const lastRun = runs[0]; return (<div key={watchlist.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between"><div><div className="flex flex-wrap items-center gap-2"><div className="text-lg font-semibold text-white">{watchlist.name}</div><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${watchlist.active ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 text-slate-400'}`}>{watchlist.active ? 'ativa' : 'pausada'}</span></div><div className="mt-2 text-sm text-slate-400">{watchlist.source_name} · {watchlist.source_kind} · agenda {watchlist.schedule_minutes ? `${watchlist.schedule_minutes} min` : 'manual'}</div><div className="mt-3 text-xs text-slate-500">Última execução: {fmtDate(watchlist.last_run_at)}</div></div><form action={`/api/leadfinder/watchlists/${watchlist.id}/run/`} method="post"><button className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950">Rodar agora</button></form></div><div className="mt-4 grid gap-3 md:grid-cols-3"><div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Status último run</div><div className="mt-2 font-semibold text-white">{lastRun?.status || 'sem histórico'}</div></div><div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Eventos criados</div><div className="mt-2 font-semibold text-white">{lastRun?.created_events ?? 0}</div></div><div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leads gerados</div><div className="mt-2 font-semibold text-white">{lastRun?.generated_leads ?? 0}</div></div></div>{lastRun ? (<div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm text-slate-300"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Detalhe do último run</div><div className="mt-2">{lastRun.detail || 'Sem detalhe adicional.'}</div></div>) : null}</div>); }) : (<div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">Nenhuma watchlist cadastrada.</div>)}</div>
               </section>
 
               <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
-                {executive ? (
-                  <>
-                    <div className="flex flex-col gap-5">
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Lead executivo</div>
-                        <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">{executive.empresa}</h2>
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                          <span className={`rounded-full border px-3 py-1 font-semibold ${badgeTone(executive.score_bucket === "oportunidade prioritária" ? "A" : executive.score_bucket === "alta probabilidade" ? "B" : executive.score_bucket === "média probabilidade" ? "C" : "D")}`}>{executive.score_bucket}</span>
-                          <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.setor || "setor não informado"}</span>
-                          <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.localizacao || "local não informado"}</span>
-                          <span className={`rounded-full border border-slate-700 px-3 py-1 ${qualityTone(executive.qualidade_match)}`}>match {executive.qualidade_match || "desconhecida"}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <form action={`/api/leadfinder/generate/${executive.company_id}/`} method="post">
-                          <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
-                        </form>
-                        <a href={`/api/leadfinder/export/${executive.company_id}/?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
-                        <a href={`/api/leadfinder/export/${executive.company_id}/?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 grid gap-4 md:grid-cols-2">
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</div><div className="mt-2 text-3xl font-semibold text-white">{executive.score_necessidade_capital}</div></div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Produto</div><div className="mt-2 text-lg font-semibold text-white">{executive.produto_mais_indicado}</div></div>
-                    </div>
-
-                    <div className="mt-6 space-y-4">
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Resumo executivo</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.resumo_executivo}</p></div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Motivos do score</div><div className="mt-3 space-y-2">{executive.motivos_do_score.map((reason) => <div key={reason} className="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">{reason}</div>)}</div></div>
-                    </div>
-                  </>
-                ) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400">Não consegui carregar o lead executivo. Verifique se a API do Leadfind está online em <code className="text-slate-200">{API_BASE}</code>.</div>}
+                {executive ? (<><div className="flex flex-col gap-5"><div><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Lead executivo</div><h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">{executive.empresa}</h2><div className="mt-3 flex flex-wrap gap-2 text-xs"><span className={`rounded-full border px-3 py-1 font-semibold ${badgeTone(executive.score_bucket === 'oportunidade prioritária' ? 'A' : executive.score_bucket === 'alta probabilidade' ? 'B' : executive.score_bucket === 'média probabilidade' ? 'C' : 'D')}`}>{executive.score_bucket}</span><span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.setor || 'setor não informado'}</span><span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.localizacao || 'local não informado'}</span><span className={`rounded-full border border-slate-700 px-3 py-1 ${qualityTone(executive.qualidade_match)}`}>match {executive.qualidade_match || 'desconhecida'}</span></div></div><div className="flex flex-wrap gap-2"><form action={`/api/leadfinder/generate/${executive.company_id}/`} method="post"><button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button></form><a href={`/api/leadfinder/export/${executive.company_id}/?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a><a href={`/api/leadfinder/export/${executive.company_id}/?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a></div></div><div className="mt-6 grid gap-4 md:grid-cols-2"><div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</div><div className="mt-2 text-3xl font-semibold text-white">{executive.score_necessidade_capital}</div></div><div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Produto</div><div className="mt-2 text-lg font-semibold text-white">{executive.produto_mais_indicado}</div></div></div><div className="mt-6 space-y-4"><div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Resumo executivo</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.resumo_executivo}</p></div><div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Motivos do score</div><div className="mt-3 space-y-2">{executive.motivos_do_score.map((reason) => <div key={reason} className="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">{reason}</div>)}</div></div></div></>) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400">Não consegui carregar o lead executivo. Verifique se a API do Leadfind está online em <code className="text-slate-200">{API_BASE}</code>.</div>}
               </section>
             </section>
           </div>
