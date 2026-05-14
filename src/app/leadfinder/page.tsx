@@ -236,7 +236,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Visão operacional</div>
                   <h2 className="mt-1 text-2xl font-semibold text-white">Tabela de priorização</h2>
                 </div>
-                <div className="text-xs text-slate-400">Use a tabela para triagem rápida e os cards laterais para foco imediato.</div>
+                <div className="text-xs text-slate-400">Use a tabela para triagem rápida, geração de snapshot e exportação do executivo.</div>
               </div>
               <div className="overflow-hidden rounded-2xl border border-slate-800">
                 <div className="overflow-x-auto">
@@ -250,6 +250,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                         <th className="px-4 py-3">Match</th>
                         <th className="px-4 py-3">Produto</th>
                         <th className="px-4 py-3">Atualizado</th>
+                        <th className="px-4 py-3">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800 bg-slate-900/60">
@@ -265,6 +266,15 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                           <td className={`px-4 py-4 font-medium ${qualityTone(item.qualidade_match)}`}>{item.qualidade_match || "desconhecida"}</td>
                           <td className="px-4 py-4 text-slate-300">{item.produto_mais_indicado}</td>
                           <td className="px-4 py-4 text-slate-400">{fmtDate(item.atualizado_em)}</td>
+                          <td className="px-4 py-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Abrir</Link>
+                              <form action={`/api/leadfinder/generate/${item.company_id}`} method="post">
+                                <button className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20">Gerar</button>
+                              </form>
+                              <a href={`${API_BASE}/leads/${item.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-300">Exportar</a>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -287,9 +297,13 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                         <span className={`rounded-full border border-slate-700 px-3 py-1 ${qualityTone(executive.qualidade_match)}`}>match {executive.qualidade_match || "desconhecida"}</span>
                       </div>
                     </div>
-                    <form action={`/api/leadfinder/generate/${executive.company_id}`} method="post">
-                      <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
-                    </form>
+                    <div className="flex flex-wrap gap-2">
+                      <form action={`/api/leadfinder/generate/${executive.company_id}`} method="post">
+                        <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
+                      </form>
+                      <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
+                      <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a>
+                    </div>
                   </div>
 
                   <div className="mt-6 grid gap-4 md:grid-cols-4">
