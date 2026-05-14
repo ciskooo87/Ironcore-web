@@ -44,3 +44,12 @@ Esse fluxo reduz as janelas de inconsistência entre build e runtime. Reinícios
 - `docs/PROD_INFRA.md`
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/MOVEMENT_DECISION_MATRIX.md`
+- `docs/LEADFINDER.md`
+
+## Leadfinder publicado
+
+A UI do Leadfinder está publicada em:
+- `https://ironcore.lat/leadfinder/`
+
+Ela consome o backend `leadfind` por HTTP interno, com fallback atual para:
+- `http://127.0.0.1:8021`
