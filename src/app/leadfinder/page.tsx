@@ -6,6 +6,8 @@ type SearchParams = Promise<{
   min_score?: string;
   tier?: string;
   sector?: string;
+  match_quality?: string;
+  company_query?: string;
   company_id?: string;
   generated?: string;
 }>;
@@ -96,14 +98,19 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
   const minScore = params.min_score || "60";
   const tier = params.tier || "";
   const sector = params.sector || "";
+  const matchQuality = params.match_quality || "";
+  const companyQuery = params.company_query || "";
+
   const currentQuery = {
     min_score: minScore,
     tier,
     sector,
+    match_quality: matchQuality,
+    company_query: companyQuery,
     company_id: params.company_id || "",
   };
 
-  const rankingPath = `/leads/ranking?limit=20&min_score=${encodeURIComponent(minScore)}${tier ? `&tier=${encodeURIComponent(tier)}` : ""}${sector ? `&sector=${encodeURIComponent(sector)}` : ""}`;
+  const rankingPath = `/leads/ranking?limit=20&min_score=${encodeURIComponent(minScore)}${tier ? `&tier=${encodeURIComponent(tier)}` : ""}${sector ? `&sector=${encodeURIComponent(sector)}` : ""}${matchQuality ? `&match_quality=${encodeURIComponent(matchQuality)}` : ""}${companyQuery ? `&company_query=${encodeURIComponent(companyQuery)}` : ""}`;
   const ranking = await apiFetch<RankingResponse>(rankingPath);
   const selectedCompanyId = params.company_id || ranking?.items?.[0]?.company_id?.toString() || "";
   const executive = selectedCompanyId ? await apiFetch<ExecutiveLead>(`/leads/${selectedCompanyId}/executive`) : null;
@@ -125,17 +132,10 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300">
                 IronCore · Leadfinder
               </div>
-              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em] text-white md:text-6xl">
-                Radar executivo de leads com evidência real.
-              </h1>
+              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em] text-white md:text-6xl">Radar executivo de leads com evidência real.</h1>
               <p className="mt-5 max-w-3xl text-sm leading-8 text-slate-300 md:text-base">
                 Ranking operacional de empresas com provável necessidade de capital de giro, crédito estruturado ou funding de expansão — com score explicável, qualidade de match e leitura executiva pronta.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                <span className="rounded-full border border-slate-700 px-3 py-2">Score multi-fonte</span>
-                <span className="rounded-full border border-slate-700 px-3 py-2">Serasa + jurídico + reputação</span>
-                <span className="rounded-full border border-slate-700 px-3 py-2">Auditoria de match</span>
-              </div>
             </div>
             <div className="grid grid-cols-2 gap-3 xl:min-w-[420px] xl:grid-cols-4">
               {metrics.map((metric) => (
@@ -148,17 +148,15 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
           </div>
         </header>
 
-        {params.generated === "ok" ? (
-          <div className="mb-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-            Snapshot do lead gerado com sucesso.
-          </div>
-        ) : null}
-
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="space-y-6">
             <div className="rounded-[24px] border border-slate-800 bg-slate-950/65 p-5 shadow-[0_16px_50px_rgba(2,8,23,0.35)]">
               <div className="mb-4 text-sm font-semibold text-white">Filtros</div>
               <form action="/leadfinder/" className="grid gap-3 text-sm">
+                <label className="grid gap-2">
+                  <span className="text-slate-400">Buscar empresa</span>
+                  <input name="company_query" defaultValue={companyQuery} placeholder="nome, setor ou cidade" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" />
+                </label>
                 <label className="grid gap-2">
                   <span className="text-slate-400">Score mínimo</span>
                   <input name="min_score" defaultValue={minScore} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" />
@@ -177,19 +175,28 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                   <span className="text-slate-400">Setor</span>
                   <input name="sector" defaultValue={sector} placeholder="transportadora, distribuidora..." className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" />
                 </label>
+                <label className="grid gap-2">
+                  <span className="text-slate-400">Qualidade do match</span>
+                  <select name="match_quality" defaultValue={matchQuality} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white">
+                    <option value="">Todas</option>
+                    <option value="alta">Alta</option>
+                    <option value="média">Média</option>
+                    <option value="baixa">Baixa</option>
+                    <option value="desconhecida">Desconhecida</option>
+                  </select>
+                </label>
                 <button className="rounded-xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950">Aplicar filtros</button>
               </form>
             </div>
 
             <div className="rounded-[24px] border border-slate-800 bg-slate-950/65 p-5 shadow-[0_16px_50px_rgba(2,8,23,0.35)]">
-              <div className="mb-4 text-sm font-semibold text-white">Ranking operacional</div>
+              <div className="mb-4 flex items-center justify-between text-sm font-semibold text-white">
+                <span>Ranking operacional</span>
+                <span className="text-xs font-normal text-slate-400">{ranking?.total ?? 0} resultados</span>
+              </div>
               <div className="space-y-3">
                 {ranking?.items?.length ? ranking.items.map((item, index) => (
-                  <Link
-                    key={item.company_id}
-                    href={queryFor(currentQuery, { company_id: String(item.company_id) })}
-                    className={`block rounded-2xl border p-4 transition ${String(item.company_id) === selectedCompanyId ? "border-cyan-400/40 bg-cyan-400/10" : "border-slate-800 bg-slate-900/70 hover:border-slate-700"}`}
-                  >
+                  <Link key={item.company_id} href={queryFor(currentQuery, { company_id: String(item.company_id) })} className={`block rounded-2xl border p-4 transition ${String(item.company_id) === selectedCompanyId ? "border-cyan-400/40 bg-cyan-400/10" : "border-slate-800 bg-slate-900/70 hover:border-slate-700"}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">#{index + 1}</div>
@@ -209,11 +216,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                       </div>
                     </div>
                   </Link>
-                )) : (
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">
-                    Nenhum lead encontrado com os filtros atuais.
-                  </div>
-                )}
+                )) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">Nenhum lead encontrado com os filtros atuais.</div>}
               </div>
             </div>
           </aside>
@@ -247,69 +250,17 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
 
                   <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                     <div className="space-y-6">
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                        <div className="text-sm font-semibold text-white">Resumo executivo</div>
-                        <p className="mt-3 text-sm leading-7 text-slate-300">{executive.resumo_executivo}</p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                        <div className="text-sm font-semibold text-white">Hipótese de dor</div>
-                        <p className="mt-3 text-sm leading-7 text-slate-300">{executive.hipotese_de_dor}</p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                        <div className="text-sm font-semibold text-white">Melhor abordagem comercial</div>
-                        <p className="mt-3 text-sm leading-7 text-slate-300">{executive.melhor_abordagem_comercial}</p>
-                      </div>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Resumo executivo</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.resumo_executivo}</p></div>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Hipótese de dor</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.hipotese_de_dor}</p></div>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Melhor abordagem comercial</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.melhor_abordagem_comercial}</p></div>
                     </div>
                     <div className="space-y-6">
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                        <div className="text-sm font-semibold text-white">Motivos do score</div>
-                        <div className="mt-3 space-y-2">
-                          {executive.motivos_do_score.map((reason) => (
-                            <div key={reason} className="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">{reason}</div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                        <div className="text-sm font-semibold text-white">Eixos de evidência</div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {executive.eixos_de_evidencia.map((axis) => (
-                            <span key={axis} className="rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">{axis}</span>
-                          ))}
-                        </div>
-                      </div>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Motivos do score</div><div className="mt-3 space-y-2">{executive.motivos_do_score.map((reason) => <div key={reason} className="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">{reason}</div>)}</div></div>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Eixos de evidência</div><div className="mt-3 flex flex-wrap gap-2">{executive.eixos_de_evidencia.map((axis) => <span key={axis} className="rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">{axis}</span>)}</div></div>
                     </div>
                   </div>
                 </>
-              ) : (
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400">
-                  Não consegui carregar o lead executivo. Verifique se a API do Leadfind está online em <code className="text-slate-200">{API_BASE}</code>.
-                </div>
-              )}
-            </section>
-
-            <section className="grid gap-6 xl:grid-cols-2">
-              <div className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
-                <div className="text-sm font-semibold text-white">Fontes e sinais</div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {executive?.fontes_utilizadas?.map((source) => (
-                    <span key={source} className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">{source}</span>
-                  ))}
-                </div>
-                <div className="mt-5 space-y-2">
-                  {executive?.principais_sinais_detectados?.map((signal) => (
-                    <div key={signal} className="rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm text-slate-300">{signal}</div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
-                <div className="text-sm font-semibold text-white">Evidências públicas</div>
-                <div className="mt-4 space-y-2">
-                  {executive?.evidencias?.map((evidence) => (
-                    <div key={evidence} className="rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm leading-7 text-slate-300">{evidence}</div>
-                  ))}
-                </div>
-              </div>
+              ) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400">Não consegui carregar o lead executivo. Verifique se a API do Leadfind está online em <code className="text-slate-200">{API_BASE}</code>.</div>}
             </section>
           </div>
         </section>
