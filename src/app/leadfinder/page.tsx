@@ -346,7 +346,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                             <div className="mt-2 text-sm text-slate-400">{watchlist.source_name} · {watchlist.source_kind} · agenda {watchlist.schedule_minutes ? `${watchlist.schedule_minutes} min` : 'manual'}</div>
                             <div className="mt-3 text-xs text-slate-500">Última execução: {fmtDate(watchlist.last_run_at)}</div>
                           </div>
-                          <form action={`/api/leadfinder/watchlists/${watchlist.id}/run`} method="post">
+                          <form action={`/api/leadfinder/watchlists/${watchlist.id}/run/`} method="post">
                             <button className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950">Rodar agora</button>
                           </form>
                         </div>
@@ -393,7 +393,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <form action={`/api/leadfinder/generate/${executive.company_id}`} method="post">
+                        <form action={`/api/leadfinder/generate/${executive.company_id}/`} method="post">
                           <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
                         </form>
                         <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
