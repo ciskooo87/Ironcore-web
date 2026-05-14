@@ -192,8 +192,17 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
           </div>
         </header>
 
+        {params.generated === 'ok' ? (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Snapshot do lead gerado com sucesso.</div>
+        ) : null}
+        {params.generated === 'error' ? (
+          <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Erro ao gerar snapshot: {params.reason || 'falha não detalhada'}.</div>
+        ) : null}
         {params.watchlist_run === 'ok' ? (
           <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Watchlist executada com sucesso.</div>
+        ) : null}
+        {params.watchlist_run === 'error' ? (
+          <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Erro ao rodar watchlist: {params.reason || 'falha não detalhada'}.</div>
         ) : null}
         {params.watchlist_create === 'ok' ? (
           <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Watchlist criada com sucesso.</div>
