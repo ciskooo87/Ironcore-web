@@ -38,6 +38,22 @@ curl http://127.0.0.1:8021/health
 curl https://ironcore.lat/leadfinder/
 ```
 
+## Deploy recomendado do frontend
+
+Para reduzir erro transitório de artefato `.next` no restart, use:
+
+```bash
+./scripts/deploy-prod.sh
+```
+
+Esse script:
+- builda com webpack
+- verifica `BUILD_ID`, `middleware-manifest.json` e `prerender-manifest.json`
+- só então reinicia o `ironcore-web.service`
+
+Exemplo endurecido de unit file:
+- `deploy/ironcore-web.service.example`
+
 ## Observação
 
 Sem o backend do Leadfind ativo, a UI continua publicada, mas mostrará `API: offline`.
