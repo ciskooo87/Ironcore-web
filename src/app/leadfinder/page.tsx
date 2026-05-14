@@ -93,6 +93,18 @@ function queryFor(base: Record<string, string>, patch: Record<string, string | u
   return qs ? `/leadfinder/?${qs}` : "/leadfinder/";
 }
 
+function fmtDate(value: string) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Sao_Paulo",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
 export default async function LeadfinderPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const minScore = params.min_score || "60";
@@ -129,13 +141,9 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
         <header className="mb-8 rounded-[28px] border border-cyan-400/10 bg-slate-950/70 p-6 shadow-[0_24px_80px_rgba(2,8,23,0.45)] backdrop-blur">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-4xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300">
-                IronCore · Leadfinder
-              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300">IronCore · Leadfinder</div>
               <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em] text-white md:text-6xl">Radar executivo de leads com evidência real.</h1>
-              <p className="mt-5 max-w-3xl text-sm leading-8 text-slate-300 md:text-base">
-                Ranking operacional de empresas com provável necessidade de capital de giro, crédito estruturado ou funding de expansão — com score explicável, qualidade de match e leitura executiva pronta.
-              </p>
+              <p className="mt-5 max-w-3xl text-sm leading-8 text-slate-300 md:text-base">Ranking operacional de empresas com provável necessidade de capital de giro, crédito estruturado ou funding de expansão — com score explicável, qualidade de match e leitura executiva pronta.</p>
             </div>
             <div className="grid grid-cols-2 gap-3 xl:min-w-[420px] xl:grid-cols-4">
               {metrics.map((metric) => (
@@ -195,7 +203,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                 <span className="text-xs font-normal text-slate-400">{ranking?.total ?? 0} resultados</span>
               </div>
               <div className="space-y-3">
-                {ranking?.items?.length ? ranking.items.map((item, index) => (
+                {ranking?.items?.length ? ranking.items.slice(0, 5).map((item, index) => (
                   <Link key={item.company_id} href={queryFor(currentQuery, { company_id: String(item.company_id) })} className={`block rounded-2xl border p-4 transition ${String(item.company_id) === selectedCompanyId ? "border-cyan-400/40 bg-cyan-400/10" : "border-slate-800 bg-slate-900/70 hover:border-slate-700"}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -222,6 +230,49 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
           </aside>
 
           <div className="space-y-6">
+            <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Visão operacional</div>
+                  <h2 className="mt-1 text-2xl font-semibold text-white">Tabela de priorização</h2>
+                </div>
+                <div className="text-xs text-slate-400">Use a tabela para triagem rápida e os cards laterais para foco imediato.</div>
+              </div>
+              <div className="overflow-hidden rounded-2xl border border-slate-800">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-800 text-sm">
+                    <thead className="bg-slate-950/80 text-left text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">Empresa</th>
+                        <th className="px-4 py-3">Setor</th>
+                        <th className="px-4 py-3">Score</th>
+                        <th className="px-4 py-3">Tier</th>
+                        <th className="px-4 py-3">Match</th>
+                        <th className="px-4 py-3">Produto</th>
+                        <th className="px-4 py-3">Atualizado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800 bg-slate-900/60">
+                      {ranking?.items?.map((item) => (
+                        <tr key={item.company_id} className={String(item.company_id) === selectedCompanyId ? "bg-cyan-400/5" : "hover:bg-slate-900/80"}>
+                          <td className="px-4 py-4">
+                            <Link href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="font-semibold text-white hover:text-cyan-300">{item.empresa}</Link>
+                            <div className="mt-1 text-xs text-slate-400">{item.localizacao || "local não informado"}</div>
+                          </td>
+                          <td className="px-4 py-4 text-slate-300">{item.setor || "-"}</td>
+                          <td className="px-4 py-4 font-semibold text-white">{item.score}</td>
+                          <td className="px-4 py-4"><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeTone(item.lead_tier)}`}>{item.lead_tier}</span></td>
+                          <td className={`px-4 py-4 font-medium ${qualityTone(item.qualidade_match)}`}>{item.qualidade_match || "desconhecida"}</td>
+                          <td className="px-4 py-4 text-slate-300">{item.produto_mais_indicado}</td>
+                          <td className="px-4 py-4 text-slate-400">{fmtDate(item.atualizado_em)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
             <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
               {executive ? (
                 <>
