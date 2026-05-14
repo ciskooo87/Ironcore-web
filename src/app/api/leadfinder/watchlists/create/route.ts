@@ -30,6 +30,14 @@ function configFromForm(form: FormData) {
     return {
       url,
       source_name: sourceName,
+      item_selector: String(form.get("item_selector") || "article"),
+      title_selector: String(form.get("title_selector") || "h1, h2, h3"),
+      content_selector: String(form.get("content_selector") || "p"),
+      company_selector: String(form.get("company_selector") || ".company"),
+      city_selector: String(form.get("city_selector") || ".city"),
+      state_selector: String(form.get("state_selector") || ".state"),
+      link_selector: String(form.get("link_selector") || "a[href]"),
+      website_selector: String(form.get("website_selector") || ".company-site"),
       confidence,
       normalize_after_insert: true,
     };
@@ -39,6 +47,14 @@ function configFromForm(form: FormData) {
     return {
       url,
       source_name: sourceName,
+      item_selector: String(form.get("item_selector") || "article"),
+      title_selector: String(form.get("title_selector") || "h1, h2, h3"),
+      content_selector: String(form.get("content_selector") || "p"),
+      company_selector: String(form.get("company_selector") || ".company"),
+      city_selector: String(form.get("city_selector") || ".city"),
+      state_selector: String(form.get("state_selector") || ".state"),
+      link_selector: String(form.get("link_selector") || "a[href]"),
+      website_selector: String(form.get("website_selector") || ".company-site"),
       confidence,
       normalize_after_insert: true,
     };
