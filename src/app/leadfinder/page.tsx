@@ -10,6 +10,8 @@ type SearchParams = Promise<{
   company_query?: string;
   company_id?: string;
   generated?: string;
+  watchlist_run?: string;
+  watchlist_id?: string;
 }>;
 
 type RankingItem = {
@@ -59,6 +61,30 @@ type ExecutiveLead = {
   criado_em: string;
 };
 
+type Watchlist = {
+  id: number;
+  name: string;
+  source_kind: string;
+  source_name: string;
+  config_json: string;
+  active: boolean;
+  schedule_minutes?: number | null;
+  last_run_at?: string | null;
+  created_at: string;
+};
+
+type WatchlistRunLog = {
+  id: number;
+  watchlist_id: number;
+  status: string;
+  created_events: number;
+  generated_leads: number;
+  impacted_company_ids_json: string;
+  detail: string;
+  started_at: string;
+  finished_at?: string | null;
+};
+
 async function apiFetch<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
@@ -93,7 +119,8 @@ function queryFor(base: Record<string, string>, patch: Record<string, string | u
   return qs ? `/leadfinder/?${qs}` : "/leadfinder/";
 }
 
-function fmtDate(value: string) {
+function fmtDate(value?: string | null) {
+  if (!value) return "-";
   try {
     return new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "short",
@@ -127,11 +154,18 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
   const selectedCompanyId = params.company_id || ranking?.items?.[0]?.company_id?.toString() || "";
   const executive = selectedCompanyId ? await apiFetch<ExecutiveLead>(`/leads/${selectedCompanyId}/executive`) : null;
   const health = await apiFetch<{ status: string; service: string }>("/health");
+  const watchlists = (await apiFetch<Watchlist[]>("/watchlists")) || [];
+  const watchlistsWithRuns = await Promise.all(
+    watchlists.slice(0, 6).map(async (watchlist) => ({
+      watchlist,
+      runs: (await apiFetch<WatchlistRunLog[]>(`/watchlists/${watchlist.id}/runs`)) || [],
+    }))
+  );
 
   const metrics = [
     { label: "API", value: health?.status === "ok" ? "online" : "offline" },
     { label: "Leads ranqueados", value: String(ranking?.total ?? 0) },
-    { label: "Filtro mínimo", value: minScore },
+    { label: "Watchlists", value: String(watchlists.length) },
     { label: "Empresa em foco", value: executive?.empresa || "nenhuma" },
   ];
 
@@ -155,6 +189,12 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
             </div>
           </div>
         </header>
+
+        {params.watchlist_run === "ok" ? (
+          <div className="mb-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            Watchlist executada com sucesso.
+          </div>
+        ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="space-y-6">
@@ -283,49 +323,96 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
-              {executive ? (
-                <>
-                  <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Lead executivo</div>
-                      <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">{executive.empresa}</h2>
-                      <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                        <span className={`rounded-full border px-3 py-1 font-semibold ${badgeTone(executive.score_bucket === "oportunidade prioritária" ? "A" : executive.score_bucket === "alta probabilidade" ? "B" : executive.score_bucket === "média probabilidade" ? "C" : "D")}`}>{executive.score_bucket}</span>
-                        <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.setor || "setor não informado"}</span>
-                        <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.localizacao || "local não informado"}</span>
-                        <span className={`rounded-full border border-slate-700 px-3 py-1 ${qualityTone(executive.qualidade_match)}`}>match {executive.qualidade_match || "desconhecida"}</span>
+            <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Watchlists</div>
+                    <h2 className="mt-1 text-2xl font-semibold text-white">Monitoramento e execução</h2>
+                  </div>
+                  <div className="text-xs text-slate-400">Rode manualmente, acompanhe agenda e veja o último histórico.</div>
+                </div>
+                <div className="space-y-4">
+                  {watchlistsWithRuns.length ? watchlistsWithRuns.map(({ watchlist, runs }) => {
+                    const lastRun = runs[0];
+                    return (
+                      <div key={watchlist.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-lg font-semibold text-white">{watchlist.name}</div>
+                              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${watchlist.active ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 text-slate-400'}`}>{watchlist.active ? 'ativa' : 'pausada'}</span>
+                            </div>
+                            <div className="mt-2 text-sm text-slate-400">{watchlist.source_name} · {watchlist.source_kind} · agenda {watchlist.schedule_minutes ? `${watchlist.schedule_minutes} min` : 'manual'}</div>
+                            <div className="mt-3 text-xs text-slate-500">Última execução: {fmtDate(watchlist.last_run_at)}</div>
+                          </div>
+                          <form action={`/api/leadfinder/watchlists/${watchlist.id}/run`} method="post">
+                            <button className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950">Rodar agora</button>
+                          </form>
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-3">
+                          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Status último run</div>
+                            <div className="mt-2 font-semibold text-white">{lastRun?.status || 'sem histórico'}</div>
+                          </div>
+                          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Eventos criados</div>
+                            <div className="mt-2 font-semibold text-white">{lastRun?.created_events ?? 0}</div>
+                          </div>
+                          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leads gerados</div>
+                            <div className="mt-2 font-semibold text-white">{lastRun?.generated_leads ?? 0}</div>
+                          </div>
+                        </div>
+                        {lastRun ? (
+                          <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-sm text-slate-300">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Detalhe do último run</div>
+                            <div className="mt-2">{lastRun.detail || 'Sem detalhe adicional.'}</div>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }) : (
+                    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">Nenhuma watchlist cadastrada.</div>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
+                {executive ? (
+                  <>
+                    <div className="flex flex-col gap-5">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Lead executivo</div>
+                        <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">{executive.empresa}</h2>
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                          <span className={`rounded-full border px-3 py-1 font-semibold ${badgeTone(executive.score_bucket === "oportunidade prioritária" ? "A" : executive.score_bucket === "alta probabilidade" ? "B" : executive.score_bucket === "média probabilidade" ? "C" : "D")}`}>{executive.score_bucket}</span>
+                          <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.setor || "setor não informado"}</span>
+                          <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">{executive.localizacao || "local não informado"}</span>
+                          <span className={`rounded-full border border-slate-700 px-3 py-1 ${qualityTone(executive.qualidade_match)}`}>match {executive.qualidade_match || "desconhecida"}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <form action={`/api/leadfinder/generate/${executive.company_id}`} method="post">
+                          <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
+                        </form>
+                        <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
+                        <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <form action={`/api/leadfinder/generate/${executive.company_id}`} method="post">
-                        <button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950">Gerar novo snapshot</button>
-                      </form>
-                      <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=json`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar JSON</a>
-                      <a href={`${API_BASE}/leads/${executive.company_id}/executive/export?format=csv`} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300">Exportar CSV</a>
+
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</div><div className="mt-2 text-3xl font-semibold text-white">{executive.score_necessidade_capital}</div></div>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Produto</div><div className="mt-2 text-lg font-semibold text-white">{executive.produto_mais_indicado}</div></div>
                     </div>
-                  </div>
 
-                  <div className="mt-6 grid gap-4 md:grid-cols-4">
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</div><div className="mt-2 text-3xl font-semibold text-white">{executive.score_necessidade_capital}</div></div>
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Conversão</div><div className="mt-2 text-lg font-semibold text-white">{executive.probabilidade_conversao}</div></div>
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Produto</div><div className="mt-2 text-lg font-semibold text-white">{executive.produto_mais_indicado}</div></div>
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Confiança</div><div className="mt-2 text-lg font-semibold text-white">{executive.confianca_do_lead}</div></div>
-                  </div>
-
-                  <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                    <div className="space-y-6">
+                    <div className="mt-6 space-y-4">
                       <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Resumo executivo</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.resumo_executivo}</p></div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Hipótese de dor</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.hipotese_de_dor}</p></div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Melhor abordagem comercial</div><p className="mt-3 text-sm leading-7 text-slate-300">{executive.melhor_abordagem_comercial}</p></div>
-                    </div>
-                    <div className="space-y-6">
                       <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Motivos do score</div><div className="mt-3 space-y-2">{executive.motivos_do_score.map((reason) => <div key={reason} className="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">{reason}</div>)}</div></div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="text-sm font-semibold text-white">Eixos de evidência</div><div className="mt-3 flex flex-wrap gap-2">{executive.eixos_de_evidencia.map((axis) => <span key={axis} className="rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">{axis}</span>)}</div></div>
                     </div>
-                  </div>
-                </>
-              ) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400">Não consegui carregar o lead executivo. Verifique se a API do Leadfind está online em <code className="text-slate-200">{API_BASE}</code>.</div>}
+                  </>
+                ) : <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400">Não consegui carregar o lead executivo. Verifique se a API do Leadfind está online em <code className="text-slate-200">{API_BASE}</code>.</div>}
+              </section>
             </section>
           </div>
         </section>
