@@ -13,6 +13,9 @@ type SearchParams = Promise<{
   watchlist_run?: string;
   watchlist_id?: string;
   watchlist_create?: string;
+  discovery?: string;
+  impacted?: string;
+  leads?: string;
   reason?: string;
 }>;
 
@@ -134,6 +137,13 @@ function fmtDate(value?: string | null) {
   }
 }
 
+function Banner({ kind, text }: { kind: "success" | "error"; text: string }) {
+  const tone = kind === "success"
+    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+    : "border-rose-500/30 bg-rose-500/10 text-rose-200";
+  return <div className={`mb-4 rounded-2xl border px-4 py-3 text-sm ${tone}`}>{text}</div>;
+}
+
 export default async function LeadfinderPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const minScore = params.min_score || "60";
@@ -192,24 +202,14 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
           </div>
         </header>
 
-        {params.generated === 'ok' ? (
-          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Snapshot do lead gerado com sucesso.</div>
-        ) : null}
-        {params.generated === 'error' ? (
-          <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Erro ao gerar snapshot: {params.reason || 'falha não detalhada'}.</div>
-        ) : null}
-        {params.watchlist_run === 'ok' ? (
-          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Watchlist executada com sucesso.</div>
-        ) : null}
-        {params.watchlist_run === 'error' ? (
-          <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Erro ao rodar watchlist: {params.reason || 'falha não detalhada'}.</div>
-        ) : null}
-        {params.watchlist_create === 'ok' ? (
-          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Watchlist criada com sucesso.</div>
-        ) : null}
-        {params.watchlist_create === 'error' ? (
-          <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Erro ao criar watchlist: {params.reason || 'falha não detalhada'}.</div>
-        ) : null}
+        {params.generated === 'ok' ? <Banner kind="success" text="Snapshot do lead gerado com sucesso." /> : null}
+        {params.generated === 'error' ? <Banner kind="error" text={`Erro ao gerar snapshot: ${params.reason || 'falha não detalhada'}.`} /> : null}
+        {params.watchlist_run === 'ok' ? <Banner kind="success" text="Watchlist executada com sucesso." /> : null}
+        {params.watchlist_run === 'error' ? <Banner kind="error" text={`Erro ao rodar watchlist: ${params.reason || 'falha não detalhada'}.`} /> : null}
+        {params.watchlist_create === 'ok' ? <Banner kind="success" text="Watchlist criada com sucesso." /> : null}
+        {params.watchlist_create === 'error' ? <Banner kind="error" text={`Erro ao criar watchlist: ${params.reason || 'falha não detalhada'}.`} /> : null}
+        {params.discovery === 'ok' ? <Banner kind="success" text={`Discovery concluído: ${params.impacted || '0'} empresas impactadas, ${params.leads || '0'} leads gerados.`} /> : null}
+        {params.discovery === 'error' ? <Banner kind="error" text={`Erro no discovery: ${params.reason || 'falha não detalhada'}.`} /> : null}
 
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="space-y-6">
@@ -222,6 +222,48 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
                 <label className="grid gap-2"><span className="text-slate-400">Setor</span><input name="sector" defaultValue={sector} placeholder="transportadora, distribuidora..." className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white" /></label>
                 <label className="grid gap-2"><span className="text-slate-400">Qualidade do match</span><select name="match_quality" defaultValue={matchQuality} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"><option value="">Todas</option><option value="alta">Alta</option><option value="média">Média</option><option value="baixa">Baixa</option><option value="desconhecida">Desconhecida</option></select></label>
                 <button className="rounded-xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950">Aplicar filtros</button>
+              </form>
+            </div>
+
+            <div className="rounded-[24px] border border-slate-800 bg-slate-950/65 p-5 shadow-[0_16px_50px_rgba(2,8,23,0.35)]">
+              <div className="mb-4 text-sm font-semibold text-white">Discovery multi-provider</div>
+              <form action="/api/leadfinder/discovery/run/" method="post" className="grid gap-4 text-sm">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                  <label className="flex items-center gap-3 text-white"><input type="checkbox" name="news_enabled" defaultChecked /> Notícias</label>
+                  <div className="mt-3 grid gap-2">
+                    <input name="news_source_name" defaultValue="Notícias Regionais" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                    <input name="news_url" placeholder="https://portal-de-noticias.com/lista" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                  <label className="flex items-center gap-3 text-white"><input type="checkbox" name="legal_enabled" /> Jurídico</label>
+                  <div className="mt-3 grid gap-2">
+                    <input name="legal_source_name" defaultValue="JusBrasil" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                    <input name="legal_url" placeholder="https://fonte-juridica.com/lista" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                  <label className="flex items-center gap-3 text-white"><input type="checkbox" name="reputation_enabled" /> Reputação</label>
+                  <div className="mt-3 grid gap-2">
+                    <input name="reputation_source_name" defaultValue="Reclamações Operacionais" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                    <input name="reputation_url" placeholder="https://fonte-reputacao.com/lista" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                  <label className="flex items-center gap-3 text-white"><input type="checkbox" name="formal_enabled" /> Atos formais</label>
+                  <div className="mt-3 grid gap-2">
+                    <input name="formal_source_name" defaultValue="Atos Formais" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                    <input name="formal_url" placeholder="https://fonte-atos.com/lista" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                  <label className="flex items-center gap-3 text-white"><input type="checkbox" name="serasa_enabled" /> Serasa</label>
+                  <div className="mt-3 grid gap-2">
+                    <input name="serasa_source_name" defaultValue="Serasa" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                    <input name="serasa_url" placeholder="https://fonte-serasa.com/lista" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white" />
+                  </div>
+                </div>
+                <button className="rounded-xl bg-white px-4 py-3 font-semibold text-slate-950">Rodar discovery</button>
               </form>
             </div>
 
