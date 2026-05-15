@@ -69,7 +69,17 @@ export async function POST(req: Request) {
     const body = await upstream.json();
     const impacted = Array.isArray(body?.impacted_company_ids) ? body.impacted_company_ids.length : 0;
     const leads = Number(body?.generated_leads || 0);
-    return NextResponse.redirect(publicUrl(req, `/leadfinder/?discovery=ok&impacted=${impacted}&leads=${leads}`));
+    const providerKinds = Array.isArray(body?.providers) ? body.providers.map((item: { kind?: string }) => item?.kind).filter(Boolean).join(",") : "";
+    const createdEvents = Array.isArray(body?.providers)
+      ? body.providers.reduce((acc: number, item: { created_events?: number }) => acc + Number(item?.created_events || 0), 0)
+      : 0;
+
+    return NextResponse.redirect(
+      publicUrl(
+        req,
+        `/leadfinder/?discovery=ok&impacted=${impacted}&leads=${leads}&events=${createdEvents}&providers=${encodeURIComponent(providerKinds)}`,
+      ),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "erro desconhecido";
     return NextResponse.redirect(publicUrl(req, `/leadfinder/?discovery=error&reason=${encodeURIComponent(message)}`));

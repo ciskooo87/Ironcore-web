@@ -16,6 +16,8 @@ type SearchParams = Promise<{
   discovery?: string;
   impacted?: string;
   leads?: string;
+  events?: string;
+  providers?: string;
   reason?: string;
 }>;
 
@@ -208,7 +210,7 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
         {params.watchlist_run === 'error' ? <Banner kind="error" text={`Erro ao rodar watchlist: ${params.reason || 'falha não detalhada'}.`} /> : null}
         {params.watchlist_create === 'ok' ? <Banner kind="success" text="Watchlist criada com sucesso." /> : null}
         {params.watchlist_create === 'error' ? <Banner kind="error" text={`Erro ao criar watchlist: ${params.reason || 'falha não detalhada'}.`} /> : null}
-        {params.discovery === 'ok' ? <Banner kind="success" text={`Discovery concluído: ${params.impacted || '0'} empresas impactadas, ${params.leads || '0'} leads gerados.`} /> : null}
+        {params.discovery === 'ok' ? <Banner kind="success" text={`Discovery concluído: ${params.impacted || '0'} empresas impactadas, ${params.leads || '0'} leads gerados, ${params.events || '0'} eventos coletados, providers: ${params.providers || 'n/d'}.`} /> : null}
         {params.discovery === 'error' ? <Banner kind="error" text={`Erro no discovery: ${params.reason || 'falha não detalhada'}.`} /> : null}
 
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
@@ -228,6 +230,9 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
             <div className="rounded-[24px] border border-slate-800 bg-slate-950/65 p-5 shadow-[0_16px_50px_rgba(2,8,23,0.35)]">
               <div className="mb-4 text-sm font-semibold text-white">Discovery multi-provider</div>
               <form action="/api/leadfinder/discovery/run/" method="post" className="grid gap-4 text-sm">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-xs text-slate-400">
+                  O discovery roda coleta multi-provider, normaliza eventos, tenta casar empresas reais e atualiza o ranking abaixo.
+                </div>
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
                   <label className="flex items-center gap-3 text-white"><input type="checkbox" name="news_enabled" defaultChecked /> Notícias</label>
                   <div className="mt-3 grid gap-2">
