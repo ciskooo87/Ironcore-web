@@ -67,17 +67,21 @@ export async function POST(req: Request) {
     }
 
     const body = await upstream.json();
-    const impacted = Array.isArray(body?.impacted_company_ids) ? body.impacted_company_ids.length : 0;
+    const impactedIds = Array.isArray(body?.impacted_company_ids) ? body.impacted_company_ids : [];
+    const impacted = impactedIds.length;
     const leads = Number(body?.generated_leads || 0);
-    const providerKinds = Array.isArray(body?.providers) ? body.providers.map((item: { kind?: string }) => item?.kind).filter(Boolean).join(",") : "";
+    const providerKinds = Array.isArray(body?.providers)
+      ? body.providers.map((item: { kind?: string }) => item?.kind).filter(Boolean).join(",")
+      : "";
     const createdEvents = Array.isArray(body?.providers)
       ? body.providers.reduce((acc: number, item: { created_events?: number }) => acc + Number(item?.created_events || 0), 0)
       : 0;
+    const idsParam = impactedIds.slice(0, 8).join(",");
 
     return NextResponse.redirect(
       publicUrl(
         req,
-        `/leadfinder/?discovery=ok&impacted=${impacted}&leads=${leads}&events=${createdEvents}&providers=${encodeURIComponent(providerKinds)}`,
+        `/leadfinder/?discovery=ok&impacted=${impacted}&leads=${leads}&events=${createdEvents}&providers=${encodeURIComponent(providerKinds)}&impacted_ids=${encodeURIComponent(idsParam)}`,
       ),
     );
   } catch (error) {

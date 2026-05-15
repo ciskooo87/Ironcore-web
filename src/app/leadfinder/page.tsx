@@ -18,6 +18,7 @@ type SearchParams = Promise<{
   leads?: string;
   events?: string;
   providers?: string;
+  impacted_ids?: string;
   reason?: string;
 }>;
 
@@ -176,6 +177,9 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
     }))
   );
 
+  const impactedIds = (params.impacted_ids || '').split(',').map(item => item.trim()).filter(Boolean);
+  const impactedItems = ranking?.items?.filter((item) => impactedIds.includes(String(item.company_id))) || [];
+
   const metrics = [
     { label: 'API', value: health?.status === 'ok' ? 'online' : 'offline' },
     { label: 'Leads ranqueados', value: String(ranking?.total ?? 0) },
@@ -287,6 +291,35 @@ export default async function LeadfinderPage({ searchParams }: { searchParams: S
           </aside>
 
           <div className="space-y-6">
+            {params.discovery === 'ok' && impactedItems.length ? (
+              <section className="rounded-[28px] border border-emerald-500/20 bg-emerald-500/5 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.25)]">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/80">Resultado do discovery</div>
+                    <h2 className="mt-1 text-2xl font-semibold text-white">Empresas impactadas</h2>
+                  </div>
+                  <div className="text-xs text-emerald-200/80">Abra direto as empresas encontradas no ciclo atual.</div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {impactedItems.map((item) => (
+                    <Link key={item.company_id} href={queryFor(currentQuery, { company_id: String(item.company_id) })} className="rounded-2xl border border-emerald-500/20 bg-slate-950/50 p-4 hover:border-emerald-400/40">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-semibold text-white">{item.empresa}</div>
+                          <div className="mt-1 text-xs text-slate-400">{item.setor || 'setor não informado'} · {item.localizacao || 'local não informado'}</div>
+                        </div>
+                        <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeTone(item.lead_tier)}`}>{item.lead_tier}</div>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between text-sm">
+                        <div className="text-white">Score {item.score}</div>
+                        <div className={qualityTone(item.qualidade_match)}>{item.qualidade_match || 'desconhecida'}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
             <section className="rounded-[28px] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(2,8,23,0.4)]">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div><div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Visão operacional</div><h2 className="mt-1 text-2xl font-semibold text-white">Tabela de priorização</h2></div>
